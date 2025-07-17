@@ -1,0 +1,75 @@
+{
+  "title": "Courses",
+  "description": "Manage your learning management system courses, modules, and lessons.",
+  "createCourse": "Create Course",
+  "createCourseDescription": "Create a new course with modules and lessons for your learners.",
+  "createFirstCourse": "Create Your First Course",
+  "noCourses": "No Courses Yet",
+  "noCoursesDescription": "Get started by creating your first course with engaging content for your learners.",
+  "preview": "Preview",
+  "fields": {
+    "title": "Course Title",
+    "titleDescription": "Enter a clear, descriptive title for your course.",
+    "description": "Description",
+    "descriptionDescription": "Provide a detailed description of what learners will gain from this course.",
+    "sku": "SKU",
+    "skuDescription": "Unique identifier for this course (optional).",
+    "price": "Price",
+    "priceDescription": "Set the price for this course. Use 0 for free courses."
+  },
+  "modules": {
+    "title": "Modules",
+    "description": "Organize your course content into logical modules.",
+    "createModule": "Add Module",
+    "noModules": "No Modules Yet",
+    "noModulesDescription": "Start organizing your course by creating modules.",
+    "fields": {
+      "title": "Module Title",
+      "description": "Module Description"
+    }
+  },
+  "lessons": {
+    "title": "Lessons",
+    "description": "Add engaging lessons to your modules.",
+    "createLesson": "Add Lesson",
+    "noLessons": "No Lessons Yet",
+    "noLessonsDescription": "Add lessons to this module to start building your course content.",
+    "types": {
+      "video": "Video",
+      "text": "Text",
+      "quiz": "Quiz",
+      "asset": "Asset"
+    },
+    "fields": {
+      "title": "Lesson Title",
+      "description": "Lesson Description",
+      "content_type": "Content Type",
+      "content": "Content",
+      "video_url": "Video URL",
+      "asset_url": "Asset URL",
+      "is_final_quiz": "Final Quiz",
+      "passing_score": "Passing Score"
+    }
+  },
+  "settings": {
+    "title": "Course Settings",
+    "description": "Configure your course settings and publication status.",
+    "general": "General Settings",
+    "publishing": "Publishing",
+    "learning": "Learning Settings",
+    "fields": {
+      "is_published": "Published",
+      "is_publishedDescription": "Make this course available to learners.",
+      "sequential_completion": "Sequential Completion",
+      "sequential_completionDescription": "Require learners to complete lessons in order.",
+      "passing_score": "Default Passing Score",
+      "passing_scoreDescription": "Default minimum score required to pass quizzes."
+    }
+  },
+  "enrollment": {
+    "title": "Enrollments",
+    "description": "View and manage course enrollments.",
+    "noEnrollments": "No Enrollments Yet",
+    "noEnrollmentsDescription": "Students will appear here once they enroll in your course."
+  }
+}

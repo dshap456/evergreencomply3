@@ -17,6 +17,8 @@
   "imageInputLabel": "Click here to upload an image",
   "cancel": "Cancel",
   "clear": "Clear",
+  "save": "Save",
+  "edit": "Edit",
   "notFound": "Not Found",
   "backToHomePage": "Back to Home Page",
   "goBack": "Go Back",
@@ -63,7 +65,8 @@
     "dashboard": "Dashboard",
     "settings": "Settings",
     "profile": "Profile",
-    "application": "Application"
+    "application": "Application",
+    "courses": "Courses"
   },
   "roles": {
     "owner": {

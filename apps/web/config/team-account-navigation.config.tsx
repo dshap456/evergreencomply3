@@ -1,4 +1,4 @@
-import { CreditCard, LayoutDashboard, Settings, Users } from 'lucide-react';
+import { CreditCard, LayoutDashboard, Settings, Users, BookOpen } from 'lucide-react';
 
 import { NavigationConfigSchema } from '@kit/ui/navigation-schema';
 
@@ -16,6 +16,11 @@ const getRoutes = (account: string) => [
         path: pathsConfig.app.accountHome.replace('[account]', account),
         Icon: <LayoutDashboard className={iconClasses} />,
         end: true,
+      },
+      {
+        label: 'common:routes.courses',
+        path: `/home/${account}/courses`,
+        Icon: <BookOpen className={iconClasses} />,
       },
     ],
   },
