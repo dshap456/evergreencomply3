@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 
-import { PlusIcon, ChevronDownIcon, ChevronRightIcon, BookIcon, VideoIcon, FileTextIcon, QuizIcon, EditIcon } from 'lucide-react';
+import { PlusIcon, ChevronDownIcon, ChevronRightIcon, BookIcon, VideoIcon, FileTextIcon, HelpCircleIcon, EditIcon } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kit/ui/card';
@@ -96,7 +96,7 @@ export function ModulesManager({ course, account }: ModulesManagerProps) {
       case 'text':
         return <FileTextIcon className="h-4 w-4" />;
       case 'quiz':
-        return <QuizIcon className="h-4 w-4" />;
+        return <HelpCircleIcon className="h-4 w-4" />;
       default:
         return <BookIcon className="h-4 w-4" />;
     }
@@ -292,7 +292,7 @@ export function ModulesManager({ course, account }: ModulesManagerProps) {
                                     variant="ghost"
                                     onClick={() => handleEditQuiz(lesson.id, lesson.quiz_questions || [])}
                                   >
-                                    <QuizIcon className="h-3 w-3" />
+                                    <HelpCircleIcon className="h-3 w-3" />
                                   </Button>
                                 )}
                               </div>
