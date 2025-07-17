@@ -2,7 +2,15 @@ import { getServerSideSitemap } from 'next-sitemap';
 
 import { createCmsClient } from '@kit/cms';
 
-import appConfig from '~/config/app.config';
+// Safe import with fallback for build time
+let appConfig: { url: string };
+try {
+  appConfig = require('~/config/app.config').default;
+} catch (error) {
+  appConfig = {
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://localhost:3000'
+  };
+}
 
 /**
  * @description The maximum age of the sitemap in seconds.
