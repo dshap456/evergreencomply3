@@ -102,8 +102,8 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Estimated Duration (hours)</label>
-              <Input type="number" min="1" defaultValue="8" />
+              <label className="text-sm font-medium">Estimated Duration</label>
+              <Input placeholder="e.g., 8 hours, 3 days, 2 weeks" />
             </div>
           </div>
         </CardContent>
