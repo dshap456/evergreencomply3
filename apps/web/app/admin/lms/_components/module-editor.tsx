@@ -32,7 +32,6 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
-  duration_minutes?: number;
 }
 
 interface ModuleEditorProps {
@@ -243,9 +242,6 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span>{getContentTypeLabel(lesson.content_type)}</span>
-                      {lesson.duration_minutes && (
-                        <span>{lesson.duration_minutes} minutes</span>
-                      )}
                     </div>
                     {lesson.description && (
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-1">

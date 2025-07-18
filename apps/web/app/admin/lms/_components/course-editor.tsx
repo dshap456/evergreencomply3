@@ -32,7 +32,6 @@ interface Course {
   created_at: string;
   updated_at: string;
   version: string;
-  tags: string[];
 }
 
 interface Module {
@@ -50,7 +49,6 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
-  duration_minutes?: number;
 }
 
 interface CourseEditorProps {
@@ -72,8 +70,7 @@ const mockModules: Module[] = [
         description: 'Course overview and objectives',
         content_type: 'video',
         order_index: 1,
-        is_final_quiz: false,
-        duration_minutes: 5
+        is_final_quiz: false
       },
       {
         id: '2',
@@ -97,8 +94,7 @@ const mockModules: Module[] = [
         description: 'Fundamental concepts explained',
         content_type: 'video',
         order_index: 1,
-        is_final_quiz: false,
-        duration_minutes: 15
+        is_final_quiz: false
       },
       {
         id: '4',
@@ -253,29 +249,6 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
                   className="min-h-[100px]"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Tags</label>
-                <div className="flex flex-wrap gap-2">
-                  {courseData.tags.map((tag) => (
-                    <Badge key={tag} variant="outline">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCourseData(prev => ({
-                            ...prev,
-                            tags: prev.tags.filter(t => t !== tag)
-                          }));
-                          setIsDirty(true);
-                        }}
-                        className="ml-2 hover:text-red-500"
-                      >
-                        ×
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -355,11 +328,6 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          {lesson.duration_minutes && (
-                            <span className="text-xs text-muted-foreground">
-                              {lesson.duration_minutes}m
-                            </span>
-                          )}
                           <Button 
                             variant="ghost" 
                             size="sm"

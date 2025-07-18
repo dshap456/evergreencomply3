@@ -38,9 +38,7 @@ const CreateCourseSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(1000),
   category: z.string().min(1, 'Category is required'),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
-  estimated_duration: z.number().min(1, 'Duration must be at least 1 hour'),
-  tags: z.array(z.string()).min(1, 'At least one tag is required'),
+  estimated_duration: z.string().min(1, 'Estimated duration is required').max(100),
 });
 
 type CreateCourseForm = z.infer<typeof CreateCourseSchema>;
@@ -60,25 +58,12 @@ const categories = [
   'Personal Development',
 ];
 
-const difficultyLevels = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-];
-
-const popularTags = [
-  'JavaScript', 'React', 'TypeScript', 'Node.js', 'Python',
-  'Data Analysis', 'Machine Learning', 'UI/UX', 'Figma',
-  'Marketing', 'SEO', 'Leadership', 'Communication'
-];
 
 export function CreateCourseDialog({
   open,
   onOpenChange,
   onCourseCreated,
 }: CreateCourseDialogProps) {
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [customTag, setCustomTag] = useState('');
 
   const form = useForm<CreateCourseForm>({
     resolver: zodResolver(CreateCourseSchema),
@@ -86,32 +71,10 @@ export function CreateCourseDialog({
       title: '',
       description: '',
       category: '',
-      difficulty: 'beginner',
-      estimated_duration: 1,
-      tags: [],
+      estimated_duration: '',
     },
   });
 
-  const addTag = (tag: string) => {
-    if (tag && !selectedTags.includes(tag)) {
-      const newTags = [...selectedTags, tag];
-      setSelectedTags(newTags);
-      form.setValue('tags', newTags);
-    }
-  };
-
-  const removeTag = (tag: string) => {
-    const newTags = selectedTags.filter(t => t !== tag);
-    setSelectedTags(newTags);
-    form.setValue('tags', newTags);
-  };
-
-  const addCustomTag = () => {
-    if (customTag.trim()) {
-      addTag(customTag.trim());
-      setCustomTag('');
-    }
-  };
 
   const onSubmit = (data: CreateCourseForm) => {
     // Create new course
@@ -131,8 +94,6 @@ export function CreateCourseDialog({
     
     // Reset form
     form.reset();
-    setSelectedTags([]);
-    setCustomTag('');
   };
 
   return (
@@ -183,75 +144,45 @@ export function CreateCourseDialog({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="difficulty"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Difficulty Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select difficulty" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {difficultyLevels.map((level) => (
-                            <SelectItem key={level.value} value={level.value}>
-                              {level.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
                 name="estimated_duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Estimated Duration (hours)</FormLabel>
+                    <FormLabel>Estimated Duration</FormLabel>
                     <FormControl>
                       <Input 
-                        type="number" 
-                        min="1" 
-                        placeholder="e.g., 8"
+                        placeholder="e.g., 8 hours, 3 days, 2 weeks"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                       />
                     </FormControl>
                     <FormDescription>
-                      How many hours do you estimate it will take to complete this course?
+                      Enter the estimated time to complete this course (flexible format)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -259,79 +190,6 @@ export function CreateCourseDialog({
               />
             </div>
 
-            {/* Tags Section */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Tags</h3>
-              
-              {/* Selected Tags */}
-              {selectedTags.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Selected Tags:</label>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="cursor-pointer">
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTag(tag)}
-                          className="ml-2 hover:text-red-500"
-                        >
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Popular Tags */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Popular Tags:</label>
-                <div className="flex flex-wrap gap-2">
-                  {popularTags.map((tag) => (
-                    <Badge 
-                      key={tag} 
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => addTag(tag)}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom Tag Input */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Add Custom Tag:</label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Enter custom tag"
-                    value={customTag}
-                    onChange={(e) => setCustomTag(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomTag();
-                      }
-                    }}
-                  />
-                  <Button type="button" variant="outline" onClick={addCustomTag}>
-                    Add
-                  </Button>
-                </div>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="tags"
-                render={() => (
-                  <FormItem>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

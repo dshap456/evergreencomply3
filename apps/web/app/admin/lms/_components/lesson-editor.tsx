@@ -21,7 +21,6 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
-  duration_minutes?: number;
 }
 
 interface Module {
@@ -163,26 +162,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   />
                 </div>
 
-                {(lessonData.content_type === 'video' || lessonData.content_type === 'text') && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {lessonData.content_type === 'video' ? 'Duration' : 'Reading Time'} (minutes)
-                    </label>
-                    <Input
-                      type="number"
-                      value={lessonData.duration_minutes || ''}
-                      onChange={(e) => {
-                        setLessonData(prev => ({ 
-                          ...prev, 
-                          duration_minutes: parseInt(e.target.value) || undefined 
-                        }));
-                        setIsDirty(true);
-                      }}
-                      min="1"
-                      placeholder="e.g., 15"
-                    />
-                  </div>
-                )}
               </div>
 
               {lessonData.content_type === 'quiz' && (

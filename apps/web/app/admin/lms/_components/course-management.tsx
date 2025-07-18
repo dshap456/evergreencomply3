@@ -28,7 +28,6 @@ interface Course {
   created_at: string;
   updated_at: string;
   version: string;
-  tags: string[];
 }
 
 const mockCourses: Course[] = [
@@ -42,8 +41,7 @@ const mockCourses: Course[] = [
     completion_rate: 78,
     created_at: '2024-01-15',
     updated_at: '2024-01-20',
-    version: '1.2',
-    tags: ['React', 'JavaScript', 'Frontend']
+    version: '1.2'
   },
   {
     id: '2',
@@ -55,8 +53,7 @@ const mockCourses: Course[] = [
     completion_rate: 85,
     created_at: '2024-02-01',
     updated_at: '2024-02-15',
-    version: '2.1',
-    tags: ['TypeScript', 'JavaScript', 'Advanced']
+    version: '2.1'
   },
   {
     id: '3',
@@ -68,8 +65,7 @@ const mockCourses: Course[] = [
     completion_rate: 0,
     created_at: '2024-03-01',
     updated_at: '2024-03-05',
-    version: '1.0',
-    tags: ['Database', 'SQL', 'Design']
+    version: '1.0'
   }
 ];
 
@@ -166,19 +162,6 @@ export function CourseManagement() {
                 {course.description}
               </p>
 
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1">
-                {course.tags.slice(0, 3).map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-                {course.tags.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{course.tags.length - 3}
-                  </Badge>
-                )}
-              </div>
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 text-sm">

@@ -37,7 +37,6 @@ const CreateLessonSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().max(1000).optional(),
   content_type: z.enum(['video', 'text', 'quiz']),
-  duration_minutes: z.number().min(1).optional(),
   is_final_quiz: z.boolean().default(false),
 });
 
@@ -50,7 +49,6 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
-  duration_minutes?: number;
 }
 
 interface CreateLessonDialogProps {
@@ -90,7 +88,6 @@ export function CreateLessonDialog({
       title: '',
       description: '',
       content_type: 'video',
-      duration_minutes: undefined,
       is_final_quiz: false,
     },
   });
@@ -105,7 +102,6 @@ export function CreateLessonDialog({
       content_type: data.content_type,
       order_index: nextOrderIndex,
       is_final_quiz: data.is_final_quiz,
-      duration_minutes: data.duration_minutes,
     };
 
     onLessonCreated(newLesson);
@@ -199,56 +195,6 @@ export function CreateLessonDialog({
               )}
             />
 
-            {/* Content Type Specific Fields */}
-            {contentType === 'video' && (
-              <FormField
-                control={form.control}
-                name="duration_minutes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estimated Duration (minutes)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        placeholder="e.g., 15"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Approximate time it takes to complete this video lesson
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {contentType === 'text' && (
-              <FormField
-                control={form.control}
-                name="duration_minutes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estimated Reading Time (minutes)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        placeholder="e.g., 10"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || undefined)}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Approximate time it takes to read and understand this content
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             {contentType === 'quiz' && (
               <FormField

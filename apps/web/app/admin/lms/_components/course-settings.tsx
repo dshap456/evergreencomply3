@@ -25,7 +25,6 @@ interface Course {
   created_at: string;
   updated_at: string;
   version: string;
-  tags: string[];
 }
 
 interface CourseSettingsProps {
@@ -38,15 +37,6 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
     onChange({ ...course, ...updates });
   };
 
-  const addTag = (tag: string) => {
-    if (tag && !course.tags.includes(tag)) {
-      updateCourse({ tags: [...course.tags, tag] });
-    }
-  };
-
-  const removeTag = (tag: string) => {
-    updateCourse({ tags: course.tags.filter(t => t !== tag) });
-  };
 
   return (
     <div className="space-y-6">
@@ -110,19 +100,6 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Difficulty Level</label>
-              <Select defaultValue="intermediate">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">🟢 Beginner</SelectItem>
-                  <SelectItem value="intermediate">🟡 Intermediate</SelectItem>
-                  <SelectItem value="advanced">🔴 Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Estimated Duration (hours)</label>
@@ -132,32 +109,12 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* Enrollment Settings */}
+      {/* Certificate Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Enrollment Settings</CardTitle>
+          <CardTitle>Certificate Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <label className="text-base font-medium">Open Enrollment</label>
-              <p className="text-sm text-muted-foreground">
-                Allow users to self-enroll in this course
-              </p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <label className="text-base font-medium">Require Approval</label>
-              <p className="text-sm text-muted-foreground">
-                Enrollments must be approved by an admin
-              </p>
-            </div>
-            <Switch />
-          </div>
-
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-0.5">
               <label className="text-base font-medium">Certificate on Completion</label>
@@ -166,17 +123,6 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
               </p>
             </div>
             <Switch defaultChecked />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Enrollment Start Date</label>
-              <Input type="date" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Enrollment End Date</label>
-              <Input type="date" />
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -207,15 +153,6 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
             <Switch defaultChecked />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <label className="text-base font-medium">Discussion Forums</label>
-              <p className="text-sm text-muted-foreground">
-                Enable student discussions and Q&A
-              </p>
-            </div>
-            <Switch />
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -236,66 +173,16 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
         </CardContent>
       </Card>
 
-      {/* Tags and Metadata */}
+      {/* SEO Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>Tags and Metadata</CardTitle>
+          <CardTitle>SEO Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Course Tags</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {course.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="cursor-pointer">
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="ml-2 hover:text-red-500"
-                  >
-                    ×
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a tag"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const input = e.target as HTMLInputElement;
-                    addTag(input.value.trim());
-                    input.value = '';
-                  }
-                }}
-              />
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={(e) => {
-                  const input = (e.target as HTMLButtonElement).previousElementSibling as HTMLInputElement;
-                  addTag(input.value.trim());
-                  input.value = '';
-                }}
-              >
-                Add
-              </Button>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <label className="text-sm font-medium">SEO Description</label>
             <Textarea
               placeholder="A brief description for search engines and course listings"
-              className="min-h-[80px]"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Prerequisites</label>
-            <Textarea
-              placeholder="List any prerequisites or recommended knowledge"
               className="min-h-[80px]"
             />
           </div>
