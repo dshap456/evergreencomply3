@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 import { Button } from '@kit/ui/button';
-import { Progress } from '@kit/ui/shadcn/progress';
+import { Progress } from '@kit/ui/progress';
 import { Alert, AlertDescription } from '@kit/ui/alert';
 import { useSupabase } from '@kit/supabase/hooks/use-supabase';
 

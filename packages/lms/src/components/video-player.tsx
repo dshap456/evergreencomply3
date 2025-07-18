@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 import { Button } from '@kit/ui/button';
-import { Progress } from '@kit/ui/shadcn/progress';
+import { Progress } from '@kit/ui/progress';
 import { useSupabase } from '@kit/supabase/hooks/use-supabase';
 
 interface VideoPlayerProps {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
-import { Progress } from '@kit/ui/shadcn/progress';
+import { Progress } from '@kit/ui/progress';
 import { Alert, AlertDescription } from '@kit/ui/alert';
 import { Badge } from '@kit/ui/badge';
 import { useSupabase } from '@kit/supabase/hooks/use-supabase';
