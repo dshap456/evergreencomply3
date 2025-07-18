@@ -242,15 +242,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                 <Switch defaultChecked />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <label className="text-base font-medium">Allow Comments</label>
-                  <p className="text-sm text-muted-foreground">
-                    Let students ask questions and discuss this lesson
-                  </p>
-                </div>
-                <Switch defaultChecked />
-              </div>
 
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
@@ -262,17 +253,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                 <Switch defaultChecked />
               </div>
 
-              {lessonData.content_type === 'video' && (
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label className="text-base font-medium">Prevent Skipping</label>
-                    <p className="text-sm text-muted-foreground">
-                      Students must watch the entire video to proceed
-                    </p>
-                  </div>
-                  <Switch />
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
