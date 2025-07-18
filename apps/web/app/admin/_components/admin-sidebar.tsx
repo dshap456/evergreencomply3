@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { LayoutDashboard, Users } from 'lucide-react';
+import { Home, LayoutDashboard, Settings, Users } from 'lucide-react';
 
 import {
   Sidebar,
@@ -31,6 +31,21 @@ export function AdminSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuButton asChild>
+                <Link className={'flex gap-2.5'} href={'/home'}>
+                  <Home className={'h-4'} />
+                  <span>Back to Home</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
           <SidebarGroupLabel>Super Admin</SidebarGroupLabel>
 
           <SidebarGroupContent>
@@ -39,6 +54,19 @@ export function AdminSidebar() {
                 <Link className={'flex gap-2.5'} href={'/admin'}>
                   <LayoutDashboard className={'h-4'} />
                   <span>Dashboard</span>
+                </Link>
+              </SidebarMenuButton>
+
+              <SidebarMenuButton
+                isActive={path.includes('/admin/lms')}
+                asChild
+              >
+                <Link
+                  className={'flex size-full gap-2.5'}
+                  href={'/admin/lms'}
+                >
+                  <Settings className={'h-4'} />
+                  <span>LMS Management</span>
                 </Link>
               </SidebarMenuButton>
 
