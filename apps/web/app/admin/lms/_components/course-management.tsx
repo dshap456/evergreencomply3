@@ -24,7 +24,6 @@ interface Course {
   status: 'draft' | 'published' | 'archived';
   lessons_count: number;
   enrollments_count: number;
-  completion_rate: number;
   created_at: string;
   updated_at: string;
   version: string;
@@ -38,7 +37,6 @@ const mockCourses: Course[] = [
     status: 'published',
     lessons_count: 12,
     enrollments_count: 245,
-    completion_rate: 78,
     created_at: '2024-01-15',
     updated_at: '2024-01-20',
     version: '1.2'
@@ -50,7 +48,6 @@ const mockCourses: Course[] = [
     status: 'published',
     lessons_count: 18,
     enrollments_count: 156,
-    completion_rate: 85,
     created_at: '2024-02-01',
     updated_at: '2024-02-15',
     version: '2.1'
@@ -62,7 +59,6 @@ const mockCourses: Course[] = [
     status: 'draft',
     lessons_count: 8,
     enrollments_count: 0,
-    completion_rate: 0,
     created_at: '2024-03-01',
     updated_at: '2024-03-05',
     version: '1.0'
@@ -174,10 +170,6 @@ export function CourseManagement() {
                   <span className="ml-1 font-medium">{course.enrollments_count}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Completion:</span>
-                  <span className="ml-1 font-medium">{course.completion_rate}%</span>
-                </div>
-                <div>
                   <span className="text-muted-foreground">Updated:</span>
                   <span className="ml-1 font-medium">
                     {new Date(course.updated_at).toLocaleDateString()}
@@ -190,17 +182,10 @@ export function CourseManagement() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex-1"
+                  className="w-full"
                   onClick={() => setSelectedCourse(course)}
                 >
                   Edit
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="flex-1"
-                >
-                  Analytics
                 </Button>
               </div>
             </CardContent>
