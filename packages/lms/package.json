@@ -10,15 +10,17 @@
     "./lib/video-utils": "./src/lib/video-utils.ts"
   },
   "dependencies": {
-    "@kit/ui": "workspace:*",
     "@kit/supabase": "workspace:*",
+    "@kit/ui": "workspace:*",
     "@supabase/supabase-js": "2.50.5",
-    "react-dropzone": "^14.2.3"
+    "react-dropzone": "^14.3.8"
   },
   "devDependencies": {
     "@kit/tsconfig": "workspace:*",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "typescript": "^5.8.3"
   },
   "peerDependencies": {
