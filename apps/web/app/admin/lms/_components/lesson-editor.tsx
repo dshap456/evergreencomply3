@@ -193,8 +193,8 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
               <CardContent>
                 <VideoUpload
                   lessonId={lessonData.id}
-                  courseId="mock-course-id" // This would come from context
-                  accountId="mock-account-id" // This would come from context
+                  courseId="f47ac10b-58cc-4372-a567-0e02b2c3d485" // Mock course UUID
+                  accountId="f47ac10b-58cc-4372-a567-0e02b2c3d486" // Mock account UUID
                   languageCode="en" // English content tab
                   onUploadComplete={(videoMetadataId) => {
                     console.log('Video uploaded:', videoMetadataId);

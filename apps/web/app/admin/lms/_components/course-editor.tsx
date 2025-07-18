@@ -58,13 +58,13 @@ interface CourseEditorProps {
 
 const mockModules: Module[] = [
   {
-    id: '1',
+    id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
     title: 'Getting Started',
     description: 'Introduction to the fundamentals',
     order_index: 1,
     lessons: [
       {
-        id: '1',
+        id: 'f47ac10b-58cc-4372-a567-0e02b2c3d480',
         title: 'Welcome to the Course',
         description: 'Course overview and objectives',
         content_type: 'video',
@@ -72,7 +72,7 @@ const mockModules: Module[] = [
         is_final_quiz: false
       },
       {
-        id: '2',
+        id: 'f47ac10b-58cc-4372-a567-0e02b2c3d481',
         title: 'Setting Up Your Environment',
         description: 'Install necessary tools and software',
         content_type: 'text',
@@ -82,13 +82,13 @@ const mockModules: Module[] = [
     ]
   },
   {
-    id: '2',
+    id: 'f47ac10b-58cc-4372-a567-0e02b2c3d482',
     title: 'Core Concepts',
     description: 'Learn the essential concepts',
     order_index: 2,
     lessons: [
       {
-        id: '3',
+        id: 'f47ac10b-58cc-4372-a567-0e02b2c3d483',
         title: 'Understanding the Basics',
         description: 'Fundamental concepts explained',
         content_type: 'video',
@@ -96,7 +96,7 @@ const mockModules: Module[] = [
         is_final_quiz: false
       },
       {
-        id: '4',
+        id: 'f47ac10b-58cc-4372-a567-0e02b2c3d484',
         title: 'Knowledge Check',
         description: 'Test your understanding',
         content_type: 'quiz',
