@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -14,8 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@kit/ui/select';
+import { toast } from '@kit/ui/sonner';
+import { Spinner } from '@kit/ui/spinner';
 
 import { CreateLessonDialog } from './create-lesson-dialog';
+import { updateModuleAction } from '../_lib/server/module-actions';
 
 interface Module {
   id: string;
@@ -45,10 +48,26 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
   const [moduleData, setModuleData] = useState(module);
   const [showCreateLesson, setShowCreateLesson] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleSave = () => {
-    onSave(moduleData);
-    setIsDirty(false);
+  const handleSave = async () => {
+    startTransition(async () => {
+      try {
+        await updateModuleAction({
+          id: moduleData.id,
+          title: moduleData.title,
+          description: moduleData.description || '',
+          order_index: moduleData.order_index,
+        });
+        
+        toast.success('Module saved successfully');
+        onSave(moduleData);
+        setIsDirty(false);
+      } catch (error) {
+        console.error('Failed to save module:', error);
+        toast.error('Failed to save module');
+      }
+    });
   };
 
   const handleLessonCreated = (newLesson: Lesson) => {
@@ -131,8 +150,15 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         </div>
         <div className="flex gap-2">
           <Button variant="outline">Preview</Button>
-          <Button onClick={handleSave} disabled={!isDirty}>
-            Save Module
+          <Button onClick={handleSave} disabled={!isDirty || isPending}>
+            {isPending ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Saving...
+              </>
+            ) : (
+              'Save Module'
+            )}
           </Button>
         </div>
       </div>
