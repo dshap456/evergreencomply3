@@ -98,18 +98,52 @@ export function VideoUpload({
         message: 'Upload complete, creating metadata...'
       });
 
-      // Create video metadata record
-      const { data: metadataData, error: metadataError } = await supabase.rpc(
-        'create_video_metadata',
-        {
-          p_lesson_id: lessonId,
-          p_language_code: languageCode,
-          p_storage_path: storagePath,
-          p_original_filename: file.name,
-          p_file_size: file.size,
-          p_quality: '720p' // Default quality
-        }
-      );
+      // First, check if video metadata already exists for this lesson/language/quality
+      const { data: existingMetadata } = await supabase
+        .from('video_metadata')
+        .select('id')
+        .eq('lesson_id', lessonId)
+        .eq('language_code', languageCode)
+        .eq('quality', '720p')
+        .maybeSingle();
+
+      let metadataData;
+      let metadataError;
+
+      if (existingMetadata) {
+        // Update existing video metadata
+        const { data: updateData, error: updateError } = await supabase
+          .from('video_metadata')
+          .update({
+            storage_path: storagePath,
+            original_filename: file.name,
+            file_size: file.size,
+            processing_status: 'pending',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingMetadata.id)
+          .select()
+          .single();
+        
+        metadataData = updateData;
+        metadataError = updateError;
+      } else {
+        // Create new video metadata record
+        const { data: createData, error: createError } = await supabase.rpc(
+          'create_video_metadata',
+          {
+            p_lesson_id: lessonId,
+            p_language_code: languageCode,
+            p_storage_path: storagePath,
+            p_original_filename: file.name,
+            p_file_size: file.size,
+            p_quality: '720p' // Default quality
+          }
+        );
+        
+        metadataData = createData;
+        metadataError = createError;
+      }
 
       if (metadataError) {
         throw new Error(`Failed to create metadata: ${metadataError.message}`);

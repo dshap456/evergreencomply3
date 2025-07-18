@@ -198,14 +198,15 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   courseId="f47ac10b-58cc-4372-a567-0e02b2c3d485" // Mock course UUID
                   accountId="c01c1f21-619e-4df0-9c0b-c8a3f296a2b7" // Your actual account UUID
                   languageCode="en" // English content tab
-                  onUploadComplete={(videoMetadataId) => {
-                    console.log('Video uploaded:', videoMetadataId);
+                  onUploadComplete={(videoMetadata) => {
+                    console.log('Video uploaded:', videoMetadata);
                     // Mark the lesson as dirty so the save button is enabled
                     setIsDirty(true);
-                    // Update lesson data with video metadata ID if needed
+                    // Update lesson data with video metadata if needed
                     setLessonData(prev => ({
                       ...prev,
-                      video_metadata_id: videoMetadataId
+                      video_metadata_id: videoMetadata?.id || videoMetadata,
+                      video_url: videoMetadata?.storage_path
                     }));
                   }}
                   onUploadError={(error) => {
