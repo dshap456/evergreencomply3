@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kit/ui/tabs';
 
 import { CourseManagement } from './course-management';
-import { ContentLibrary } from './content-library';
 import { LMSAnalytics } from './lms-analytics';
 import { UserManagement } from './user-management';
 
@@ -65,10 +64,9 @@ export function LMSAdminDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="courses">Courses</TabsTrigger>
-          <TabsTrigger value="content">Content Library</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
 
@@ -78,10 +76,6 @@ export function LMSAdminDashboard() {
 
         <TabsContent value="courses" className="space-y-6">
           <CourseManagement />
-        </TabsContent>
-
-        <TabsContent value="content" className="space-y-6">
-          <ContentLibrary />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
