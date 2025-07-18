@@ -156,10 +156,17 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Completion Threshold (%)</label>
+              <label className="text-sm font-medium">Content Completion Required (%)</label>
+              <Input type="number" min="0" max="100" defaultValue="100" disabled />
+              <p className="text-xs text-muted-foreground">
+                100% of course content must be completed (fixed requirement)
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Final Quiz Passing Score (%)</label>
               <Input type="number" min="0" max="100" defaultValue="80" />
               <p className="text-xs text-muted-foreground">
-                Percentage of content that must be completed
+                Minimum score required on final quiz to pass the course
               </p>
             </div>
             <div className="space-y-2">
