@@ -1,0 +1,28 @@
+{
+  "name": "@kit/lms",
+  "version": "1.0.0",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    "./components/video-player": "./src/components/video-player.tsx",
+    "./components/video-upload": "./src/components/video-upload.tsx",
+    "./lib/video-utils": "./src/lib/video-utils.ts"
+  },
+  "dependencies": {
+    "@kit/ui": "workspace:*",
+    "@kit/supabase": "workspace:*",
+    "@supabase/supabase-js": "2.50.5",
+    "react-dropzone": "^14.2.3"
+  },
+  "devDependencies": {
+    "@kit/tsconfig": "workspace:*",
+    "@types/react": "19.1.8",
+    "@types/react-dom": "19.1.6",
+    "typescript": "^5.8.3"
+  },
+  "peerDependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  }
+}

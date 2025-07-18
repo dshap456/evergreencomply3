@@ -1,0 +1,10 @@
+{
+  "extends": "@kit/tsconfig/react-library.json",
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
