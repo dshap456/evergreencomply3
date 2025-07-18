@@ -1,10 +1,7 @@
 {
-  "buildCommand": "pnpm turbo build --filter=web",
+  "buildCommand": "cd apps/web && pnpm build",
   "outputDirectory": "apps/web/.next",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "ignoreCommand": "exit 0",
-  "env": {
-    "ENABLE_REACT_COMPILER": "false"
-  }
+  "framework": null,
+  "ignoreCommand": "exit 0"
 }
