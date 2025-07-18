@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
@@ -16,9 +16,28 @@ export function AdminGuard<Params extends object>(
 ) {
   return async function AdminGuardServerComponentWrapper(params: Params) {
     const client = getSupabaseServerClient();
+    
+    // Check if user is authenticated
+    const { data: { user } } = await client.auth.getUser();
+    
+    if (!user) {
+      notFound();
+    }
+    
+    // Check if user has super-admin role (without MFA check)
+    const { data: userData } = await client.auth.getUser();
+    const hasAdminRole = userData?.user?.app_metadata?.role === 'super-admin' || 
+                        userData?.user?.user_metadata?.role === 'super-admin';
+    
+    // Check if user is a super admin (with MFA)
     const isUserSuperAdmin = await isSuperAdmin(client);
 
-    // if the user is not a super-admin, we redirect to a 404
+    // If user has admin role but not MFA, redirect to setup page
+    if (hasAdminRole && !isUserSuperAdmin) {
+      redirect('/admin/setup-mfa');
+    }
+    
+    // if the user is not a super-admin at all, we redirect to a 404
     if (!isUserSuperAdmin) {
       notFound();
     }

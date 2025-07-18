@@ -1,14 +1,16 @@
-export default function RootPage() {
-  return (
-    <div>
-      <h1>Root Page Works!</h1>
-      <p>If you can see this, the app is deployed correctly.</p>
-      <p>
-        <a href="/test">Go to test page</a>
-      </p>
-      <p>
-        <a href="/auth/sign-in">Go to sign in</a>
-      </p>
-    </div>
-  );
+import { redirect } from 'next/navigation';
+
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+import pathsConfig from '~/config/paths.config';
+
+export default async function RootPage() {
+  const client = getSupabaseServerClient();
+  const { data: { user } } = await client.auth.getUser();
+
+  if (user) {
+    redirect(pathsConfig.app.home);
+  }
+
+  redirect(pathsConfig.auth.signIn);
 }
