@@ -7,6 +7,8 @@
   "exports": {
     "./components/video-player": "./src/components/video-player.tsx",
     "./components/video-upload": "./src/components/video-upload.tsx",
+    "./components/course-player": "./src/components/course-player.tsx",
+    "./components/quiz-player": "./src/components/quiz-player.tsx",
     "./lib/video-utils": "./src/lib/video-utils.ts"
   },
   "dependencies": {

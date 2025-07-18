@@ -10,7 +10,7 @@ import { Textarea } from '@kit/ui/textarea';
 import { Switch } from '@kit/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kit/ui/tabs';
 
-import { VideoUpload } from '../../../../../packages/lms/src/components/video-upload';
+import { VideoUpload } from '@kit/lms/components/video-upload';
 import { QuizEditor } from './quiz-editor';
 import { TextContentEditor } from './text-content-editor';
 
