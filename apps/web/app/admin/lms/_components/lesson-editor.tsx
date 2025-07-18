@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -9,11 +9,14 @@ import { Input } from '@kit/ui/input';
 import { Textarea } from '@kit/ui/textarea';
 import { Switch } from '@kit/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kit/ui/tabs';
+import { toast } from '@kit/ui/sonner';
+import { Spinner } from '@kit/ui/spinner';
 
 import { VideoUpload } from '@kit/lms/components/video-upload';
 import { QuizEditor } from './quiz-editor';
 import { TextContentEditor } from './text-content-editor';
 import { VideoContentDisplay } from './video-content-display';
+import { updateLessonAction } from '../_lib/server/lesson-actions';
 
 interface Lesson {
   id: string;
@@ -43,10 +46,28 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const [lessonData, setLessonData] = useState(lesson);
   const [isDirty, setIsDirty] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
+  const [isPending, startTransition] = useTransition();
 
   const handleSave = () => {
-    onSave(lessonData);
-    setIsDirty(false);
+    startTransition(async () => {
+      try {
+        await updateLessonAction({
+          id: lessonData.id,
+          title: lessonData.title,
+          description: lessonData.description || '',
+          content_type: lessonData.content_type,
+          order_index: lessonData.order_index,
+          is_final_quiz: lessonData.is_final_quiz,
+        });
+        
+        toast.success('Lesson saved successfully');
+        onSave(lessonData);
+        setIsDirty(false);
+      } catch (error) {
+        console.error('Failed to save lesson:', error);
+        toast.error('Failed to save lesson');
+      }
+    });
   };
 
   const getContentTypeIcon = (type: string) => {
@@ -100,8 +121,15 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
         </div>
         <div className="flex gap-2">
           <Button variant="outline">Preview</Button>
-          <Button onClick={handleSave} disabled={!isDirty}>
-            Save Lesson
+          <Button onClick={handleSave} disabled={!isDirty || isPending}>
+            {isPending ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Saving...
+              </>
+            ) : (
+              'Save Lesson'
+            )}
           </Button>
         </div>
       </div>
