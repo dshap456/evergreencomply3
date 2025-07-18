@@ -195,6 +195,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   lessonId={lessonData.id}
                   courseId="mock-course-id" // This would come from context
                   accountId="mock-account-id" // This would come from context
+                  languageCode="en" // English content tab
                   onUploadComplete={(videoMetadataId) => {
                     console.log('Video uploaded:', videoMetadataId);
                     // Handle video upload completion
