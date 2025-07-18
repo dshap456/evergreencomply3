@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Badge } from '@kit/ui/badge';
 import { Input } from '@kit/ui/input';
+import { Spinner } from '@kit/ui/spinner';
 import { 
   Select,
   SelectContent,
@@ -16,6 +17,7 @@ import {
 
 import { CreateCourseDialog } from './create-course-dialog';
 import { CourseEditorLoader } from './course-editor-loader';
+import { loadCoursesAction } from '../_lib/server/load-courses-action';
 
 interface Course {
   id: string;
@@ -29,48 +31,38 @@ interface Course {
   version: string;
 }
 
-const mockCourses: Course[] = [
-  {
-    id: 'f47ac10b-58cc-4372-a567-0e02b2c3d485', // Use our test course UUID
-    title: 'Test Course for Video Upload',
-    description: 'This is a test course for testing video upload functionality',
-    status: 'published',
-    lessons_count: 4,
-    enrollments_count: 0,
-    created_at: '2024-01-15',
-    updated_at: '2024-01-20',
-    version: '1.0'
-  },
-  {
-    id: '2',
-    title: 'Advanced TypeScript',
-    description: 'Master TypeScript for professional development',
-    status: 'published',
-    lessons_count: 18,
-    enrollments_count: 156,
-    created_at: '2024-02-01',
-    updated_at: '2024-02-15',
-    version: '2.1'
-  },
-  {
-    id: '3',
-    title: 'Database Design Fundamentals',
-    description: 'Learn database design principles and best practices',
-    status: 'draft',
-    lessons_count: 8,
-    enrollments_count: 0,
-    created_at: '2024-03-01',
-    updated_at: '2024-03-05',
-    version: '1.0'
-  }
-];
-
 export function CourseManagement() {
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const loadCourses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const coursesData = await loadCoursesAction();
+      setCourses(coursesData);
+    } catch (err) {
+      console.error('Error loading courses:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load courses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
+
+  const handleBackFromEditor = () => {
+    setSelectedCourse(null);
+    // Refresh the course list when returning from editor
+    loadCourses();
+  };
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -92,8 +84,33 @@ export function CourseManagement() {
     return (
       <CourseEditorLoader 
         courseId={selectedCourse.id} 
-        onBack={() => setSelectedCourse(null)}
+        onBack={handleBackFromEditor}
       />
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <Spinner className="mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading courses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <h2 className="text-lg font-medium text-red-600 mb-2">Error Loading Courses</h2>
+          <p className="text-sm text-muted-foreground mb-4">{error}</p>
+          <Button onClick={loadCourses}>
+            Try Again
+          </Button>
+        </div>
+      </div>
     );
   }
 
@@ -214,9 +231,10 @@ export function CourseManagement() {
       <CreateCourseDialog 
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
-        onCourseCreated={(newCourse) => {
-          setCourses(prev => [...prev, newCourse]);
+        onCourseCreated={() => {
           setShowCreateDialog(false);
+          // Refresh the course list to show the new course
+          loadCourses();
         }}
       />
     </div>
