@@ -83,17 +83,20 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Course Category</label>
-              <Select defaultValue="programming">
+              <Select defaultValue="environment-safety">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="programming">Programming</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="data-science">Data Science</SelectItem>
-                  <SelectItem value="personal-development">Personal Development</SelectItem>
+                  <SelectItem value="environment-safety">Environment and Safety</SelectItem>
+                  <SelectItem value="osha">OSHA</SelectItem>
+                  <SelectItem value="healthcare">Healthcare</SelectItem>
+                  <SelectItem value="food-alcohol">Food & Alcohol</SelectItem>
+                  <SelectItem value="hr-compliance">HR & Compliance</SelectItem>
+                  <SelectItem value="industrial">Industrial</SelectItem>
+                  <SelectItem value="insurance">Insurance</SelectItem>
+                  <SelectItem value="real-estate">Real Estate</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>

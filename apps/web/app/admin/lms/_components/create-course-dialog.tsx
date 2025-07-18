@@ -50,12 +50,15 @@ interface CreateCourseDialogProps {
 }
 
 const categories = [
-  'Programming',
-  'Data Science',
-  'Design',
-  'Business',
-  'Marketing',
-  'Personal Development',
+  'Environment and Safety',
+  'OSHA',
+  'Healthcare',
+  'Food & Alcohol',
+  'HR & Compliance',
+  'Industrial',
+  'Insurance',
+  'Real Estate',
+  'Other',
 ];
 
 
