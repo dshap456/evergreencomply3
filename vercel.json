@@ -3,7 +3,6 @@
   "outputDirectory": "apps/web/.next",
   "installCommand": "pnpm install",
   "framework": "nextjs",
-  "rootDirectory": ".",
   "ignoreCommand": "exit 0",
   "env": {
     "ENABLE_REACT_COMPILER": "false"
