@@ -1,4 +1,4 @@
-import { CreditCard, Home, User } from 'lucide-react';
+import { CreditCard, Home, Settings, User } from 'lucide-react';
 import { z } from 'zod';
 
 import { NavigationConfigSchema } from '@kit/ui/navigation-schema';
@@ -19,6 +19,18 @@ const routes = [
         end: true,
       },
     ],
+  },
+  {
+    label: 'Admin',
+    children: [
+      {
+        label: 'LMS Management',
+        path: '/admin/lms',
+        Icon: <Settings className={iconClasses} />,
+        // This will only show for super admins due to server-side rendering with user context
+      },
+    ],
+    // This section will be conditionally rendered based on user role
   },
   {
     label: 'common:routes.settings',

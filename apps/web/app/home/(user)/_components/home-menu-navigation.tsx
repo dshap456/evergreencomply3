@@ -17,7 +17,19 @@ import { type UserWorkspace } from '../_lib/server/load-user-workspace';
 export function HomeMenuNavigation(props: { workspace: UserWorkspace }) {
   const { workspace, user, accounts } = props.workspace;
 
-  const routes = personalAccountNavigationConfig.routes.reduce<
+  // Filter navigation config based on user role
+  const isSuperAdmin = user.app_metadata?.role === 'super-admin';
+  
+  const navigationConfig = isSuperAdmin
+    ? personalAccountNavigationConfig
+    : {
+        ...personalAccountNavigationConfig,
+        routes: personalAccountNavigationConfig.routes.filter(
+          route => route.label !== 'Admin'
+        ),
+      };
+
+  const routes = navigationConfig.routes.reduce<
     Array<{
       path: string;
       label: string;

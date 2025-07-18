@@ -26,6 +26,18 @@ export function HomeSidebar(props: HomeSidebarProps) {
   const { workspace, user, accounts } = props.workspace;
   const collapsible = personalAccountNavigationConfig.sidebarCollapsedStyle;
 
+  // Filter navigation config based on user role
+  const isSuperAdmin = user.app_metadata?.role === 'super-admin';
+  
+  const navigationConfig = isSuperAdmin
+    ? personalAccountNavigationConfig
+    : {
+        ...personalAccountNavigationConfig,
+        routes: personalAccountNavigationConfig.routes.filter(
+          route => route.label !== 'Admin'
+        ),
+      };
+
   return (
     <Sidebar collapsible={collapsible}>
       <SidebarHeader className={'h-16 justify-center'}>
@@ -50,7 +62,7 @@ export function HomeSidebar(props: HomeSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarNavigation config={personalAccountNavigationConfig} />
+        <SidebarNavigation config={navigationConfig} />
       </SidebarContent>
 
       <SidebarFooter>
