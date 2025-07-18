@@ -1,7 +1,10 @@
 {
+  "buildCommand": "pnpm build",
   "installCommand": "cd ../.. && pnpm install",
+  "outputDirectory": ".next",
   "env": {
     "ENABLE_REACT_COMPILER": "false",
-    "NEXT_TELEMETRY_DISABLED": "1"
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "NODE_ENV": "production"
   }
 }

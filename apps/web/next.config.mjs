@@ -51,17 +51,8 @@ const config = {
   },
   experimental: {
     mdxRs: true,
-    reactCompiler: ENABLE_REACT_COMPILER,
-    optimizePackageImports: [
-      'recharts',
-      'lucide-react',
-      '@radix-ui/react-icons',
-      '@radix-ui/react-avatar',
-      '@radix-ui/react-select',
-      'date-fns',
-      ...INTERNAL_PACKAGES,
-    ],
-    clientComponentBoundary: false,
+    reactCompiler: false,
+    serverComponentsExternalPackages: ['@kit/shared'],
   },
   modularizeImports: {
     lodash: {
