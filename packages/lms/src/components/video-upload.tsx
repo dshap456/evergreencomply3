@@ -12,7 +12,6 @@ interface VideoUploadProps {
   lessonId: string;
   courseId: string;
   accountId: string;
-  languageCode?: 'en' | 'es';
   onUploadComplete?: (videoMetadataId: string) => void;
   onUploadError?: (error: string) => void;
   className?: string;
@@ -28,7 +27,6 @@ export function VideoUpload({
   lessonId,
   courseId,
   accountId,
-  languageCode = 'en',
   onUploadComplete,
   onUploadError,
   className = ''
@@ -65,7 +63,7 @@ export function VideoUpload({
       // Generate storage path
       const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'mp4';
       const timestamp = Date.now();
-      const storagePath = `${accountId}/${courseId}/${lessonId}/${languageCode}/${timestamp}.${fileExtension}`;
+      const storagePath = `${accountId}/${courseId}/${lessonId}/${timestamp}.${fileExtension}`;
 
       setProgress({
         percentage: 10,
@@ -83,7 +81,6 @@ export function VideoUpload({
             lessonId,
             courseId,
             accountId,
-            languageCode,
             originalName: file.name,
             fileSize: file.size.toString()
           }
@@ -104,7 +101,6 @@ export function VideoUpload({
         'create_video_metadata',
         {
           p_lesson_id: lessonId,
-          p_language_code: languageCode,
           p_storage_path: storagePath,
           p_original_filename: file.name,
           p_file_size: file.size,
@@ -166,7 +162,7 @@ export function VideoUpload({
       onUploadError?.(errorMessage);
       setUploading(false);
     }
-  }, [lessonId, courseId, accountId, languageCode, supabase, onUploadComplete, onUploadError]);
+  }, [lessonId, courseId, accountId, supabase, onUploadComplete, onUploadError]);
 
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
     accept: {
@@ -223,30 +219,6 @@ export function VideoUpload({
         )}
       </div>
 
-      {/* Language Selection */}
-      <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-gray-700">
-          Language:
-        </label>
-        <div className="flex gap-2">
-          <Button
-            variant={languageCode === 'en' ? 'default' : 'outline'}
-            size="sm"
-            disabled={uploading}
-            onClick={() => {/* Language switching would be handled by parent component */}}
-          >
-            🇺🇸 English
-          </Button>
-          <Button
-            variant={languageCode === 'es' ? 'default' : 'outline'}
-            size="sm"
-            disabled={uploading}
-            onClick={() => {/* Language switching would be handled by parent component */}}
-          >
-            🇪🇸 Spanish
-          </Button>
-        </div>
-      </div>
 
       {/* Error Display */}
       {error && (

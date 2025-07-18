@@ -111,7 +111,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="translations">Translations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="basic" className="space-y-6">
@@ -196,7 +195,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   lessonId={lessonData.id}
                   courseId="mock-course-id" // This would come from context
                   accountId="mock-account-id" // This would come from context
-                  languageCode="en"
                   onUploadComplete={(videoMetadataId) => {
                     console.log('Video uploaded:', videoMetadataId);
                     // Handle video upload completion
@@ -257,41 +255,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           </Card>
         </TabsContent>
 
-        <TabsContent value="translations" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Content Translations</CardTitle>
-                <Button variant="outline" size="sm">
-                  + Add Translation
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 border rounded-lg">
-                  <span className="text-2xl">🇺🇸</span>
-                  <div className="flex-1">
-                    <h4 className="font-medium">English (Original)</h4>
-                    <p className="text-sm text-muted-foreground">Primary language</p>
-                  </div>
-                  <Badge variant="secondary">Complete</Badge>
-                </div>
-
-                <div className="flex items-center gap-4 p-4 border rounded-lg border-dashed">
-                  <span className="text-2xl">🇪🇸</span>
-                  <div className="flex-1">
-                    <h4 className="font-medium">Spanish</h4>
-                    <p className="text-sm text-muted-foreground">Translation needed</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Translate
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
