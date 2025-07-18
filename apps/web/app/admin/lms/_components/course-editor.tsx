@@ -19,7 +19,6 @@ import {
 import { ModuleEditor } from './module-editor';
 import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
-import { CourseVersioning } from './course-versioning';
 
 interface Course {
   id: string;
@@ -195,10 +194,10 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
       {/* Main Editor Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="overview">Basic Info</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="versions">Versions</TabsTrigger>
+          <TabsTrigger value="english-content">English Content</TabsTrigger>
+          <TabsTrigger value="spanish-content">Spanish Content</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -281,9 +280,9 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="content" className="space-y-6">
+        <TabsContent value="english-content" className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Course Content</h3>
+            <h3 className="text-lg font-medium">English Course Content</h3>
             <Button>+ Add Module</Button>
           </div>
 
@@ -358,14 +357,71 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
           />
         </TabsContent>
 
-        <TabsContent value="versions">
-          <CourseVersioning 
-            course={courseData}
-            onVersionChange={(version) => {
-              setCourseData(prev => ({ ...prev, version }));
-              setIsDirty(true);
-            }}
-          />
+        <TabsContent value="spanish-content" className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium">Spanish Course Content</h3>
+            <Button>+ Add Module</Button>
+          </div>
+
+          {/* Modules List */}
+          <div className="space-y-4">
+            {modules.map((module) => (
+              <Card key={module.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{module.title} (Spanish)</CardTitle>
+                      <p className="text-sm text-muted-foreground">{module.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedModule(module)}
+                      >
+                        Edit
+                      </Button>
+                      <Button variant="ghost" size="sm">⋮</Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {module.lessons.map((lesson) => (
+                      <div key={lesson.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm">
+                            {lesson.content_type === 'video' && '📹'}
+                            {lesson.content_type === 'text' && '📄'}
+                            {lesson.content_type === 'quiz' && '📝'}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium">{lesson.title} (Spanish)</p>
+                            <p className="text-xs text-muted-foreground">{lesson.description}</p>
+                          </div>
+                          {lesson.is_final_quiz && (
+                            <Badge variant="secondary" className="text-xs">Final</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedModule(module);
+                              setSelectedLesson(lesson);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
