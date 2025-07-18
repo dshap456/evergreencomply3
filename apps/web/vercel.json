@@ -1,9 +1,7 @@
 {
-  "buildCommand": "NODE_ENV=production pnpm build",
   "installCommand": "cd ../.. && pnpm install",
-  "framework": "nextjs",
   "env": {
     "ENABLE_REACT_COMPILER": "false",
-    "NODE_ENV": "production"
+    "NEXT_TELEMETRY_DISABLED": "1"
   }
 }

@@ -61,6 +61,7 @@ const config = {
       'date-fns',
       ...INTERNAL_PACKAGES,
     ],
+    clientComponentBoundary: false,
   },
   modularizeImports: {
     lodash: {
