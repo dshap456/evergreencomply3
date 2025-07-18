@@ -9,7 +9,7 @@ import { Button } from '@kit/ui/button';
 import { Heading } from '@kit/ui/heading';
 import { Trans } from '@kit/ui/trans';
 
-import { SiteHeader } from '~/(marketing)/_components/site-header';
+import { SiteHeader } from '~/marketing-temp/_components/site-header';
 
 const ErrorPage = ({
   error,

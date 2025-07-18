@@ -12,8 +12,8 @@ import {
   SidebarMenuSub,
 } from '@kit/ui/shadcn-sidebar';
 
-import { DocsNavLink } from '~/(marketing)/docs/_components/docs-nav-link';
-import { DocsNavigationCollapsible } from '~/(marketing)/docs/_components/docs-navigation-collapsible';
+import { DocsNavLink } from '~/marketing-temp/docs/_components/docs-nav-link';
+import { DocsNavigationCollapsible } from '~/marketing-temp/docs/_components/docs-navigation-collapsible';
 
 import { FloatingDocumentationNavigation } from './floating-docs-navigation';
 

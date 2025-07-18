@@ -52,7 +52,6 @@ const config = {
   experimental: {
     mdxRs: true,
     reactCompiler: false,
-    serverComponentsExternalPackages: ['@kit/shared'],
   },
   modularizeImports: {
     lodash: {

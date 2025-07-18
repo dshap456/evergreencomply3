@@ -1,8 +1,8 @@
 import { Heading } from '@kit/ui/heading';
 import { Trans } from '@kit/ui/trans';
 
-import { SitePageHeader } from '~/(marketing)/_components/site-page-header';
-import { ContactForm } from '~/(marketing)/contact/_components/contact-form';
+import { SitePageHeader } from '~/marketing-temp/_components/site-page-header';
+import { ContactForm } from '~/marketing-temp/contact/_components/contact-form';
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 

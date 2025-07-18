@@ -1,6 +1,6 @@
 import { PricingTable } from '@kit/billing-gateway/marketing';
 
-import { SitePageHeader } from '~/(marketing)/_components/site-page-header';
+import { SitePageHeader } from '~/marketing-temp/_components/site-page-header';
 import billingConfig from '~/config/billing.config';
 import pathsConfig from '~/config/paths.config';
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
