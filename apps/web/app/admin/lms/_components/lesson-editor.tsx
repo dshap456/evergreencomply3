@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kit/ui/tabs';
 import { VideoUpload } from '@kit/lms/components/video-upload';
 import { QuizEditor } from './quiz-editor';
 import { TextContentEditor } from './text-content-editor';
+import { VideoContentDisplay } from './video-content-display';
 
 interface Lesson {
   id: string;
@@ -190,15 +191,22 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
               <CardHeader>
                 <CardTitle>Video Content</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <VideoContentDisplay lessonId={lessonData.id} languageCode="en" />
                 <VideoUpload
                   lessonId={lessonData.id}
                   courseId="f47ac10b-58cc-4372-a567-0e02b2c3d485" // Mock course UUID
-                  accountId="f47ac10b-58cc-4372-a567-0e02b2c3d486" // Mock account UUID
+                  accountId="c01c1f21-619e-4df0-9c0b-c8a3f296a2b7" // Your actual account UUID
                   languageCode="en" // English content tab
                   onUploadComplete={(videoMetadataId) => {
                     console.log('Video uploaded:', videoMetadataId);
-                    // Handle video upload completion
+                    // Mark the lesson as dirty so the save button is enabled
+                    setIsDirty(true);
+                    // Update lesson data with video metadata ID if needed
+                    setLessonData(prev => ({
+                      ...prev,
+                      video_metadata_id: videoMetadataId
+                    }));
                   }}
                   onUploadError={(error) => {
                     console.error('Video upload failed:', error);
