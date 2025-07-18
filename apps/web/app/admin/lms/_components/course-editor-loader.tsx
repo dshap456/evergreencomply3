@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSupabase } from '@kit/supabase/hooks/use-supabase';
 import { Spinner } from '@kit/ui/spinner';
 import { CourseEditorClient } from './course-editor-client';
+import { loadCourseAction } from '../_lib/server/load-course-action';
 
 interface CourseEditorLoaderProps {
   courseId: string;
@@ -11,7 +11,6 @@ interface CourseEditorLoaderProps {
 }
 
 export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps) {
-  const supabase = useSupabase();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courseData, setCourseData] = useState<any>(null);
@@ -22,40 +21,9 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
         setLoading(true);
         setError(null);
 
-        // Load course data
-        const { data: course, error: courseError } = await supabase
-          .from('courses')
-          .select('*')
-          .eq('id', courseId)
-          .single();
-
-        if (courseError) {
-          throw new Error(`Failed to load course: ${courseError.message}`);
-        }
-
-        // Load modules with lessons
-        const { data: modules, error: modulesError } = await supabase
-          .from('course_modules')
-          .select(`
-            *,
-            lessons (
-              *
-            )
-          `)
-          .eq('course_id', courseId)
-          .order('order_index');
-
-        if (modulesError) {
-          throw new Error(`Failed to load modules: ${modulesError.message}`);
-        }
-
-        // Format the data
-        const formattedModules = modules.map(module => ({
-          ...module,
-          lessons: module.lessons?.sort((a: any, b: any) => a.order_index - b.order_index) || []
-        }));
-
-        setCourseData({ course, modules: formattedModules });
+        // Use server action to load course data (bypasses RLS issues)
+        const result = await loadCourseAction({ courseId });
+        setCourseData(result);
       } catch (err) {
         console.error('Error loading course:', err);
         setError(err instanceof Error ? err.message : 'Failed to load course');
@@ -65,7 +33,7 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
     }
 
     loadCourse();
-  }, [courseId, supabase]);
+  }, [courseId]);
 
   if (loading) {
     return (
