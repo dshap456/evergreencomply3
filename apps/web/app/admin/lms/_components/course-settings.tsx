@@ -202,24 +202,14 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
           <CardTitle>Pricing Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <label className="text-base font-medium">Free Course</label>
-              <p className="text-sm text-muted-foreground">
-                Make this course available at no cost
-              </p>
-            </div>
-            <Switch defaultChecked />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Individual Price ($)</label>
-              <Input type="number" min="0" step="0.01" placeholder="0.00" disabled />
+              <Input type="number" min="0" step="0.01" placeholder="0.00" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Bulk License Price ($)</label>
-              <Input type="number" min="0" step="0.01" placeholder="0.00" disabled />
+              <Input type="number" min="0" step="0.01" placeholder="0.00" />
             </div>
           </div>
         </CardContent>
