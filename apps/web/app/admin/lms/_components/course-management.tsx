@@ -15,7 +15,7 @@ import {
 } from '@kit/ui/select';
 
 import { CreateCourseDialog } from './create-course-dialog';
-import { CourseEditor } from './course-editor';
+import { CourseEditorLoader } from './course-editor-loader';
 
 interface Course {
   id: string;
@@ -31,15 +31,15 @@ interface Course {
 
 const mockCourses: Course[] = [
   {
-    id: '1',
-    title: 'Introduction to React',
-    description: 'Learn the basics of React development',
+    id: 'f47ac10b-58cc-4372-a567-0e02b2c3d485', // Use our test course UUID
+    title: 'Test Course for Video Upload',
+    description: 'This is a test course for testing video upload functionality',
     status: 'published',
-    lessons_count: 12,
-    enrollments_count: 245,
+    lessons_count: 4,
+    enrollments_count: 0,
     created_at: '2024-01-15',
     updated_at: '2024-01-20',
-    version: '1.2'
+    version: '1.0'
   },
   {
     id: '2',
@@ -90,13 +90,9 @@ export function CourseManagement() {
 
   if (selectedCourse) {
     return (
-      <CourseEditor 
-        course={selectedCourse} 
+      <CourseEditorLoader 
+        courseId={selectedCourse.id} 
         onBack={() => setSelectedCourse(null)}
-        onSave={(updatedCourse) => {
-          setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
-          setSelectedCourse(null);
-        }}
       />
     );
   }
