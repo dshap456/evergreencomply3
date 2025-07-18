@@ -8,7 +8,7 @@ const UpdateCourseSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
-  is_published: z.boolean().optional(),
+  status: z.enum(['draft', 'published', 'archived']).optional(),
   sku: z.string().optional(),
   price: z.number().min(0).optional(),
 });
@@ -17,12 +17,17 @@ export const updateCourseAction = enhanceAction(
   async function (data) {
     const client = getSupabaseServerAdminClient();
 
+    console.log('🔄 UpdateCourseAction: Updating course:', { id: data.id, title: data.title, status: data.status });
+
+    // Convert status enum to is_published boolean for database
+    const is_published = data.status === 'published';
+
     const { error } = await client
       .from('courses')
       .update({
         title: data.title,
         description: data.description,
-        is_published: data.is_published,
+        is_published: is_published,
         sku: data.sku,
         price: data.price,
         updated_at: new Date().toISOString(),
@@ -30,9 +35,11 @@ export const updateCourseAction = enhanceAction(
       .eq('id', data.id);
 
     if (error) {
+      console.error('❌ UpdateCourseAction: Failed to update course:', error);
       throw new Error(`Failed to update course: ${error.message}`);
     }
 
+    console.log('✅ UpdateCourseAction: Course updated successfully');
     return { success: true };
   },
   {

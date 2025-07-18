@@ -7,6 +7,8 @@ export const loadCoursesAction = enhanceAction(
   async function () {
     const client = getSupabaseServerAdminClient();
 
+    console.log('🔍 LoadCoursesAction: Starting to load courses from database...');
+
     // Load all courses with basic stats
     const { data: courses, error: coursesError } = await client
       .from('courses')
@@ -14,16 +16,21 @@ export const loadCoursesAction = enhanceAction(
         id,
         title,
         description,
-        status,
+        is_published,
         created_at,
-        updated_at,
-        version
+        updated_at
       `)
       .order('created_at', { ascending: false });
 
     if (coursesError) {
+      console.error('❌ LoadCoursesAction: Error loading courses:', coursesError);
       throw new Error(`Failed to load courses: ${coursesError.message}`);
     }
+
+    console.log('📊 LoadCoursesAction: Raw courses from database:', {
+      count: courses?.length || 0,
+      courses: courses?.map(c => ({ id: c.id, title: c.title })) || []
+    });
 
     // Get lesson counts for each course
     const { data: lessonCounts, error: lessonCountsError } = await client
@@ -68,13 +75,18 @@ export const loadCoursesAction = enhanceAction(
       id: course.id,
       title: course.title,
       description: course.description || '',
-      status: course.status as 'draft' | 'published' | 'archived',
+      status: (course.is_published ? 'published' : 'draft') as 'draft' | 'published' | 'archived',
       lessons_count: lessonCounts?.[course.id] || 0,
       enrollments_count: enrollmentCounts?.[course.id] || 0,
       created_at: course.created_at,
       updated_at: course.updated_at,
-      version: course.version || '1.0'
+      version: '1.0' // Default version since column doesn't exist yet
     })) || [];
+
+    console.log('✅ LoadCoursesAction: Returning formatted courses:', {
+      count: formattedCourses.length,
+      courses: formattedCourses.map(c => ({ id: c.id, title: c.title, status: c.status }))
+    });
 
     return formattedCourses;
   },
