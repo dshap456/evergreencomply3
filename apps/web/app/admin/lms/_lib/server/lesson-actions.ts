@@ -7,24 +7,30 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 const UpdateLessonSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   content_type: z.enum(['video', 'text', 'quiz']),
   order_index: z.number().min(1),
   is_final_quiz: z.boolean().optional(),
-  video_url: z.string().optional(),
-  video_metadata_id: z.string().optional(),
+  video_url: z.string().optional().nullable(),
+  video_metadata_id: z.string().optional().nullable(),
 });
 
 export const updateLessonAction = enhanceAction(
   async function (data) {
-    const client = getSupabaseServerAdminClient();
-
-    console.log('🔄 UpdateLessonAction: Updating lesson in database...', {
+    console.log('🔄 UpdateLessonAction: Received data:', {
       id: data.id,
       title: data.title,
+      description: data.description,
       content_type: data.content_type,
-      video_url: data.video_url ? 'present' : 'missing'
+      order_index: data.order_index,
+      is_final_quiz: data.is_final_quiz,
+      video_url: data.video_url,
+      video_metadata_id: data.video_metadata_id
     });
+    
+    const client = getSupabaseServerAdminClient();
+
+    console.log('🔄 UpdateLessonAction: Updating lesson in database...');
 
     const updateData: any = {
       title: data.title,

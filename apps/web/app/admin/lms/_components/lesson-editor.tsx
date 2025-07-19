@@ -63,16 +63,20 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
         });
 
         // First, update the basic lesson data
-        await updateLessonAction({
+        const updateData = {
           id: lessonData.id,
           title: lessonData.title,
-          description: lessonData.description || '',
+          description: lessonData.description || undefined,
           content_type: lessonData.content_type,
           order_index: lessonData.order_index,
           is_final_quiz: lessonData.is_final_quiz,
-          video_url: lessonData.video_url,
-          video_metadata_id: lessonData.video_metadata_id,
-        });
+          video_url: lessonData.video_url || undefined,
+          video_metadata_id: lessonData.video_metadata_id || undefined,
+        };
+        
+        console.log('🔍 LessonEditor: Update data being sent:', updateData);
+        
+        await updateLessonAction(updateData);
 
         // TODO: Temporarily disable quiz save to isolate the issue
         console.log('ℹ️ LessonEditor: Quiz save temporarily disabled for debugging');
