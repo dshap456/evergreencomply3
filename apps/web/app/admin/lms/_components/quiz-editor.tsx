@@ -96,12 +96,24 @@ export function QuizEditor({ lessonId, isFinalQuiz, onQuizChange }: QuizEditorPr
   };
 
   const updateQuestion = (questionId: string, updates: Partial<QuizQuestion>) => {
-    setQuiz(prev => ({
-      ...prev,
-      questions: prev.questions.map(q => 
+    setQuiz(prev => {
+      const updatedQuestions = prev.questions.map(q => 
         q.id === questionId ? { ...q, ...updates } : q
-      )
-    }));
+      );
+      
+      // Update selectedQuestion if it's the one being modified
+      if (selectedQuestion?.id === questionId) {
+        const updatedQuestion = updatedQuestions.find(q => q.id === questionId);
+        if (updatedQuestion) {
+          setSelectedQuestion(updatedQuestion);
+        }
+      }
+      
+      return {
+        ...prev,
+        questions: updatedQuestions
+      };
+    });
     onQuizChange();
   };
 
