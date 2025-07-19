@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useRef } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -13,10 +13,10 @@ import { toast } from '@kit/ui/sonner';
 import { Spinner } from '@kit/ui/spinner';
 
 import { VideoUpload } from '@kit/lms/components/video-upload';
-import { QuizEditor } from './quiz-editor';
+import { QuizEditor, QuizEditorRef } from './quiz-editor';
 import { TextContentEditor } from './text-content-editor';
 import { VideoContentDisplay } from './video-content-display';
-import { updateLessonAction } from '../_lib/server/lesson-actions';
+import { updateLessonAction, saveQuizDataAction } from '../_lib/server/lesson-actions';
 
 interface Lesson {
   id: string;
@@ -49,6 +49,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const [isDirty, setIsDirty] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [isPending, startTransition] = useTransition();
+  const quizEditorRef = useRef<QuizEditorRef>(null);
 
   const handleSave = () => {
     startTransition(async () => {
@@ -56,10 +57,12 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
         console.log('🔄 LessonEditor: Saving lesson with video data...', {
           id: lessonData.id,
           title: lessonData.title,
+          content_type: lessonData.content_type,
           video_url: lessonData.video_url ? 'present' : 'missing',
           video_metadata_id: lessonData.video_metadata_id ? 'present' : 'missing'
         });
 
+        // First, update the basic lesson data
         await updateLessonAction({
           id: lessonData.id,
           title: lessonData.title,
@@ -70,6 +73,19 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           video_url: lessonData.video_url,
           video_metadata_id: lessonData.video_metadata_id,
         });
+
+        // If this is a quiz lesson, save the quiz data
+        if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
+          console.log('🔄 LessonEditor: Saving quiz data...');
+          const quizData = quizEditorRef.current.getQuizData();
+          
+          await saveQuizDataAction({
+            lessonId: lessonData.id,
+            quizData,
+          });
+          
+          console.log('✅ LessonEditor: Quiz data saved successfully');
+        }
         
         toast.success('Lesson saved successfully');
         onSave(lessonData);
@@ -266,6 +282,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
 
           {lessonData.content_type === 'quiz' && (
             <QuizEditor
+              ref={quizEditorRef}
               lessonId={lessonData.id}
               isFinalQuiz={lessonData.is_final_quiz}
               onQuizChange={() => setIsDirty(true)}

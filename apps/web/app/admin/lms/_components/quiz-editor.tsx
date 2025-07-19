@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useImperativeHandle, forwardRef } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -50,7 +50,11 @@ interface QuizEditorProps {
   onQuizChange: () => void;
 }
 
-export function QuizEditor({ lessonId, isFinalQuiz, onQuizChange }: QuizEditorProps) {
+export interface QuizEditorRef {
+  getQuizData: () => Quiz;
+}
+
+export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function QuizEditor({ lessonId, isFinalQuiz, onQuizChange }, ref) {
   const [quiz, setQuiz] = useState<Quiz>({
     id: 'mock-quiz-id',
     title: 'Lesson Quiz',
@@ -62,6 +66,10 @@ export function QuizEditor({ lessonId, isFinalQuiz, onQuizChange }: QuizEditorPr
   });
 
   const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    getQuizData: () => quiz,
+  }));
 
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
@@ -510,4 +518,4 @@ export function QuizEditor({ lessonId, isFinalQuiz, onQuizChange }: QuizEditorPr
       )}
     </div>
   );
-}
+});

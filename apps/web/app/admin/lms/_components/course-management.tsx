@@ -42,12 +42,18 @@ export function CourseManagement() {
 
   const loadCourses = async () => {
     try {
+      console.log('🔄 CourseManagement: Starting to load courses...');
       setLoading(true);
       setError(null);
       const coursesData = await loadCoursesAction();
+      console.log('📥 CourseManagement: Received courses data:', {
+        count: coursesData.length,
+        courses: coursesData.map(c => ({ id: c.id, title: c.title, status: c.status }))
+      });
       setCourses(coursesData);
+      console.log('✅ CourseManagement: State updated with courses');
     } catch (err) {
-      console.error('Error loading courses:', err);
+      console.error('❌ CourseManagement: Error loading courses:', err);
       setError(err instanceof Error ? err.message : 'Failed to load courses');
     } finally {
       setLoading(false);
