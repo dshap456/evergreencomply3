@@ -11,28 +11,49 @@ const UpdateLessonSchema = z.object({
   content_type: z.enum(['video', 'text', 'quiz']),
   order_index: z.number().min(1),
   is_final_quiz: z.boolean().optional(),
+  video_url: z.string().optional(),
+  video_metadata_id: z.string().optional(),
 });
 
 export const updateLessonAction = enhanceAction(
   async function (data) {
     const client = getSupabaseServerAdminClient();
 
+    console.log('🔄 UpdateLessonAction: Updating lesson in database...', {
+      id: data.id,
+      title: data.title,
+      content_type: data.content_type,
+      video_url: data.video_url ? 'present' : 'missing'
+    });
+
+    const updateData: any = {
+      title: data.title,
+      description: data.description,
+      content_type: data.content_type,
+      order_index: data.order_index,
+      is_final_quiz: data.is_final_quiz,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Only include video fields if they're provided (preserves existing data)
+    if (data.video_url !== undefined) {
+      updateData.video_url = data.video_url;
+    }
+    if (data.video_metadata_id !== undefined) {
+      updateData.video_metadata_id = data.video_metadata_id;
+    }
+
     const { error } = await client
       .from('lessons')
-      .update({
-        title: data.title,
-        description: data.description,
-        content_type: data.content_type,
-        order_index: data.order_index,
-        is_final_quiz: data.is_final_quiz,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', data.id);
 
     if (error) {
+      console.error('❌ UpdateLessonAction: Database error:', error);
       throw new Error(`Failed to update lesson: ${error.message}`);
     }
 
+    console.log('✅ UpdateLessonAction: Lesson updated successfully');
     return { success: true };
   },
   {

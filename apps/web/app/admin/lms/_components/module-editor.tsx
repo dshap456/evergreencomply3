@@ -35,6 +35,8 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  video_url?: string;
+  video_metadata_id?: string;
 }
 
 interface ModuleEditorProps {

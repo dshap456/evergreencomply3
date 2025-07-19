@@ -25,6 +25,8 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  video_url?: string;
+  video_metadata_id?: string;
 }
 
 interface Module {
@@ -51,6 +53,13 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const handleSave = () => {
     startTransition(async () => {
       try {
+        console.log('🔄 LessonEditor: Saving lesson with video data...', {
+          id: lessonData.id,
+          title: lessonData.title,
+          video_url: lessonData.video_url ? 'present' : 'missing',
+          video_metadata_id: lessonData.video_metadata_id ? 'present' : 'missing'
+        });
+
         await updateLessonAction({
           id: lessonData.id,
           title: lessonData.title,
@@ -58,6 +67,8 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           content_type: lessonData.content_type,
           order_index: lessonData.order_index,
           is_final_quiz: lessonData.is_final_quiz,
+          video_url: lessonData.video_url,
+          video_metadata_id: lessonData.video_metadata_id,
         });
         
         toast.success('Lesson saved successfully');

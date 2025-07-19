@@ -54,6 +54,8 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  video_url?: string;
+  video_metadata_id?: string;
 }
 
 interface CreateLessonDialogProps {
@@ -132,6 +134,8 @@ export function CreateLessonDialog({
           content_type: result.lesson.content_type,
           order_index: result.lesson.order_index,
           is_final_quiz: result.lesson.is_final_quiz || false,
+          video_url: result.lesson.video_url,
+          video_metadata_id: result.lesson.video_metadata_id,
         };
 
         onLessonCreated(newLesson);
