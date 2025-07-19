@@ -311,6 +311,7 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         onOpenChange={setShowCreateLesson}
         onLessonCreated={handleLessonCreated}
         nextOrderIndex={moduleData.lessons.length + 1}
+        moduleId={moduleData.id}
       />
     </div>
   );

@@ -54,6 +54,13 @@ export const createLessonAction = enhanceAction(
   async function (data) {
     const client = getSupabaseServerAdminClient();
 
+    console.log('🔄 CreateLessonAction: Creating lesson in database...', {
+      module_id: data.module_id,
+      title: data.title,
+      content_type: data.content_type,
+      order_index: data.order_index
+    });
+
     const { data: lesson, error } = await client
       .from('lessons')
       .insert({
@@ -68,9 +75,11 @@ export const createLessonAction = enhanceAction(
       .single();
 
     if (error) {
+      console.error('❌ CreateLessonAction: Database error:', error);
       throw new Error(`Failed to create lesson: ${error.message}`);
     }
 
+    console.log('✅ CreateLessonAction: Lesson created successfully:', lesson);
     return { success: true, lesson };
   },
   {

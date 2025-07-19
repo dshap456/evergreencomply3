@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,6 +33,10 @@ import {
   SelectValue,
 } from '@kit/ui/select';
 import { Switch } from '@kit/ui/switch';
+import { Spinner } from '@kit/ui/spinner';
+import { toast } from '@kit/ui/sonner';
+
+import { createLessonAction } from '../_lib/server/lesson-actions';
 
 const CreateLessonSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -56,6 +61,7 @@ interface CreateLessonDialogProps {
   onOpenChange: (open: boolean) => void;
   onLessonCreated: (lesson: Lesson) => void;
   nextOrderIndex: number;
+  moduleId: string;
 }
 
 const contentTypes = [
@@ -81,7 +87,10 @@ export function CreateLessonDialog({
   onOpenChange,
   onLessonCreated,
   nextOrderIndex,
+  moduleId,
 }: CreateLessonDialogProps) {
+  const [isPending, startTransition] = useTransition();
+  
   const form = useForm<CreateLessonForm>({
     resolver: zodResolver(CreateLessonSchema),
     defaultValues: {
@@ -95,17 +104,45 @@ export function CreateLessonDialog({
   const contentType = form.watch('content_type');
 
   const onSubmit = (data: CreateLessonForm) => {
-    const newLesson: Lesson = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: data.title,
-      description: data.description || '',
-      content_type: data.content_type,
-      order_index: nextOrderIndex,
-      is_final_quiz: data.is_final_quiz,
-    };
+    startTransition(async () => {
+      try {
+        console.log('🔄 CreateLessonDialog: Creating lesson in database...', {
+          moduleId,
+          title: data.title,
+          contentType: data.content_type,
+          orderIndex: nextOrderIndex
+        });
 
-    onLessonCreated(newLesson);
-    form.reset();
+        const result = await createLessonAction({
+          module_id: moduleId,
+          title: data.title,
+          description: data.description || '',
+          content_type: data.content_type,
+          order_index: nextOrderIndex,
+          is_final_quiz: data.is_final_quiz,
+        });
+
+        console.log('✅ CreateLessonDialog: Lesson created successfully:', result.lesson);
+
+        // Create lesson object for UI update
+        const newLesson: Lesson = {
+          id: result.lesson.id,
+          title: result.lesson.title,
+          description: result.lesson.description || '',
+          content_type: result.lesson.content_type,
+          order_index: result.lesson.order_index,
+          is_final_quiz: result.lesson.is_final_quiz || false,
+        };
+
+        onLessonCreated(newLesson);
+        form.reset();
+        onOpenChange(false);
+        toast.success('Lesson created successfully');
+      } catch (error) {
+        console.error('❌ CreateLessonDialog: Failed to create lesson:', error);
+        toast.error('Failed to create lesson');
+      }
+    });
   };
 
   return (
@@ -224,11 +261,19 @@ export function CreateLessonDialog({
                 type="button" 
                 variant="outline" 
                 onClick={() => onOpenChange(false)}
+                disabled={isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit">
-                Create Lesson
+              <Button type="submit" disabled={isPending}>
+                {isPending ? (
+                  <>
+                    <Spinner className="mr-2 h-4 w-4" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Lesson'
+                )}
               </Button>
             </DialogFooter>
           </form>
