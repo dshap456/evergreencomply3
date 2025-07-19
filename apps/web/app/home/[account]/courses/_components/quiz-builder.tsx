@@ -255,7 +255,7 @@ export function QuizBuilder({ account, lessonId, existingQuestions = [], onSucce
                           <FormItem>
                             <div className="space-y-2">
                               {form.watch(`questions.${questionIndex}.options`).map((_, optionIndex) => (
-                                <div key={optionIndex} className="flex items-center space-x-2">
+                                <div key={`${field.id}-option-${optionIndex}`} className="flex items-center space-x-2">
                                   <FormField
                                     control={form.control}
                                     name={`questions.${questionIndex}.correct_answer`}
