@@ -137,10 +137,11 @@ export const deleteLessonAction = enhanceAction(
 const SaveQuizDataSchema = z.object({
   lessonId: z.string().uuid(),
   quizData: z.object({
+    id: z.string().optional(),
     title: z.string(),
     description: z.string(),
     passing_score: z.number().min(0).max(100),
-    time_limit_minutes: z.number().optional(),
+    time_limit_minutes: z.number().optional().nullable(),
     max_attempts: z.number().min(1),
     questions: z.array(z.object({
       id: z.string(),
@@ -154,7 +155,7 @@ const SaveQuizDataSchema = z.object({
         order_index: z.number()
       })),
       correct_answer: z.string().optional(),
-      explanation: z.string().optional(),
+      explanation: z.string().optional().nullable(),
       points: z.number().min(1)
     }))
   })
@@ -164,10 +165,20 @@ export const saveQuizDataAction = enhanceAction(
   async function (data) {
     const client = getSupabaseServerAdminClient();
 
-    console.log('🔄 SaveQuizDataAction: Saving quiz data to database...', {
+    console.log('🔄 SaveQuizDataAction: Received data for validation:', {
       lessonId: data.lessonId,
-      questionsCount: data.quizData.questions.length
+      quizData: {
+        title: data.quizData.title,
+        description: data.quizData.description,
+        passing_score: data.quizData.passing_score,
+        time_limit_minutes: data.quizData.time_limit_minutes,
+        max_attempts: data.quizData.max_attempts,
+        questionsCount: data.quizData.questions?.length || 0,
+        firstQuestion: data.quizData.questions?.[0] || null
+      }
     });
+
+    console.log('🔄 SaveQuizDataAction: Saving quiz data to database...');
 
     try {
       // First, delete existing quiz questions for this lesson

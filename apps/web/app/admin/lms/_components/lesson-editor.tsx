@@ -79,12 +79,32 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           console.log('🔄 LessonEditor: Saving quiz data...');
           const quizData = quizEditorRef.current.getQuizData();
           
-          await saveQuizDataAction({
+          console.log('📊 LessonEditor: Quiz data structure:', {
             lessonId: lessonData.id,
-            quizData,
+            quizData: {
+              ...quizData,
+              questions: quizData.questions.map(q => ({
+                id: q.id,
+                question_text: q.question_text,
+                question_type: q.question_type,
+                options: q.options,
+                points: q.points,
+                order_index: q.order_index
+              }))
+            }
           });
           
-          console.log('✅ LessonEditor: Quiz data saved successfully');
+          try {
+            await saveQuizDataAction({
+              lessonId: lessonData.id,
+              quizData,
+            });
+            
+            console.log('✅ LessonEditor: Quiz data saved successfully');
+          } catch (quizError) {
+            console.error('❌ LessonEditor: Quiz save failed:', quizError);
+            throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
+          }
         }
         
         toast.success('Lesson saved successfully');
