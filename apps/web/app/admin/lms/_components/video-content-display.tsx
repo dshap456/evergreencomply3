@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSupabase } from '@kit/supabase/hooks/use-supabase';
 import { Card, CardContent } from '@kit/ui/card';
 import { Badge } from '@kit/ui/badge';
 import { Spinner } from '@kit/ui/spinner';
+
+import { loadVideoDataAction } from '../_lib/server/video-actions';
 
 interface VideoContentDisplayProps {
   lessonId: string;
@@ -12,51 +13,42 @@ interface VideoContentDisplayProps {
 }
 
 export function VideoContentDisplay({ lessonId, languageCode = 'en' }: VideoContentDisplayProps) {
-  const supabase = useSupabase();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [videoMetadata, setVideoMetadata] = useState<any>(null);
   const [lesson, setLesson] = useState<any>(null);
 
   useEffect(() => {
     async function loadVideoData() {
       try {
-        // Load lesson data
-        const { data: lessonData, error: lessonError } = await supabase
-          .from('lessons')
-          .select('*')
-          .eq('id', lessonId)
-          .single();
+        setLoading(true);
+        setError(null);
+        
+        console.log('🔍 VideoContentDisplay: Loading video data using server action for lesson:', lessonId);
 
-        if (lessonError) {
-          console.error('Error loading lesson:', lessonError);
-          return;
-        }
+        const result = await loadVideoDataAction({
+          lessonId,
+          languageCode,
+        });
 
-        setLesson(lessonData);
+        console.log('✅ VideoContentDisplay: Video data loaded successfully:', {
+          hasLesson: !!result.lesson,
+          hasVideoMetadata: !!result.videoMetadata,
+          video_url: result.lesson?.video_url ? 'present' : 'missing'
+        });
 
-        // Load video metadata
-        const { data: metadataData, error: metadataError } = await supabase
-          .from('video_metadata')
-          .select('*')
-          .eq('lesson_id', lessonId)
-          .eq('language_code', languageCode)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (metadataError) {
-          console.error('Error loading video metadata:', metadataError);
-          return;
-        }
-
-        setVideoMetadata(metadataData);
+        setLesson(result.lesson);
+        setVideoMetadata(result.videoMetadata);
+      } catch (err) {
+        console.error('❌ VideoContentDisplay: Failed to load video data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load video data');
       } finally {
         setLoading(false);
       }
     }
 
     loadVideoData();
-  }, [lessonId, languageCode, supabase]);
+  }, [lessonId, languageCode]);
 
   if (loading) {
     return (
@@ -66,8 +58,31 @@ export function VideoContentDisplay({ lessonId, languageCode = 'en' }: VideoCont
     );
   }
 
+  if (error) {
+    return (
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <div className="text-center text-destructive py-4">
+            <p>Error loading video data</p>
+            <p className="text-xs">{error}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!lesson?.video_url && !videoMetadata) {
-    return null;
+    console.log('ℹ️ VideoContentDisplay: No video content found for lesson:', lessonId);
+    return (
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground py-4">
+            <p>No video uploaded yet</p>
+            <p className="text-xs">Upload a video using the form below</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
