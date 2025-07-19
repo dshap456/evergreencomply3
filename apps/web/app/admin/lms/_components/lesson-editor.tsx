@@ -74,53 +74,56 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           video_metadata_id: lessonData.video_metadata_id,
         });
 
+        // TODO: Temporarily disable quiz save to isolate the issue
+        console.log('ℹ️ LessonEditor: Quiz save temporarily disabled for debugging');
+        
         // If this is a quiz lesson, save the quiz data
-        if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
-          console.log('🔄 LessonEditor: Saving quiz data...');
-          const quizData = quizEditorRef.current.getQuizData();
-          
-          console.log('📊 LessonEditor: Raw quiz data from editor:', quizData);
-          
-          // Only try to save if there are actually questions
-          if (quizData.questions.length > 0) {
-            console.log('📊 LessonEditor: Quiz data structure for server:', {
-              lessonId: lessonData.id,
-              quizData: {
-                ...quizData,
-                questions: quizData.questions.map(q => ({
-                  id: q.id,
-                  question_text: q.question_text,
-                  question_type: q.question_type,
-                  options: q.options,
-                  points: q.points,
-                  order_index: q.order_index
-                }))
-              }
-            });
-            
-            try {
-              // First test if basic server action works
-              console.log('🔄 LessonEditor: Testing basic server action...');
-              const testResult = await testQuizSaveAction({
-                lessonId: lessonData.id,
-              });
-              console.log('✅ LessonEditor: Test server action worked:', testResult);
-              
-              // If test works, try the full quiz save
-              await saveQuizDataAction({
-                lessonId: lessonData.id,
-                quizData,
-              });
-              
-              console.log('✅ LessonEditor: Quiz data saved successfully');
-            } catch (quizError) {
-              console.error('❌ LessonEditor: Quiz save failed:', quizError);
-              throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
-            }
-          } else {
-            console.log('ℹ️ LessonEditor: No quiz questions to save, skipping quiz data save');
-          }
-        }
+        // if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
+        //   console.log('🔄 LessonEditor: Saving quiz data...');
+        //   const quizData = quizEditorRef.current.getQuizData();
+        //   
+        //   console.log('📊 LessonEditor: Raw quiz data from editor:', quizData);
+        //   
+        //   // Only try to save if there are actually questions
+        //   if (quizData.questions.length > 0) {
+        //     console.log('📊 LessonEditor: Quiz data structure for server:', {
+        //       lessonId: lessonData.id,
+        //       quizData: {
+        //         ...quizData,
+        //         questions: quizData.questions.map(q => ({
+        //           id: q.id,
+        //           question_text: q.question_text,
+        //           question_type: q.question_type,
+        //           options: q.options,
+        //           points: q.points,
+        //           order_index: q.order_index
+        //         }))
+        //       }
+        //     });
+        //     
+        //     try {
+        //       // First test if basic server action works
+        //       console.log('🔄 LessonEditor: Testing basic server action...');
+        //       const testResult = await testQuizSaveAction({
+        //         lessonId: lessonData.id,
+        //       });
+        //       console.log('✅ LessonEditor: Test server action worked:', testResult);
+        //       
+        //       // If test works, try the full quiz save
+        //       await saveQuizDataAction({
+        //         lessonId: lessonData.id,
+        //         quizData,
+        //       });
+        //       
+        //       console.log('✅ LessonEditor: Quiz data saved successfully');
+        //     } catch (quizError) {
+        //       console.error('❌ LessonEditor: Quiz save failed:', quizError);
+        //       throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
+        //     }
+        //   } else {
+        //     console.log('ℹ️ LessonEditor: No quiz questions to save, skipping quiz data save');
+        //   }
+        // }
         
         toast.success('Lesson saved successfully');
         onSave(lessonData);
