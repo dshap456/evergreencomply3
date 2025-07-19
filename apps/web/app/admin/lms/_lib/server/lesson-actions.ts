@@ -161,6 +161,44 @@ const SaveQuizDataSchema = z.object({
   })
 });
 
+// Simple test action to check if server actions work at all
+const TestQuizSaveSchema = z.object({
+  lessonId: z.string().uuid(),
+});
+
+export const testQuizSaveAction = enhanceAction(
+  async function (data) {
+    console.log('🔄 TestQuizSaveAction: Simple test action called with lessonId:', data.lessonId);
+    
+    try {
+      const client = getSupabaseServerAdminClient();
+      
+      // Just try to read the lesson to make sure database connection works
+      const { data: lesson, error } = await client
+        .from('lessons')
+        .select('id, title')
+        .eq('id', data.lessonId)
+        .single();
+        
+      if (error) {
+        console.error('❌ TestQuizSaveAction: Database error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+      
+      console.log('✅ TestQuizSaveAction: Found lesson:', lesson);
+      return { success: true, lesson };
+      
+    } catch (error) {
+      console.error('❌ TestQuizSaveAction: Unexpected error:', error);
+      throw error;
+    }
+  },
+  {
+    auth: true,
+    schema: TestQuizSaveSchema,
+  }
+);
+
 export const saveQuizDataAction = enhanceAction(
   async function (data) {
     const client = getSupabaseServerAdminClient();
