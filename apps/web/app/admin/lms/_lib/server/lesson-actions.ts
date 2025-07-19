@@ -167,6 +167,48 @@ const SaveQuizDataSchema = z.object({
   })
 });
 
+// Load quiz data for a lesson
+const LoadQuizDataSchema = z.object({
+  lessonId: z.string().uuid(),
+});
+
+export const loadQuizDataAction = enhanceAction(
+  async function (data) {
+    const client = getSupabaseServerAdminClient();
+    
+    console.log('🔄 LoadQuizDataAction: Loading quiz data for lesson:', data.lessonId);
+    
+    try {
+      // Load quiz questions for this lesson
+      const { data: questions, error } = await client
+        .from('quiz_questions')
+        .select('*')
+        .eq('lesson_id', data.lessonId)
+        .order('order_index', { ascending: true });
+        
+      if (error) {
+        console.error('❌ LoadQuizDataAction: Database error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+      
+      console.log('✅ LoadQuizDataAction: Found quiz questions:', {
+        count: questions?.length || 0,
+        questions: questions?.map(q => ({ id: q.id, question: q.question, type: q.question_type })) || []
+      });
+      
+      return { success: true, questions: questions || [] };
+      
+    } catch (error) {
+      console.error('❌ LoadQuizDataAction: Unexpected error:', error);
+      throw error;
+    }
+  },
+  {
+    auth: true,
+    schema: LoadQuizDataSchema,
+  }
+);
+
 // Simple test action to check if server actions work at all
 const TestQuizSaveSchema = z.object({
   lessonId: z.string().uuid(),

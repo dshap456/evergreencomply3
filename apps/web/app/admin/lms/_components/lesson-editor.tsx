@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition, useRef, useEffect } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -16,7 +16,7 @@ import { VideoUpload } from '@kit/lms/components/video-upload';
 import { QuizEditor, QuizEditorRef } from './quiz-editor';
 import { TextContentEditor } from './text-content-editor';
 import { VideoContentDisplay } from './video-content-display';
-import { updateLessonAction, saveQuizDataAction, testQuizSaveAction } from '../_lib/server/lesson-actions';
+import { updateLessonAction, saveQuizDataAction, testQuizSaveAction, loadQuizDataAction } from '../_lib/server/lesson-actions';
 
 interface Lesson {
   id: string;
@@ -50,6 +50,59 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const [activeTab, setActiveTab] = useState('basic');
   const [isPending, startTransition] = useTransition();
   const quizEditorRef = useRef<QuizEditorRef>(null);
+  const [existingQuizData, setExistingQuizData] = useState<any>(null);
+  const [loadingQuizData, setLoadingQuizData] = useState(false);
+  
+  // Load existing quiz data if this is a quiz lesson
+  useEffect(() => {
+    if (lessonData.content_type === 'quiz') {
+      console.log('🔄 LessonEditor: Loading existing quiz data for lesson:', lessonData.id);
+      setLoadingQuizData(true);
+      
+      loadQuizDataAction({ lessonId: lessonData.id })
+        .then((result) => {
+          if (result.success && result.questions && result.questions.length > 0) {
+            // Transform database questions back to quiz editor format
+            const transformedQuestions = result.questions.map((q: any) => ({
+              id: q.id || Math.random().toString(36).substr(2, 9),
+              question_text: q.question,
+              question_type: q.question_type,
+              order_index: q.order_index,
+              options: Array.isArray(q.options) ? q.options.map((optText: string, idx: number) => ({
+                id: Math.random().toString(36).substr(2, 9),
+                option_text: optText,
+                is_correct: optText === q.correct_answer,
+                order_index: idx + 1
+              })) : [],
+              correct_answer: q.correct_answer,
+              explanation: q.explanation || '',
+              points: q.points || 1
+            }));
+            
+            const quizData = {
+              id: 'loaded-quiz-id',
+              title: 'Lesson Quiz',
+              description: 'Test your understanding of this lesson',
+              passing_score: 80,
+              time_limit_minutes: undefined,
+              max_attempts: 3,
+              questions: transformedQuestions
+            };
+            
+            console.log('✅ LessonEditor: Loaded and transformed quiz data:', quizData);
+            setExistingQuizData(quizData);
+          } else {
+            console.log('ℹ️ LessonEditor: No existing quiz data found');
+          }
+        })
+        .catch((error) => {
+          console.error('❌ LessonEditor: Failed to load quiz data:', error);
+        })
+        .finally(() => {
+          setLoadingQuizData(false);
+        });
+    }
+  }, [lessonData.id, lessonData.content_type]);
 
   const handleSave = () => {
     startTransition(async () => {
@@ -78,56 +131,45 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
         
         await updateLessonAction(updateData);
 
-        // TODO: Temporarily disable quiz save to isolate the issue
-        console.log('ℹ️ LessonEditor: Quiz save temporarily disabled for debugging');
-        
         // If this is a quiz lesson, save the quiz data
-        // if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
-        //   console.log('🔄 LessonEditor: Saving quiz data...');
-        //   const quizData = quizEditorRef.current.getQuizData();
-        //   
-        //   console.log('📊 LessonEditor: Raw quiz data from editor:', quizData);
-        //   
-        //   // Only try to save if there are actually questions
-        //   if (quizData.questions.length > 0) {
-        //     console.log('📊 LessonEditor: Quiz data structure for server:', {
-        //       lessonId: lessonData.id,
-        //       quizData: {
-        //         ...quizData,
-        //         questions: quizData.questions.map(q => ({
-        //           id: q.id,
-        //           question_text: q.question_text,
-        //           question_type: q.question_type,
-        //           options: q.options,
-        //           points: q.points,
-        //           order_index: q.order_index
-        //         }))
-        //       }
-        //     });
-        //     
-        //     try {
-        //       // First test if basic server action works
-        //       console.log('🔄 LessonEditor: Testing basic server action...');
-        //       const testResult = await testQuizSaveAction({
-        //         lessonId: lessonData.id,
-        //       });
-        //       console.log('✅ LessonEditor: Test server action worked:', testResult);
-        //       
-        //       // If test works, try the full quiz save
-        //       await saveQuizDataAction({
-        //         lessonId: lessonData.id,
-        //         quizData,
-        //       });
-        //       
-        //       console.log('✅ LessonEditor: Quiz data saved successfully');
-        //     } catch (quizError) {
-        //       console.error('❌ LessonEditor: Quiz save failed:', quizError);
-        //       throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
-        //     }
-        //   } else {
-        //     console.log('ℹ️ LessonEditor: No quiz questions to save, skipping quiz data save');
-        //   }
-        // }
+        if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
+          console.log('🔄 LessonEditor: Saving quiz data...');
+          const quizData = quizEditorRef.current.getQuizData();
+          
+          console.log('📊 LessonEditor: Raw quiz data from editor:', quizData);
+          
+          // Only try to save if there are actually questions
+          if (quizData.questions.length > 0) {
+            console.log('📊 LessonEditor: Quiz data structure for server:', {
+              lessonId: lessonData.id,
+              quizData: {
+                ...quizData,
+                questions: quizData.questions.map(q => ({
+                  id: q.id,
+                  question_text: q.question_text,
+                  question_type: q.question_type,
+                  options: q.options,
+                  points: q.points,
+                  order_index: q.order_index
+                }))
+              }
+            });
+            
+            try {
+              await saveQuizDataAction({
+                lessonId: lessonData.id,
+                quizData,
+              });
+              
+              console.log('✅ LessonEditor: Quiz data saved successfully');
+            } catch (quizError) {
+              console.error('❌ LessonEditor: Quiz save failed:', quizError);
+              throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
+            }
+          } else {
+            console.log('ℹ️ LessonEditor: No quiz questions to save, skipping quiz data save');
+          }
+        }
         
         toast.success('Lesson saved successfully');
         onSave(lessonData);
@@ -323,12 +365,20 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           )}
 
           {lessonData.content_type === 'quiz' && (
-            <QuizEditor
-              ref={quizEditorRef}
-              lessonId={lessonData.id}
-              isFinalQuiz={lessonData.is_final_quiz}
-              onQuizChange={() => setIsDirty(true)}
-            />
+            <div>
+              {loadingQuizData && (
+                <div className="text-center py-4">
+                  <span className="text-sm text-muted-foreground">Loading quiz data...</span>
+                </div>
+              )}
+              <QuizEditor
+                ref={quizEditorRef}
+                lessonId={lessonData.id}
+                isFinalQuiz={lessonData.is_final_quiz}
+                onQuizChange={() => setIsDirty(true)}
+                existingQuizData={existingQuizData}
+              />
+            </div>
           )}
         </TabsContent>
 

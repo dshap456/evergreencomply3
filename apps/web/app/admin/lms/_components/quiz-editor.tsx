@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useImperativeHandle, forwardRef } from 'react';
+import { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -48,14 +48,15 @@ interface QuizEditorProps {
   lessonId: string;
   isFinalQuiz: boolean;
   onQuizChange: () => void;
+  existingQuizData?: Quiz | null;
 }
 
 export interface QuizEditorRef {
   getQuizData: () => Quiz;
 }
 
-export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function QuizEditor({ lessonId, isFinalQuiz, onQuizChange }, ref) {
-  const [quiz, setQuiz] = useState<Quiz>({
+export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function QuizEditor({ lessonId, isFinalQuiz, onQuizChange, existingQuizData }, ref) {
+  const [quiz, setQuiz] = useState<Quiz>(existingQuizData || {
     id: 'mock-quiz-id',
     title: 'Lesson Quiz',
     description: 'Test your understanding of this lesson',
@@ -64,6 +65,14 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
     max_attempts: 3,
     questions: []
   });
+  
+  // Update quiz state when existingQuizData changes
+  useEffect(() => {
+    if (existingQuizData) {
+      console.log('🔄 QuizEditor: Loading existing quiz data:', existingQuizData);
+      setQuiz(existingQuizData);
+    }
+  }, [existingQuizData]);
 
   const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null);
 
