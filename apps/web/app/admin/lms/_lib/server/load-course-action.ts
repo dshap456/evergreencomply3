@@ -45,8 +45,18 @@ export const loadCourseAction = enhanceAction(
       lessons: module.lessons?.sort((a: any, b: any) => a.order_index - b.order_index) || []
     }));
 
+    // Transform course data to match the expected interface
+    const transformedCourse = {
+      ...course,
+      status: (course.is_published ? 'published' : 'draft') as 'draft' | 'published' | 'archived',
+      version: '1.0', // Default version
+      lessons_count: formattedModules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0),
+      enrollments_count: 0, // Would need a separate query for accurate count
+      completion_rate: 0 // Would need calculation
+    };
+
     return {
-      course,
+      course: transformedCourse,
       modules: formattedModules
     };
   },
