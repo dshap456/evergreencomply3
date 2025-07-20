@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { UserDetailsDialog } from './user-details-dialog';
+
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Badge } from '@kit/ui/badge';
@@ -284,9 +286,14 @@ export function UserManagement() {
 
                   {/* Actions */}
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
+                    <UserDetailsDialog
+                      userId={user.id}
+                      userName={user.name}
+                    >
+                      <Button variant="outline" size="sm">
+                        View
+                      </Button>
+                    </UserDetailsDialog>
                     <Button variant="ghost" size="sm">
                       ⋮
                     </Button>
