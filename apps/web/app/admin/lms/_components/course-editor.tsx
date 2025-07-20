@@ -166,20 +166,29 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
     try {
       setIsSaving(true);
       
+      console.log('🔄 CourseEditor: Starting save process...', {
+        id: courseData.id,
+        title: courseData.title,
+        status: courseData.status,
+        isDirty
+      });
+      
       // Call the updateCourseAction to persist to database
-      await updateCourseAction({
+      const result = await updateCourseAction({
         id: courseData.id,
         title: courseData.title,
         description: courseData.description,
         status: courseData.status,
       });
       
+      console.log('✅ CourseEditor: Save result:', result);
+      
       toast.success('Course saved successfully');
       setIsDirty(false);
       onSave(courseData);
     } catch (error) {
-      console.error('Failed to save course:', error);
-      toast.error('Failed to save course');
+      console.error('❌ CourseEditor: Failed to save course:', error);
+      toast.error(`Failed to save course: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }
