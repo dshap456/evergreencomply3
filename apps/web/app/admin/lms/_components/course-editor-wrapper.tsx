@@ -1,5 +1,5 @@
-import { loadCourseWithModules } from '../_lib/server/course-data-loader';
-import { CourseEditorClient } from './course-editor-client';
+import { loadCourseAction } from '../_lib/server/load-course-action';
+import { CourseEditor } from './course-editor';
 
 interface CourseEditorWrapperProps {
   courseId: string;
@@ -8,13 +8,16 @@ interface CourseEditorWrapperProps {
 
 export async function CourseEditorWrapper({ courseId, onBack }: CourseEditorWrapperProps) {
   try {
-    const { course, modules } = await loadCourseWithModules(courseId);
+    const { course, modules } = await loadCourseAction({ courseId });
     
     return (
-      <CourseEditorClient 
+      <CourseEditor 
         course={course} 
-        modules={modules} 
         onBack={onBack} 
+        onSave={(updatedCourse) => {
+          // Handle course save completion - could refresh the course list
+          console.log('Course saved:', updatedCourse);
+        }}
       />
     );
   } catch (error) {
