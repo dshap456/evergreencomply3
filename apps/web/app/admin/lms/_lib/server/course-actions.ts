@@ -1,6 +1,7 @@
 'use server';
 
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 import { enhanceAction } from '@kit/next/actions';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
@@ -14,25 +15,55 @@ const UpdateCourseSchema = z.object({
 });
 
 export const updateCourseAction = enhanceAction(
-  async function (data) {
+  async function (data, user) {
     const client = getSupabaseServerAdminClient();
 
-    console.log('🔄 UpdateCourseAction: Updating course:', { id: data.id, title: data.title, status: data.status });
+    console.log('🔄 UpdateCourseAction: Starting update...', { 
+      id: data.id, 
+      title: data.title, 
+      status: data.status,
+      userId: user?.id 
+    });
+
+    // First, verify the course exists and get current state
+    const { data: currentCourse, error: fetchError } = await client
+      .from('courses')
+      .select('id, title, is_published, account_id')
+      .eq('id', data.id)
+      .single();
+
+    if (fetchError || !currentCourse) {
+      console.error('❌ UpdateCourseAction: Course not found:', fetchError);
+      throw new Error(`Course not found: ${fetchError?.message || 'Unknown error'}`);
+    }
+
+    console.log('📋 UpdateCourseAction: Current course state:', currentCourse);
 
     // Convert status enum to is_published boolean for database
     const is_published = data.status === 'published';
+    
+    console.log('🔄 UpdateCourseAction: Converting status:', { 
+      statusEnum: data.status, 
+      booleanValue: is_published,
+      currentIsPublished: currentCourse.is_published
+    });
 
-    const { error } = await client
+    const updateData = {
+      title: data.title,
+      description: data.description,
+      is_published: is_published,
+      sku: data.sku,
+      price: data.price,
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log('📝 UpdateCourseAction: Update payload:', updateData);
+
+    const { error, data: updateResult } = await client
       .from('courses')
-      .update({
-        title: data.title,
-        description: data.description,
-        is_published: is_published,
-        sku: data.sku,
-        price: data.price,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', data.id);
+      .update(updateData)
+      .eq('id', data.id)
+      .select();
 
     if (error) {
       console.error('❌ UpdateCourseAction: Failed to update course:', error);
@@ -40,7 +71,13 @@ export const updateCourseAction = enhanceAction(
     }
 
     console.log('✅ UpdateCourseAction: Course updated successfully');
-    return { success: true };
+    console.log('📊 UpdateCourseAction: Update result:', updateResult);
+    
+    // Revalidate the admin LMS pages to refresh cached data
+    revalidatePath('/admin/lms');
+    revalidatePath('/admin/lms/courses');
+    
+    return { success: true, updatedCourse: updateResult?.[0] };
   },
   {
     auth: true,
