@@ -160,9 +160,29 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
     );
   }
 
-  const handleSave = () => {
-    onSave(courseData);
-    setIsDirty(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      
+      // Call the updateCourseAction to persist to database
+      await updateCourseAction({
+        id: courseData.id,
+        title: courseData.title,
+        description: courseData.description,
+        status: courseData.status,
+      });
+      
+      toast.success('Course saved successfully');
+      setIsDirty(false);
+      onSave(courseData);
+    } catch (error) {
+      console.error('Failed to save course:', error);
+      toast.error('Failed to save course');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -188,8 +208,15 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline">Preview</Button>
-          <Button onClick={handleSave} disabled={!isDirty}>
-            Save Changes
+          <Button onClick={handleSave} disabled={!isDirty || isSaving}>
+            {isSaving ? (
+              <>
+                <Spinner className="mr-2 h-4 w-4" />
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
           </Button>
         </div>
       </div>
