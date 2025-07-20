@@ -71,5 +71,30 @@
     "description": "View and manage course enrollments.",
     "noEnrollments": "No Enrollments Yet",
     "noEnrollmentsDescription": "Students will appear here once they enroll in your course."
+  },
+  "learner": {
+    "myLearning": "My Learning",
+    "coursesPage": "Courses",
+    "learnerDashboardDescription": "Track your learning progress and discover new courses",
+    "myCourses": "My Courses",
+    "availableCourses": "Available Courses",
+    "noCourses": "No Courses Available",
+    "noCoursesDescription": "Check back soon for new learning opportunities",
+    "totalEnrollments": "Total Enrolled",
+    "coursesEnrolled": "courses enrolled",
+    "inProgress": "In Progress",
+    "activeLearning": "active learning",
+    "completed": "Completed",
+    "coursesCompleted": "courses completed",
+    "available": "Available",
+    "newCoursesAvailable": "new courses available",
+    "notStarted": "Not Started",
+    "enroll": "Enroll Now",
+    "enrolling": "Enrolling...",
+    "enrolled": "Enrolled",
+    "start": "Start Course",
+    "continue": "Continue",
+    "review": "Review",
+    "certificate": "Certificate"
   }
 }

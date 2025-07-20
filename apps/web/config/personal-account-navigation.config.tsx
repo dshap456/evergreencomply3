@@ -1,4 +1,4 @@
-import { CreditCard, Home, Settings, User } from 'lucide-react';
+import { CreditCard, Home, Settings, User, BookOpen } from 'lucide-react';
 import { z } from 'zod';
 
 import { NavigationConfigSchema } from '@kit/ui/navigation-schema';
@@ -17,6 +17,11 @@ const routes = [
         path: pathsConfig.app.home,
         Icon: <Home className={iconClasses} />,
         end: true,
+      },
+      {
+        label: 'courses:learner.myLearning',
+        path: pathsConfig.app.personalAccountCourses,
+        Icon: <BookOpen className={iconClasses} />,
       },
     ],
   },
