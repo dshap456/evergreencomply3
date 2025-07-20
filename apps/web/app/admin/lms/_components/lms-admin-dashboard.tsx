@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@kit/ui/tabs';
 import { CourseManagement } from './course-management';
 import { LMSAnalytics } from './lms-analytics';
 import { UserManagement } from './user-management';
+import { AdminEnrollmentTool } from './admin-enrollment-tool';
 
 export function LMSAdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -79,7 +80,10 @@ export function LMSAdminDashboard() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
-          <UserManagement />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AdminEnrollmentTool />
+            <UserManagement />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
