@@ -5,20 +5,16 @@ import { revalidatePath } from 'next/cache';
 
 import { enhanceAction } from '@kit/next/actions';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
-import { getCurrentUser } from '@kit/supabase/get-current-user';
 
 const EnrollInCourseSchema = z.object({
   courseId: z.string().uuid(),
 });
 
 export const enrollInCourseAction = enhanceAction(
-  async function (data) {
+  async function (data, user) {
     const client = getSupabaseServerClient();
-    const user = await getCurrentUser(client);
 
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
+    // enhanceAction with auth: true provides the user automatically
 
     // Check if course exists and is published
     const { data: course, error: courseError } = await client
@@ -83,13 +79,10 @@ const UnenrollFromCourseSchema = z.object({
 });
 
 export const unenrollFromCourseAction = enhanceAction(
-  async function (data) {
+  async function (data, user) {
     const client = getSupabaseServerClient();
-    const user = await getCurrentUser(client);
 
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
+    // enhanceAction with auth: true provides the user automatically
 
     // Check if user is enrolled and get enrollment details
     const { data: enrollment, error: enrollmentError } = await client

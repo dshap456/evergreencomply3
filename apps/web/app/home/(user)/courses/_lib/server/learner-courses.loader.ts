@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
-import { getCurrentUser } from '@kit/supabase/get-current-user';
 
 export interface LearnerCourse {
   id: string;
@@ -36,9 +35,11 @@ export interface LearnerCoursesData {
 
 export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
   const client = getSupabaseServerClient();
-  const user = await getCurrentUser(client);
+  
+  // Get current user from Supabase auth
+  const { data: { user }, error: userError } = await client.auth.getUser();
 
-  if (!user) {
+  if (!user || userError) {
     throw new Error('User not authenticated');
   }
 
