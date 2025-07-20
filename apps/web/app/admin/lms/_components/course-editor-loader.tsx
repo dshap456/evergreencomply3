@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Spinner } from '@kit/ui/spinner';
-import { CourseEditorClient } from './course-editor-client';
+import { CourseEditor } from './course-editor';
 import { loadCourseAction } from '../_lib/server/load-course-action';
 
 interface CourseEditorLoaderProps {
@@ -81,10 +81,13 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
   }
 
   return (
-    <CourseEditorClient 
+    <CourseEditor 
       course={courseData.course} 
-      modules={courseData.modules} 
       onBack={onBack} 
+      onSave={(updatedCourse) => {
+        console.log('Course saved from loader:', updatedCourse);
+        // Could add additional logic here if needed
+      }}
     />
   );
 }
