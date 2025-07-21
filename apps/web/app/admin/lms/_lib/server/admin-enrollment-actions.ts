@@ -58,8 +58,7 @@ export const adminEnrollUserAction = enhanceAction(
         user_id: userId,
         course_id: data.courseId,
         enrolled_at: new Date().toISOString(),
-        progress_percentage: 0,
-        status: 'in_progress'
+        progress_percentage: 0
       })
       .select()
       .single();
