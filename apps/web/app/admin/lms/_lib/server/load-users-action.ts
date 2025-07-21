@@ -67,7 +67,11 @@ export const loadUsersAction = enhanceAction(
       const userEnrollmentStats: Record<string, { enrollments: number; completions: number; lastActive: string }> = {};
       
       if (enrollmentStats) {
+        console.log(`📊 LoadUsersAction: Processing ${enrollmentStats.length} enrollment records`);
+        
         enrollmentStats.forEach(enrollment => {
+          console.log(`📝 Processing enrollment: user_id=${enrollment.user_id}, completion=${enrollment.completion_percentage}%`);
+          
           if (!userEnrollmentStats[enrollment.user_id]) {
             userEnrollmentStats[enrollment.user_id] = {
               enrollments: 0,
@@ -88,15 +92,19 @@ export const loadUsersAction = enhanceAction(
             userEnrollmentStats[enrollment.user_id].lastActive = enrollment.created_at;
           }
         });
+        
+        console.log('📊 Enrollment stats by user:', userEnrollmentStats);
       }
 
       // Format user data
       const formattedUsers: UserWithStats[] = accounts.map(account => {
-        const userId = account.primary_owner_user_id;
-        const stats = userEnrollmentStats[userId] || { enrollments: 0, completions: 0, lastActive: account.created_at };
+        const authUserId = account.primary_owner_user_id; // This is the auth.users.id
+        const stats = userEnrollmentStats[authUserId] || { enrollments: 0, completions: 0, lastActive: account.created_at };
+        
+        console.log(`👤 Processing account: ${account.email} (auth_id: ${authUserId}) -> enrollments: ${stats.enrollments}`);
         
         return {
-          id: account.id,
+          id: account.id, // Account ID for display
           name: account.name || 'Unknown User',
           email: account.email || 'No email',
           role: 'learner', // Default role for personal accounts
