@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { UserDetailsDialog } from './user-details-dialog';
+import { loadUsersAction } from '../_lib/server/load-users-action';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Badge } from '@kit/ui/badge';
 import { Input } from '@kit/ui/input';
+import { Spinner } from '@kit/ui/spinner';
+import { toast } from '@kit/ui/sonner';
 import {
   Select,
   SelectContent,
@@ -29,74 +32,29 @@ interface User {
   created_at: string;
 }
 
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@acme.com',
-    role: 'team_manager',
-    account: 'Acme Corp',
-    enrollments: 12,
-    completions: 8,
-    last_active: '2024-01-20',
-    status: 'active',
-    created_at: '2024-01-01'
-  },
-  {
-    id: '2',
-    name: 'Mike Chen',
-    email: 'mike@techstart.io',
-    role: 'learner',
-    account: 'TechStart',
-    enrollments: 5,
-    completions: 3,
-    last_active: '2024-01-19',
-    status: 'active',
-    created_at: '2024-01-05'
-  },
-  {
-    id: '3',
-    name: 'Emma Davis',
-    email: 'emma@freelance.com',
-    role: 'learner',
-    account: 'Personal',
-    enrollments: 8,
-    completions: 6,
-    last_active: '2024-01-18',
-    status: 'active',
-    created_at: '2024-01-10'
-  },
-  {
-    id: '4',
-    name: 'John Smith',
-    email: 'john@bigcorp.com',
-    role: 'team_manager',
-    account: 'BigCorp Inc',
-    enrollments: 20,
-    completions: 12,
-    last_active: '2024-01-15',
-    status: 'inactive',
-    created_at: '2023-12-15'
-  },
-  {
-    id: '5',
-    name: 'Lisa Wong',
-    email: 'lisa@startup.co',
-    role: 'learner',
-    account: 'Startup Co',
-    enrollments: 3,
-    completions: 1,
-    last_active: '2024-01-10',
-    status: 'suspended',
-    created_at: '2024-01-12'
-  }
-];
-
 export function UserManagement() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const userData = await loadUsersAction();
+      setUsers(userData);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      toast.error('Failed to load user data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,6 +91,25 @@ export function UserManagement() {
       default: return role;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">User Management</h2>
+            <p className="text-muted-foreground">Manage users across all accounts and tenants</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex items-center justify-center p-8">
+            <Spinner className="mr-2" />
+            Loading user data...
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
