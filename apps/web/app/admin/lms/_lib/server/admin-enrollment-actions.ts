@@ -16,21 +16,26 @@ export const adminEnrollUserAction = enhanceAction(
 
       console.log('🔄 AdminEnrollUser: Starting enrollment...', data);
 
-      // Find user by email
-      const { data: user, error: userError } = await client.auth.admin.getUserByEmail(data.userEmail);
+      // Find user by email using accounts table
+      const { data: userAccount, error: userError } = await client
+        .from('accounts')
+        .select('primary_owner_user_id, email, name')
+        .eq('email', data.userEmail)
+        .eq('is_personal_account', true)
+        .single();
       
       if (userError) {
         console.error('❌ User lookup error:', userError);
         throw new Error(`User lookup failed: ${userError.message}`);
       }
 
-      if (!user.user) {
+      if (!userAccount) {
         console.log('❌ User not found:', data.userEmail);
         throw new Error(`User not found: ${data.userEmail}`);
       }
 
-      const userId = user.user.id;
-      console.log('✅ Found user:', { id: userId, email: user.user.email });
+      const userId = userAccount.primary_owner_user_id;
+      console.log('✅ Found user:', { id: userId, email: userAccount.email, name: userAccount.name });
 
       // Check if course exists and is published
       const { data: course, error: courseError } = await client
@@ -156,20 +161,12 @@ export const listUsersForEnrollmentAction = enhanceAction(
 // Test enrollment with known test user
 export const testEnrollmentAction = enhanceAction(
   async function (data: { courseId: string }) {
-    const client = getSupabaseServerAdminClient();
     const testUserEmail = 'learner@test.com';
     
     console.log('🔄 Testing enrollment with:', testUserEmail);
 
     try {
-      // Find test user
-      const { data: user, error: userError } = await client.auth.admin.getUserByEmail(testUserEmail);
-      
-      if (userError || !user.user) {
-        throw new Error(`Test user ${testUserEmail} not found. Please run seed file first.`);
-      }
-
-      // Try enrollment
+      // Use the main enrollment action which already handles user lookup properly
       const result = await adminEnrollUserAction({
         userEmail: testUserEmail,
         courseId: data.courseId
