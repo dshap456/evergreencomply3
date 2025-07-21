@@ -66,7 +66,7 @@ export const loadUsersAction = enhanceAction(
         .from('course_enrollments')
         .select(`
           user_id,
-          completion_percentage,
+          progress_percentage,
           created_at
         `);
 
@@ -82,7 +82,7 @@ export const loadUsersAction = enhanceAction(
         console.log(`📊 LoadUsersAction: Processing ${enrollmentStats.length} enrollment records`);
         
         enrollmentStats.forEach(enrollment => {
-          console.log(`📝 Processing enrollment: user_id=${enrollment.user_id}, completion=${enrollment.completion_percentage}%`);
+          console.log(`📝 Processing enrollment: user_id=${enrollment.user_id}, progress=${enrollment.progress_percentage}%`);
           
           if (!userEnrollmentStats[enrollment.user_id]) {
             userEnrollmentStats[enrollment.user_id] = {
@@ -95,7 +95,7 @@ export const loadUsersAction = enhanceAction(
           userEnrollmentStats[enrollment.user_id].enrollments++;
           
           // Consider completed if progress is 100%
-          if (enrollment.completion_percentage >= 100) {
+          if (enrollment.progress_percentage >= 100) {
             userEnrollmentStats[enrollment.user_id].completions++;
           }
 
