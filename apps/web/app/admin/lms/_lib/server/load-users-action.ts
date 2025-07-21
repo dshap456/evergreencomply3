@@ -44,6 +44,18 @@ export const loadUsersAction = enhanceAction(
 
       if (!accounts || accounts.length === 0) {
         console.log('ℹ️ LoadUsersAction: No user accounts found');
+        
+        // Check if there are users in auth.users but no personal accounts
+        const { data: authUsers, error: authError } = await client
+          .from('auth.users')
+          .select('id, email')
+          .limit(5);
+          
+        if (!authError && authUsers && authUsers.length > 0) {
+          console.warn(`⚠️ LoadUsersAction: Found ${authUsers.length} users in auth.users but no personal accounts. This suggests missing personal account records.`);
+          console.warn('💡 LoadUsersAction: Run the fix-missing-personal-accounts.sql script to resolve this.');
+        }
+        
         return [];
       }
 
