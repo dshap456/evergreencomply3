@@ -104,10 +104,58 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
-  const handleStartLesson = (moduleId: string, lessonId: string) => {
-    // TODO: Navigate to lesson viewer
-    console.log('Starting lesson:', { moduleId, lessonId });
-    alert(`Starting lesson: ${lessonId}`);
+  const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Auto-select the first incomplete lesson when course loads
+  useEffect(() => {
+    if (course && !currentLessonId) {
+      const nextLesson = getNextLesson();
+      if (nextLesson) {
+        setCurrentLessonId(nextLesson.lesson.id);
+      }
+    }
+  }, [course, currentLessonId]);
+
+  const handleSelectLesson = (lessonId: string) => {
+    setCurrentLessonId(lessonId);
+    setSidebarOpen(false); // Close sidebar on mobile after selection
+  };
+
+  const getCurrentLesson = () => {
+    for (const module of course?.modules || []) {
+      for (const lesson of module.lessons) {
+        if (lesson.id === currentLessonId) {
+          return { module, lesson };
+        }
+      }
+    }
+    return null;
+  };
+
+  const getNextLessonInSequence = () => {
+    const currentLesson = getCurrentLesson();
+    if (!currentLesson || !course) return null;
+
+    const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
+    course.modules.forEach(module => {
+      module.lessons.forEach(lesson => {
+        allLessons.push({ module, lesson });
+      });
+    });
+
+    const currentIndex = allLessons.findIndex(item => item.lesson.id === currentLessonId);
+    if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
+      return allLessons[currentIndex + 1];
+    }
+    return null;
+  };
+
+  const handleNextLesson = () => {
+    const nextLesson = getNextLessonInSequence();
+    if (nextLesson) {
+      setCurrentLessonId(nextLesson.lesson.id);
+    }
   };
 
   if (loading) {
@@ -147,127 +195,261 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     );
   }
 
-  const nextLesson = getNextLesson();
+  const currentLesson = getCurrentLesson();
 
   return (
-    <div className="space-y-6">
-      {/* Course Header */}
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle className="text-2xl mb-2">{course.title}</CardTitle>
-            {course.description && (
-              <p className="text-gray-600">{course.description}</p>
-            )}
-            <div className="flex items-center gap-4 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-full bg-gray-200 rounded-full h-2 w-32">
+    <div className="flex h-[calc(100vh-200px)] bg-gray-50">
+      {/* Sidebar - Course Navigation */}
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <div>
+              <h2 className="font-semibold text-lg truncate">{course.title}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-24 bg-gray-200 rounded-full h-1.5">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
                     style={{ width: `${course.progress_percentage}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium">{course.progress_percentage}%</span>
+                <span className="text-xs text-gray-600">{course.progress_percentage}%</span>
               </div>
             </div>
+            <Button
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden"
+            >
+              ✕
+            </Button>
           </div>
-        </CardHeader>
-        {nextLesson && (
-          <CardContent>
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                  ▶
-                </div>
-                <div>
-                  <p className="font-medium">Continue Learning</p>
-                  <p className="text-sm text-gray-600">{nextLesson.lesson.title}</p>
-                </div>
-              </div>
-              <Button 
-                onClick={() => handleStartLesson(nextLesson.module.id, nextLesson.lesson.id)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {course.progress_percentage > 0 ? 'Continue' : 'Start'}
-              </Button>
-            </div>
-          </CardContent>
-        )}
-      </Card>
 
-      {/* Course Modules */}
-      <div className="space-y-4">
-        {course.modules.map((module) => (
-          <Card key={module.id}>
-            <CardHeader>
-              <CardTitle className="text-xl flex items-center gap-2">
-                📚 {module.title}
-                <Badge variant="secondary" className="ml-auto">
-                  {module.lessons.filter(l => l.completed).length} / {module.lessons.length} completed
-                </Badge>
-              </CardTitle>
-              {module.description && (
-                <p className="text-gray-600">{module.description}</p>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {module.lessons.map((lesson) => (
-                  <div
-                    key={lesson.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-all cursor-pointer hover:bg-gray-50 ${
-                      lesson.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
-                    }`}
-                    onClick={() => handleStartLesson(module.id, lesson.id)}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+          {/* Course Navigation */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {course.modules.map((module) => (
+              <div key={module.id} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-sm">{module.title}</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {module.lessons.filter(l => l.completed).length}/{module.lessons.length}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  {module.lessons.map((lesson) => (
+                    <button
+                      key={lesson.id}
+                      onClick={() => handleSelectLesson(lesson.id)}
+                      className={`w-full flex items-center gap-3 p-2 text-left rounded-lg transition-all text-sm ${
+                        currentLessonId === lesson.id 
+                          ? 'bg-blue-100 border border-blue-200 text-blue-900' 
+                          : lesson.completed 
+                            ? 'bg-green-50 hover:bg-green-100' 
+                            : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                         lesson.completed ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
                       }`}>
                         {lesson.completed ? '✓' : lesson.order_index}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{lesson.title}</span>
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs ${getContentTypeColor(lesson.content_type)}`}
-                          >
-                            {getContentTypeIcon(lesson.content_type)} {lesson.content_type}
-                          </Badge>
-                          {lesson.is_final_quiz && (
-                            <Badge variant="destructive" className="text-xs">
-                              Final Quiz
-                            </Badge>
-                          )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <span className="truncate font-medium">{lesson.title}</span>
+                          <span className="text-xs">{getContentTypeIcon(lesson.content_type)}</span>
                         </div>
-                        {lesson.description && (
-                          <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
-                        )}
                       </div>
-                    </div>
-                    <div className="text-right">
-                      {lesson.completed ? (
-                        <div className="text-sm text-green-600">
-                          ✓ Complete
-                          {lesson.time_spent > 0 && (
-                            <div className="text-xs text-gray-500">
-                              {Math.floor(lesson.time_spent / 60)}m spent
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <Button variant="ghost" size="sm">
-                          Start →
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Mobile Header */}
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b">
+          <Button
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setSidebarOpen(true)}
+          >
+            ☰ Course Menu
+          </Button>
+          <h1 className="font-medium truncate">{currentLesson?.lesson.title || 'Select a lesson'}</h1>
+        </div>
+
+        {/* Lesson Player */}
+        <div className="flex-1 bg-white">
+          {currentLesson ? (
+            <LessonPlayer 
+              lesson={currentLesson.lesson} 
+              module={currentLesson.module}
+              onNext={handleNextLesson}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-2">Welcome to {course.title}</h2>
+                <p className="text-gray-600 mb-4">Select a lesson from the sidebar to get started</p>
+                <Button onClick={() => setSidebarOpen(true)} className="lg:hidden">
+                  Open Course Menu
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sidebar overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Lesson Player Component
+function LessonPlayer({ 
+  lesson, 
+  module, 
+  onNext 
+}: { 
+  lesson: CourseLesson; 
+  module: CourseModule;
+  onNext: () => void;
+}) {
+  const getContentTypeIcon = (contentType: string) => {
+    switch (contentType) {
+      case 'video': return '🎥';
+      case 'text': return '📝';
+      case 'quiz': return '📊';
+      case 'asset': return '📎';
+      default: return '📄';
+    }
+  };
+
+  const renderLessonContent = () => {
+    switch (lesson.content_type) {
+      case 'video':
+        return (
+          <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
+            {lesson.video_url ? (
+              <video 
+                controls 
+                className="w-full h-full rounded-lg"
+                src={lesson.video_url}
+              >
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="text-white text-center">
+                <div className="text-4xl mb-2">🎥</div>
+                <p>Video content placeholder</p>
+                <p className="text-sm opacity-75">Video URL: {lesson.video_url || 'Not set'}</p>
+              </div>
+            )}
+          </div>
+        );
+        
+      case 'text':
+        return (
+          <div className="prose max-w-none bg-white rounded-lg p-6">
+            <h1>{lesson.title}</h1>
+            {lesson.content ? (
+              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+            ) : (
+              <div>
+                <p>📝 Text lesson content will be displayed here.</p>
+                <p className="text-gray-500">Content: {lesson.content || 'No content set'}</p>
+              </div>
+            )}
+          </div>
+        );
+        
+      case 'quiz':
+        return (
+          <div className="bg-white rounded-lg p-6 text-center">
+            <div className="text-4xl mb-4">📊</div>
+            <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
+            <p className="text-gray-600 mb-4">Quiz content will be rendered here</p>
+            {lesson.is_final_quiz && (
+              <Badge variant="destructive" className="mb-4">Final Quiz</Badge>
+            )}
+            <p className="text-sm text-gray-500">Quiz implementation coming soon...</p>
+          </div>
+        );
+        
+      case 'asset':
+        return (
+          <div className="bg-white rounded-lg p-6 text-center">
+            <div className="text-4xl mb-4">📎</div>
+            <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
+            <p className="text-gray-600 mb-4">Asset content</p>
+            {lesson.asset_url && (
+              <a 
+                href={lesson.asset_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"
+              >
+                📎 Download Asset
+              </a>
+            )}
+          </div>
+        );
+        
+      default:
+        return (
+          <div className="bg-white rounded-lg p-6 text-center">
+            <div className="text-4xl mb-4">📄</div>
+            <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
+            <p className="text-gray-600">Unknown content type: {lesson.content_type}</p>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Lesson Header */}
+      <div className="bg-white border-b p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">{getContentTypeIcon(lesson.content_type)}</span>
+              <div>
+                <h1 className="text-xl font-bold">{lesson.title}</h1>
+                <p className="text-sm text-gray-600">{module.title}</p>
+              </div>
+            </div>
+            {lesson.description && (
+              <p className="text-gray-700 mt-2">{lesson.description}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {lesson.completed && (
+              <Badge variant="secondary" className="bg-green-100 text-green-800">
+                ✓ Completed
+              </Badge>
+            )}
+            <Button onClick={onNext} variant="default">
+              Next Lesson →
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Lesson Content */}
+      <div className="flex-1 p-6 bg-gray-50">
+        {renderLessonContent()}
       </div>
     </div>
   );
