@@ -9,7 +9,7 @@ import { withI18n } from '~/lib/i18n/with-i18n';
 
 import { HomeLayoutPageHeader } from '../../_components/home-page-header';
 import { CourseViewerMinimal } from './_components/course-viewer-minimal';
-import { loadLearnerCourseDetails } from './_lib/server/learner-course-details.loader';
+// import { loadLearnerCourseDetails } from './_lib/server/learner-course-details.loader';
 
 interface LearnerCoursePageProps {
   params: Promise<{ courseId: string }>;
@@ -19,16 +19,10 @@ export const generateMetadata = async ({ params }: LearnerCoursePageProps) => {
   const { courseId } = use(params);
   const i18n = await createI18nServerInstance();
   
-  try {
-    const course = await loadLearnerCourseDetails(courseId);
-    return {
-      title: course.title,
-    };
-  } catch {
-    return {
-      title: i18n.t('courses:learner.courseNotFound'),
-    };
-  }
+  // Temporarily bypass the problematic loader
+  return {
+    title: `Debug Course ${courseId}`,
+  };
 };
 
 function LearnerCoursePage({ params }: LearnerCoursePageProps) {
@@ -37,7 +31,7 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   return (
     <>
       <HomeLayoutPageHeader
-        title={<CoursePageHeader courseId={courseId} />}
+        title={`Debug Course: ${courseId}`}
         description={<Trans i18nKey={'courses:learner.courseViewDescription'} />}
       />
 
@@ -48,13 +42,14 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   );
 }
 
-async function CoursePageHeader({ courseId }: { courseId: string }) {
-  try {
-    const course = await loadLearnerCourseDetails(courseId);
-    return <span>{course.title}</span>;
-  } catch {
-    return <Trans i18nKey={'courses:learner.courseNotFound'} />;
-  }
-}
+// Temporarily removed - was causing the error
+// async function CoursePageHeader({ courseId }: { courseId: string }) {
+//   try {
+//     const course = await loadLearnerCourseDetails(courseId);
+//     return <span>{course.title}</span>;
+//   } catch {
+//     return <Trans i18nKey={'courses:learner.courseNotFound'} />;
+//   }
+// }
 
 export default withI18n(LearnerCoursePage);
