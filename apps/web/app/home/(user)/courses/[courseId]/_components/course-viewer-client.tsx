@@ -317,7 +317,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b">
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white">
           <Button
             variant="ghost" 
             size="sm" 
@@ -465,7 +465,7 @@ function LessonPlayer({
   return (
     <div className="h-full flex flex-col">
       {/* Lesson Header */}
-      <div className="bg-white border-b p-4">
+      <div className="bg-white p-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
