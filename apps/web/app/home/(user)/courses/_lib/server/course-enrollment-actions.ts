@@ -19,9 +19,9 @@ export const enrollInCourseAction = enhanceAction(
     // Check if course exists and is published
     const { data: course, error: courseError } = await client
       .from('courses')
-      .select('id, title, status')
+      .select('id, title, is_published')
       .eq('id', data.courseId)
-      .eq('status', 'published')
+      .eq('is_published', true)
       .single();
 
     if (courseError || !course) {
@@ -30,7 +30,7 @@ export const enrollInCourseAction = enhanceAction(
 
     // Check if user is already enrolled
     const { data: existingEnrollment, error: enrollmentCheckError } = await client
-      .from('course_progress')
+      .from('course_enrollments')
       .select('id')
       .eq('user_id', user.id)
       .eq('course_id', data.courseId)
@@ -46,14 +46,12 @@ export const enrollInCourseAction = enhanceAction(
 
     // Create enrollment record
     const { error: enrollmentError } = await client
-      .from('course_progress')
+      .from('course_enrollments')
       .insert({
         user_id: user.id,
         course_id: data.courseId,
         progress_percentage: 0,
-        status: 'in_progress',
-        completed_modules: 0,
-        completed_lessons: 0,
+        enrolled_at: new Date().toISOString(),
       });
 
     if (enrollmentError) {
@@ -86,7 +84,7 @@ export const unenrollFromCourseAction = enhanceAction(
 
     // Check if user is enrolled and get enrollment details
     const { data: enrollment, error: enrollmentError } = await client
-      .from('course_progress')
+      .from('course_enrollments')
       .select('id, completed_at')
       .eq('user_id', user.id)
       .eq('course_id', data.courseId)
@@ -103,7 +101,7 @@ export const unenrollFromCourseAction = enhanceAction(
 
     // Delete enrollment record
     const { error: deleteError } = await client
-      .from('course_progress')
+      .from('course_enrollments')
       .delete()
       .eq('id', enrollment.id);
 
