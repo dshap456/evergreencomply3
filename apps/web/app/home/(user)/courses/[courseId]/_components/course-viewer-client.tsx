@@ -22,6 +22,9 @@ interface CourseLesson {
   is_final_quiz: boolean;
   completed: boolean;
   time_spent: number;
+  is_locked?: boolean;
+  video_progress?: number;
+  quiz_score?: number;
 }
 
 interface CourseModule {
@@ -58,7 +61,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const result = await response.json();
       
       if (result.success) {
-        setCourse(result.course);
+        // Process lessons to determine locked state
+        const processedCourse = processLessonLockStates(result.course);
+        setCourse(processedCourse);
       } else {
         setError(result.error || 'Failed to load course data');
       }
@@ -67,6 +72,51 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const processLessonLockStates = (courseData: CourseData): CourseData => {
+    let previousLessonCompleted = true;
+    
+    const processedModules = courseData.modules.map(module => {
+      const processedLessons = module.lessons.map(lesson => {
+        // First lesson is always unlocked, others depend on previous completion
+        const isLocked = !previousLessonCompleted;
+        
+        // Check if lesson meets completion criteria
+        let isFullyCompleted = false;
+        if (lesson.content_type === 'video') {
+          // Videos need 95% completion
+          isFullyCompleted = lesson.completed && (lesson.video_progress || 0) >= 95;
+        } else if (lesson.content_type === 'quiz') {
+          // Quizzes need 80% score
+          isFullyCompleted = lesson.completed && (lesson.quiz_score || 0) >= 80;
+        } else {
+          // Other content types just need to be marked complete
+          isFullyCompleted = lesson.completed;
+        }
+        
+        // Update previous lesson completed state for next iteration
+        if (!isLocked) {
+          previousLessonCompleted = isFullyCompleted;
+        }
+        
+        return {
+          ...lesson,
+          is_locked: isLocked,
+          completed: isFullyCompleted
+        };
+      });
+      
+      return {
+        ...module,
+        lessons: processedLessons
+      };
+    });
+    
+    return {
+      ...courseData,
+      modules: processedModules
+    };
   };
 
   useEffect(() => {
@@ -96,7 +146,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const getNextLesson = () => {
     for (const module of course?.modules || []) {
       for (const lesson of module.lessons) {
-        if (!lesson.completed) {
+        if (!lesson.completed && !lesson.is_locked) {
           return { module, lesson };
         }
       }
@@ -119,6 +169,16 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   }, [course, currentLessonId]);
 
   const handleSelectLesson = (lessonId: string) => {
+    // Find the lesson to check if it's locked
+    const lesson = course?.modules
+      .flatMap(m => m.lessons)
+      .find(l => l.id === lessonId);
+    
+    if (lesson?.is_locked) {
+      // Don't allow selecting locked lessons
+      return;
+    }
+    
     setCurrentLessonId(lessonId);
     setSidebarOpen(false); // Close sidebar on mobile after selection
   };
@@ -147,7 +207,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
     const currentIndex = allLessons.findIndex(item => item.lesson.id === currentLessonId);
     if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
-      return allLessons[currentIndex + 1];
+      const nextLesson = allLessons[currentIndex + 1];
+      // Only return the next lesson if it's not locked
+      return nextLesson.lesson.is_locked ? null : nextLesson;
     }
     return null;
   };
@@ -256,16 +318,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                     <button
                       key={lesson.id}
                       onClick={() => handleSelectLesson(lesson.id)}
+                      disabled={lesson.is_locked}
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                        currentLessonId === lesson.id 
-                          ? 'bg-blue-600 text-white' 
-                          : lesson.completed 
-                            ? 'bg-green-600 text-white' 
-                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                        lesson.is_locked
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : currentLessonId === lesson.id 
+                            ? 'bg-blue-600 text-white' 
+                            : lesson.completed 
+                              ? 'bg-green-600 text-white' 
+                              : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                       }`}
-                      title={`${lesson.title} (${module.title})`}
+                      title={`${lesson.title} (${module.title})${lesson.is_locked ? ' - Locked' : ''}`}
                     >
-                      {lesson.completed ? '✓' : lesson.order_index}
+                      {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : lesson.order_index}
                     </button>
                   ))
                 )}
@@ -285,24 +350,36 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                       <button
                         key={lesson.id}
                         onClick={() => handleSelectLesson(lesson.id)}
+                        disabled={lesson.is_locked}
                         className={`w-full flex items-center gap-3 p-2 text-left rounded-lg transition-all text-sm ${
-                          currentLessonId === lesson.id 
-                            ? 'bg-blue-100 border border-blue-200 text-blue-900' 
-                            : lesson.completed 
-                              ? 'bg-green-50 hover:bg-green-100' 
-                              : 'hover:bg-gray-100'
+                          lesson.is_locked
+                            ? 'bg-gray-100 opacity-50 cursor-not-allowed'
+                            : currentLessonId === lesson.id 
+                              ? 'bg-blue-100 border border-blue-200 text-blue-900' 
+                              : lesson.completed 
+                                ? 'bg-green-50 hover:bg-green-100' 
+                                : 'hover:bg-gray-100'
                         }`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          lesson.completed ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+                          lesson.is_locked 
+                            ? 'bg-gray-300 text-gray-500' 
+                            : lesson.completed 
+                              ? 'bg-green-600 text-white' 
+                              : 'bg-gray-200 text-gray-600'
                         }`}>
-                          {lesson.completed ? '✓' : lesson.order_index}
+                          {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : lesson.order_index}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1">
-                            <span className="truncate font-medium">{lesson.title}</span>
+                            <span className={`truncate font-medium ${lesson.is_locked ? 'text-gray-500' : ''}`}>
+                              {lesson.title}
+                            </span>
                             <span className="text-xs">{getContentTypeIcon(lesson.content_type)}</span>
                           </div>
+                          {lesson.is_locked && (
+                            <p className="text-xs text-gray-500 mt-0.5">Complete previous lesson to unlock</p>
+                          )}
                         </div>
                       </button>
                     ))}
@@ -335,6 +412,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
               lesson={currentLesson.lesson} 
               module={currentLesson.module}
               onNext={handleNextLesson}
+              hasNextLesson={!!getNextLessonInSequence()}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -365,11 +443,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 function LessonPlayer({ 
   lesson, 
   module, 
-  onNext 
+  onNext,
+  hasNextLesson 
 }: { 
   lesson: CourseLesson; 
   module: CourseModule;
   onNext: () => void;
+  hasNextLesson: boolean;
 }) {
   const getContentTypeIcon = (contentType: string) => {
     switch (contentType) {
@@ -485,8 +565,12 @@ function LessonPlayer({
                 ✓ Completed
               </Badge>
             )}
-            <Button onClick={onNext} variant="default">
-              Next Lesson →
+            <Button 
+              onClick={onNext} 
+              variant="default"
+              disabled={!hasNextLesson}
+            >
+              {hasNextLesson ? 'Next Lesson →' : 'Course Complete'}
             </Button>
           </div>
         </div>
