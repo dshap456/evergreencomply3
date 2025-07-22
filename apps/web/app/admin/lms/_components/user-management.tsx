@@ -38,6 +38,7 @@ export function UserManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -51,7 +52,17 @@ export function UserManagement() {
       console.log('✅ UserManagement: Loaded users:', userData);
       console.log('📊 UserManagement: User count:', userData.length);
       console.log('📊 UserManagement: Users with enrollments:', userData.filter(u => u.enrollments > 0).length);
+      
+      // Look for the specific user we know has enrollments
+      const davidUser = userData.find(u => u.email === 'davidbannon010@gmail.com');
+      if (davidUser) {
+        console.log('🔍 Found davidbannon010@gmail.com:', davidUser);
+      } else {
+        console.log('❌ davidbannon010@gmail.com not found in user data!');
+      }
+      
       setUsers(userData);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('❌ UserManagement: Failed to load users:', error);
       toast.error('Failed to load user data');
@@ -123,7 +134,17 @@ export function UserManagement() {
           <h2 className="text-2xl font-bold">User Management</h2>
           <p className="text-muted-foreground">Manage users across all accounts and tenants</p>
         </div>
-        <Button>+ Invite User</Button>
+        <div className="flex items-center gap-2">
+          {lastRefresh && (
+            <span className="text-xs text-muted-foreground">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </span>
+          )}
+          <Button variant="outline" onClick={loadUsers} disabled={loading}>
+            🔄 Refresh
+          </Button>
+          <Button>+ Invite User</Button>
+        </div>
       </div>
 
       {/* Stats Overview */}
