@@ -71,8 +71,15 @@ export const loadUsersAction = enhanceAction(
         `);
 
       if (enrollmentError) {
-        console.warn('⚠️ LoadUsersAction: Error loading enrollment stats:', enrollmentError);
+        console.error('❌ LoadUsersAction: Error loading enrollment stats:', enrollmentError);
+        console.error('❌ LoadUsersAction: Enrollment error details:', {
+          message: enrollmentError.message,
+          code: enrollmentError.code,
+          details: enrollmentError.details
+        });
         // Continue without enrollment data
+      } else {
+        console.log(`✅ LoadUsersAction: Successfully loaded ${enrollmentStats?.length || 0} enrollment records`);
       }
 
       // Process enrollment stats
@@ -106,6 +113,16 @@ export const loadUsersAction = enhanceAction(
         });
         
         console.log('📊 Enrollment stats by user:', userEnrollmentStats);
+        
+        // Check specifically for david's enrollment
+        const davidEnrollment = enrollmentStats.find(e => e.user_id === '1b66279f-f6eb-439b-8312-540e7d294518');
+        if (davidEnrollment) {
+          console.log('🔍 Found davidbannon010 enrollment:', davidEnrollment);
+        } else {
+          console.log('❌ No enrollment found for davidbannon010 (user_id: 1b66279f-f6eb-439b-8312-540e7d294518)');
+        }
+      } else {
+        console.log('⚠️ LoadUsersAction: No enrollment stats to process');
       }
 
       // Format user data
@@ -114,6 +131,15 @@ export const loadUsersAction = enhanceAction(
         const stats = userEnrollmentStats[authUserId] || { enrollments: 0, completions: 0, lastActive: account.created_at };
         
         console.log(`👤 Processing account: ${account.email} (auth_id: ${authUserId}) -> enrollments: ${stats.enrollments}`);
+        
+        // Special check for david
+        if (account.email === 'davidbannon010@gmail.com') {
+          console.log('🔍 David account processing:', {
+            authUserId,
+            hasStatsInMap: authUserId in userEnrollmentStats,
+            stats
+          });
+        }
         
         return {
           id: account.id, // Account ID for display
