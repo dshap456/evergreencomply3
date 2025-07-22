@@ -46,10 +46,14 @@ export function UserManagement() {
   const loadUsers = async () => {
     try {
       setLoading(true);
+      console.log('🔄 UserManagement: Loading users...');
       const userData = await loadUsersAction();
+      console.log('✅ UserManagement: Loaded users:', userData);
+      console.log('📊 UserManagement: User count:', userData.length);
+      console.log('📊 UserManagement: Users with enrollments:', userData.filter(u => u.enrollments > 0).length);
       setUsers(userData);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      console.error('❌ UserManagement: Failed to load users:', error);
       toast.error('Failed to load user data');
     } finally {
       setLoading(false);
