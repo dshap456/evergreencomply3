@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Spinner } from '@kit/ui/spinner';
 import { Button } from '@kit/ui/button';
@@ -488,18 +488,14 @@ function LessonPlayer({
         return (
           <div className="aspect-video bg-black flex items-center justify-center">
             <div className="w-full h-full relative">
-              <video 
-                controls 
-                className="w-full h-full"
+              <VideoPlayer 
                 src={videoUrl}
-              >
-                Your browser does not support the video tag.
-              </video>
-              {isPlaceholderVideo && (
-                <div className="absolute top-4 left-4 bg-yellow-500 text-black px-2 py-1 rounded text-xs">
-                  Sample Video - Content Not Yet Uploaded
-                </div>
-              )}
+                isPlaceholder={isPlaceholderVideo}
+                onProgress={(progress) => {
+                  // TODO: Track video progress for completion requirements
+                  console.log('Video progress:', progress);
+                }}
+              />
             </div>
           </div>
         );
@@ -599,6 +595,175 @@ function LessonPlayer({
       {/* Lesson Content */}
       <div className="flex-1 p-6 bg-gray-50">
         {renderLessonContent()}
+      </div>
+    </div>
+  );
+}
+
+// Custom Video Player Component that prevents fast-forwarding
+function VideoPlayer({ 
+  src, 
+  isPlaceholder,
+  onProgress 
+}: { 
+  src: string; 
+  isPlaceholder: boolean;
+  onProgress: (progress: number) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [maxWatchedTime, setMaxWatchedTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      const current = video.currentTime;
+      setCurrentTime(current);
+      
+      // Update max watched time only if moving forward
+      if (current > maxWatchedTime) {
+        setMaxWatchedTime(current);
+      }
+      
+      // Calculate and report progress
+      if (duration > 0) {
+        const progress = (maxWatchedTime / duration) * 100;
+        onProgress(progress);
+      }
+    };
+
+    const handleSeeking = () => {
+      const current = video.currentTime;
+      
+      // Prevent seeking beyond the maximum watched time (plus a small buffer for rewind)
+      if (current > maxWatchedTime + 1) {
+        video.currentTime = maxWatchedTime;
+        return;
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('seeking', handleSeeking);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('seeking', handleSeeking);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+    };
+  }, [maxWatchedTime, duration, onProgress]);
+
+  const handleRewind = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = Math.max(0, video.currentTime - 10);
+    }
+  };
+
+  const togglePlayPause = () => {
+    const video = videoRef.current;
+    if (video) {
+      if (isPlaying) {
+        video.pause();
+      } else {
+        video.play();
+      }
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const maxProgressPercentage = duration > 0 ? (maxWatchedTime / duration) * 100 : 0;
+
+  return (
+    <div className="w-full h-full relative bg-black">
+      <video 
+        ref={videoRef}
+        className="w-full h-full"
+        src={src}
+        onContextMenu={(e) => e.preventDefault()} // Disable right-click menu
+      >
+        Your browser does not support the video tag.
+      </video>
+      
+      {/* Custom Controls Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+        {/* Progress Bar */}
+        <div className="mb-3">
+          <div className="w-full bg-gray-600 rounded-full h-1 relative">
+            {/* Max watched progress (gray) */}
+            <div 
+              className="bg-gray-400 h-1 rounded-full absolute top-0 left-0"
+              style={{ width: `${maxProgressPercentage}%` }}
+            />
+            {/* Current progress (blue) */}
+            <div 
+              className="bg-blue-500 h-1 rounded-full absolute top-0 left-0"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
+        
+        {/* Control Buttons */}
+        <div className="flex items-center justify-between text-white">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRewind}
+              className="text-white hover:bg-white/20 p-2"
+              title="Rewind 10 seconds"
+            >
+              ⏪
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={togglePlayPause}
+              className="text-white hover:bg-white/20 p-2"
+              title={isPlaying ? "Pause" : "Play"}
+            >
+              {isPlaying ? '⏸️' : '▶️'}
+            </Button>
+          </div>
+          
+          <div className="text-sm">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+        </div>
+      </div>
+      
+      {/* Placeholder indicator */}
+      {isPlaceholder && (
+        <div className="absolute top-4 left-4 bg-yellow-500 text-black px-2 py-1 rounded text-xs">
+          Sample Video - Content Not Yet Uploaded
+        </div>
+      )}
+      
+      {/* Progress indicator */}
+      <div className="absolute top-4 right-4 bg-black/60 text-white px-2 py-1 rounded text-xs">
+        {Math.round(maxProgressPercentage)}% watched
       </div>
     </div>
   );
