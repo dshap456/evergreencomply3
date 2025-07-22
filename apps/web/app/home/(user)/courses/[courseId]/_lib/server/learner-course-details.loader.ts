@@ -49,7 +49,7 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     throw new Error('User not authenticated');
   }
 
-  // Get enrollment info
+  // Get enrollment info with course data
   const { data: enrollment, error: enrollmentError } = await client
     .from('course_enrollments')
     .select(`
@@ -58,7 +58,7 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
       enrolled_at,
       completed_at,
       final_score,
-      course:courses!inner (
+      courses!inner (
         id,
         title,
         description,
@@ -67,7 +67,6 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     `)
     .eq('user_id', user.id)
     .eq('course_id', courseId)
-    .eq('courses.is_published', true)
     .single();
 
   if (enrollmentError || !enrollment) {
@@ -166,10 +165,15 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
       })
   }));
 
+  // Check if course is published
+  if (!enrollment.courses.is_published) {
+    throw new Error('Course is not published');
+  }
+
   return {
-    id: enrollment.course.id,
-    title: enrollment.course.title,
-    description: enrollment.course.description || '',
+    id: enrollment.courses.id,
+    title: enrollment.courses.title,
+    description: enrollment.courses.description || '',
     enrollment_id: enrollment.id,
     progress_percentage: enrollment.progress_percentage || 0,
     enrolled_at: enrollment.enrolled_at,
