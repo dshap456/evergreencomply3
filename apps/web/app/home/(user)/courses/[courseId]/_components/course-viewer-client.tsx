@@ -198,7 +198,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const currentLesson = getCurrentLesson();
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-gray-50 -mx-6">
+    <div className="flex h-[calc(100vh-64px)] bg-gray-50 absolute inset-0 top-16">
       {/* Sidebar - Course Navigation */}
       <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="flex flex-col h-full">
