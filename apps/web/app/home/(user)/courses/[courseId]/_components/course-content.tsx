@@ -6,6 +6,7 @@ import { Progress } from '@kit/ui/progress';
 import { Trans } from '@kit/ui/trans';
 
 import { loadLearnerCourseDetails } from '../_lib/server/learner-course-details.loader';
+import { CourseLearningInterface } from './course-learning-interface';
 
 interface CourseContentProps {
   courseId: string;
@@ -86,20 +87,9 @@ export async function CourseContent({ courseId }: CourseContentProps) {
             </div>
           </div>
           
-          {/* Course Content Placeholder */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">
-              <Trans i18nKey="courses:learner.courseContent" />
-            </h3>
-            
-            <div className="p-8 text-center border-2 border-dashed border-muted-foreground/20 rounded-lg">
-              <p className="text-muted-foreground">
-                Lesson viewer will be implemented here
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                This will show the current lesson content based on navigation selection
-              </p>
-            </div>
+          {/* Interactive Learning Interface */}
+          <div className="mt-6">
+            <CourseLearningInterface course={course} />
           </div>
         </CardContent>
       </Card>
