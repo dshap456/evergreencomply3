@@ -180,18 +180,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json({ 
         success: true,
-        message: "All processing completed successfully!",
-        data: {
-          modules_count: modules?.length || 0,
-          lessons_count: lessons?.length || 0,
-          progress_records: lessonProgress?.length || 0,
-          formatted_modules_count: formattedModules.length
-        },
-        sample_result: {
-          course_id: finalResult.id,
-          course_title: finalResult.title,
-          first_module: formattedModules[0] || null
-        }
+        course: finalResult
       });
 
     } catch (processingError) {

@@ -4,25 +4,49 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Spinner } from '@kit/ui/spinner';
 import { Button } from '@kit/ui/button';
+import { Badge } from '@kit/ui/badge';
 
 interface CourseViewerClientProps {
   courseId: string;
 }
 
+interface CourseLesson {
+  id: string;
+  title: string;
+  description: string;
+  content_type: 'video' | 'text' | 'quiz' | 'asset';
+  order_index: number;
+  video_url: string | null;
+  content: string | null;
+  asset_url: string | null;
+  is_final_quiz: boolean;
+  completed: boolean;
+  time_spent: number;
+}
+
+interface CourseModule {
+  id: string;
+  title: string;
+  description: string;
+  order_index: number;
+  lessons: CourseLesson[];
+}
+
 interface CourseData {
+  id: string;
+  title: string;
+  description: string;
   enrollment_id: string;
-  progress: number;
-  course_id: string;
-  course_title: string;
-  is_published: boolean;
-  modules_count: number;
-  lessons_count: number;
-  progress_records: number;
+  progress_percentage: number;
+  enrolled_at: string;
+  completed_at: string | null;
+  final_score: number | null;
+  modules: CourseModule[];
 }
 
 export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<CourseData | null>(null);
+  const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const loadCourseData = async () => {
@@ -34,7 +58,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const result = await response.json();
       
       if (result.success) {
-        setData(result.data);
+        setCourse(result.course);
       } else {
         setError(result.error || 'Failed to load course data');
       }
@@ -49,13 +73,50 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     loadCourseData();
   }, [courseId]);
 
+  const getContentTypeIcon = (contentType: string) => {
+    switch (contentType) {
+      case 'video': return '🎥';
+      case 'text': return '📝';
+      case 'quiz': return '📊';
+      case 'asset': return '📎';
+      default: return '📄';
+    }
+  };
+
+  const getContentTypeColor = (contentType: string) => {
+    switch (contentType) {
+      case 'video': return 'bg-blue-100 text-blue-800';
+      case 'text': return 'bg-green-100 text-green-800';
+      case 'quiz': return 'bg-purple-100 text-purple-800';
+      case 'asset': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getNextLesson = () => {
+    for (const module of course?.modules || []) {
+      for (const lesson of module.lessons) {
+        if (!lesson.completed) {
+          return { module, lesson };
+        }
+      }
+    }
+    return null;
+  };
+
+  const handleStartLesson = (moduleId: string, lessonId: string) => {
+    // TODO: Navigate to lesson viewer
+    console.log('Starting lesson:', { moduleId, lessonId });
+    alert(`Starting lesson: ${lessonId}`);
+  };
+
   if (loading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
           <div className="flex items-center gap-3">
             <Spinner className="h-5 w-5" />
-            <span>Loading course...</span>
+            <span>Loading course content...</span>
           </div>
         </CardContent>
       </Card>
@@ -76,7 +137,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     );
   }
 
-  if (!data) {
+  if (!course) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
@@ -86,94 +147,128 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     );
   }
 
+  const nextLesson = getNextLesson();
+
   return (
     <div className="space-y-6">
       {/* Course Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            📚 {data.course_title}
-            {data.is_published && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                Published
-              </span>
+          <div>
+            <CardTitle className="text-2xl mb-2">{course.title}</CardTitle>
+            {course.description && (
+              <p className="text-gray-600">{course.description}</p>
             )}
-          </CardTitle>
+            <div className="flex items-center gap-4 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-full bg-gray-200 rounded-full h-2 w-32">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${course.progress_percentage}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium">{course.progress_percentage}%</span>
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{data.progress}%</div>
-              <div className="text-sm text-gray-500">Progress</div>
+        {nextLesson && (
+          <CardContent>
+            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                  ▶
+                </div>
+                <div>
+                  <p className="font-medium">Continue Learning</p>
+                  <p className="text-sm text-gray-600">{nextLesson.lesson.title}</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => handleStartLesson(nextLesson.module.id, nextLesson.lesson.id)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {course.progress_percentage > 0 ? 'Continue' : 'Start'}
+              </Button>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{data.modules_count}</div>
-              <div className="text-sm text-gray-500">Modules</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">{data.lessons_count}</div>
-              <div className="text-sm text-gray-500">Lessons</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">{data.progress_records}</div>
-              <div className="text-sm text-gray-500">Completed</div>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button className="flex-1">
-              {data.progress > 0 ? 'Continue Learning' : 'Start Course'}
-            </Button>
-            <Button variant="outline">
-              View Syllabus
-            </Button>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
-      {/* Course Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">📊 Your Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span>Overall Progress</span>
-              <span>{data.progress}% Complete</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${data.progress}%` }}
-              />
-            </div>
-            <p className="text-sm text-gray-600">
-              {data.progress === 0 
-                ? "Ready to start your learning journey!"
-                : `Keep going! You're making great progress.`
-              }
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Debug Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">🔍 Course Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="font-medium">Course ID:</span> {data.course_id}
-            </div>
-            <div>
-              <span className="font-medium">Enrollment ID:</span> {data.enrollment_id}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Course Modules */}
+      <div className="space-y-4">
+        {course.modules.map((module) => (
+          <Card key={module.id}>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                📚 {module.title}
+                <Badge variant="secondary" className="ml-auto">
+                  {module.lessons.filter(l => l.completed).length} / {module.lessons.length} completed
+                </Badge>
+              </CardTitle>
+              {module.description && (
+                <p className="text-gray-600">{module.description}</p>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {module.lessons.map((lesson) => (
+                  <div
+                    key={lesson.id}
+                    className={`flex items-center justify-between p-4 rounded-lg border transition-all cursor-pointer hover:bg-gray-50 ${
+                      lesson.completed ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+                    }`}
+                    onClick={() => handleStartLesson(module.id, lesson.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        lesson.completed ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {lesson.completed ? '✓' : lesson.order_index}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{lesson.title}</span>
+                          <Badge 
+                            variant="secondary" 
+                            className={`text-xs ${getContentTypeColor(lesson.content_type)}`}
+                          >
+                            {getContentTypeIcon(lesson.content_type)} {lesson.content_type}
+                          </Badge>
+                          {lesson.is_final_quiz && (
+                            <Badge variant="destructive" className="text-xs">
+                              Final Quiz
+                            </Badge>
+                          )}
+                        </div>
+                        {lesson.description && (
+                          <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {lesson.completed ? (
+                        <div className="text-sm text-green-600">
+                          ✓ Complete
+                          {lesson.time_spent > 0 && (
+                            <div className="text-xs text-gray-500">
+                              {Math.floor(lesson.time_spent / 60)}m spent
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <Button variant="ghost" size="sm">
+                          Start →
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
