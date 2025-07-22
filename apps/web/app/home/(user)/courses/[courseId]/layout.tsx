@@ -39,7 +39,7 @@ export default function CourseLayout({ children }: { children: React.ReactNode }
           display: none;
         }
         
-        /* Keep icons visible */
+        /* Keep icons visible and centered */
         .course-view-active [data-sidebar="sidebar"] svg {
           margin: 0 auto;
         }
@@ -47,6 +47,21 @@ export default function CourseLayout({ children }: { children: React.ReactNode }
         /* Adjust main content area to use more space */
         .course-view-active main {
           margin-left: 3rem !important;
+        }
+        
+        /* Disable hover effects on collapsed sidebar items */
+        .course-view-active [data-sidebar="sidebar"] a:hover,
+        .course-view-active [data-sidebar="sidebar"] button:hover {
+          background-color: transparent !important;
+          color: inherit !important;
+        }
+        
+        /* Optional: Add subtle hover effect just for the icons */
+        .course-view-active [data-sidebar="sidebar"] a:hover svg,
+        .course-view-active [data-sidebar="sidebar"] button:hover svg {
+          opacity: 0.7;
+          transform: scale(1.1);
+          transition: all 0.2s ease;
         }
       `}</style>
       {children}
