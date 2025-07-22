@@ -15,26 +15,7 @@ interface LearnerCoursePageProps {
   params: Promise<{ courseId: string }>;
 }
 
-export const generateMetadata = async ({ params }: LearnerCoursePageProps) => {
-  const { courseId } = use(params);
-  const i18n = await createI18nServerInstance();
-  
-  // Temporarily disable to isolate error
-  return {
-    title: 'Course Page',
-  };
-  
-  // try {
-  //   const course = await loadLearnerCourseDetails(courseId);
-  //   return {
-  //     title: course.title,
-  //   };
-  // } catch {
-  //   return {
-  //     title: i18n.t('courses:learner.courseNotFound'),
-  //   };
-  // }
-};
+// Completely removed generateMetadata to isolate error
 
 function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   const { courseId } = use(params);
@@ -42,8 +23,8 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   return (
     <>
       <HomeLayoutPageHeader
-        title={<Trans i18nKey={'courses:learner.courseView'} />}
-        description={<Trans i18nKey={'courses:learner.courseViewDescription'} />}
+        title="Course View"
+        description="View your course content and progress"
       />
 
       <PageBody>
@@ -68,4 +49,4 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
 //   }
 // }
 
-export default withI18n(LearnerCoursePage);
+export default LearnerCoursePage;
