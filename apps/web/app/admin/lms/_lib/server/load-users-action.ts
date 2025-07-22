@@ -67,7 +67,7 @@ export const loadUsersAction = enhanceAction(
         .select(`
           user_id,
           progress_percentage,
-          created_at
+          enrolled_at
         `);
 
       if (enrollmentError) {
@@ -95,7 +95,7 @@ export const loadUsersAction = enhanceAction(
             userEnrollmentStats[enrollment.user_id] = {
               enrollments: 0,
               completions: 0,
-              lastActive: enrollment.created_at
+              lastActive: enrollment.enrolled_at
             };
           }
           
@@ -107,8 +107,8 @@ export const loadUsersAction = enhanceAction(
           }
 
           // Track most recent activity
-          if (new Date(enrollment.created_at) > new Date(userEnrollmentStats[enrollment.user_id].lastActive)) {
-            userEnrollmentStats[enrollment.user_id].lastActive = enrollment.created_at;
+          if (new Date(enrollment.enrolled_at) > new Date(userEnrollmentStats[enrollment.user_id].lastActive)) {
+            userEnrollmentStats[enrollment.user_id].lastActive = enrollment.enrolled_at;
           }
         });
         
