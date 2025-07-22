@@ -214,6 +214,20 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
+  const isLastLesson = () => {
+    if (!course || !currentLessonId) return false;
+    
+    const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
+    course.modules.forEach(module => {
+      module.lessons.forEach(lesson => {
+        allLessons.push({ module, lesson });
+      });
+    });
+    
+    const currentIndex = allLessons.findIndex(item => item.lesson.id === currentLessonId);
+    return currentIndex === allLessons.length - 1;
+  };
+
   const handleNextLesson = () => {
     const nextLesson = getNextLessonInSequence();
     if (nextLesson) {
@@ -413,6 +427,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
               module={currentLesson.module}
               onNext={handleNextLesson}
               hasNextLesson={!!getNextLessonInSequence()}
+              isLastLesson={isLastLesson()}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -444,12 +459,14 @@ function LessonPlayer({
   lesson, 
   module, 
   onNext,
-  hasNextLesson 
+  hasNextLesson,
+  isLastLesson 
 }: { 
   lesson: CourseLesson; 
   module: CourseModule;
   onNext: () => void;
   hasNextLesson: boolean;
+  isLastLesson: boolean;
 }) {
   const getContentTypeIcon = (contentType: string) => {
     switch (contentType) {
@@ -568,9 +585,9 @@ function LessonPlayer({
             <Button 
               onClick={onNext} 
               variant="default"
-              disabled={!hasNextLesson}
+              disabled={!hasNextLesson && !isLastLesson}
             >
-              {hasNextLesson ? 'Next Lesson →' : 'Course Complete'}
+              {isLastLesson ? 'Course Complete' : 'Next Lesson →'}
             </Button>
           </div>
         </div>
