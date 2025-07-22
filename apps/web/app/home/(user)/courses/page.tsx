@@ -5,7 +5,7 @@ import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 
 import { HomeLayoutPageHeader } from '../_components/home-page-header';
-import { LearnerCoursesDashboardDebug } from './_components/learner-courses-dashboard-debug';
+import { LearnerCoursesDashboard } from './_components/learner-courses-dashboard';
 
 export const generateMetadata = async () => {
   const i18n = await createI18nServerInstance();
@@ -25,7 +25,7 @@ function LearnerCoursesPage() {
       />
 
       <PageBody>
-        <LearnerCoursesDashboardDebug />
+        <LearnerCoursesDashboard />
       </PageBody>
     </>
   );
