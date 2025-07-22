@@ -760,11 +760,6 @@ function VideoPlayer({
           Sample Video - Content Not Yet Uploaded
         </div>
       )}
-      
-      {/* Progress indicator */}
-      <div className="absolute top-4 right-4 bg-black/60 text-white px-2 py-1 rounded text-xs">
-        {Math.round(maxProgressPercentage)}% watched
-      </div>
     </div>
   );
 }
