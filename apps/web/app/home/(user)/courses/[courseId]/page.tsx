@@ -47,7 +47,12 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
       />
 
       <PageBody>
-        <CourseViewerWorking courseId={courseId} />
+        <div className="p-8">
+          <h1 className="text-2xl font-bold mb-4">Course Page Works!</h1>
+          <p>Course ID: {courseId}</p>
+          <p>If you see this, the page itself works fine.</p>
+          <p>The issue is in any async database operations.</p>
+        </div>
       </PageBody>
     </>
   );
