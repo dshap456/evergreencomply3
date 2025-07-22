@@ -385,11 +385,11 @@ function LessonPlayer({
     switch (lesson.content_type) {
       case 'video':
         return (
-          <div className="aspect-video bg-black rounded-lg flex items-center justify-center">
+          <div className="aspect-video bg-black flex items-center justify-center">
             {lesson.video_url ? (
               <video 
                 controls 
-                className="w-full h-full rounded-lg"
+                className="w-full h-full"
                 src={lesson.video_url}
               >
                 Your browser does not support the video tag.
