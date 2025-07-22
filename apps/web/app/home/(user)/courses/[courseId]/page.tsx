@@ -7,7 +7,6 @@ import { Trans } from '@kit/ui/trans';
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 
-import { HomeLayoutPageHeader } from '../../_components/home-page-header';
 import { CourseViewerClient } from './_components/course-viewer-client';
 
 interface LearnerCoursePageProps {
@@ -20,16 +19,9 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   const { courseId } = use(params);
 
   return (
-    <>
-      <HomeLayoutPageHeader
-        title="Course View"
-        description="View your course content and progress"
-      />
-
-      <PageBody>
-        <CourseViewerClient courseId={courseId} />
-      </PageBody>
-    </>
+    <PageBody className="pt-0">
+      <CourseViewerClient courseId={courseId} />
+    </PageBody>
   );
 }
 
