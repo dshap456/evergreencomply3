@@ -5,6 +5,7 @@ import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 
 import { HomeLayoutPageHeader } from '../_components/home-page-header';
+import { LearnerCoursesDashboard } from './_components/learner-courses-dashboard';
 
 export const generateMetadata = async () => {
   const i18n = await createI18nServerInstance();
@@ -15,7 +16,7 @@ export const generateMetadata = async () => {
   };
 };
 
-function LearnerCoursesPageSimpleTest() {
+function LearnerCoursesPage() {
   return (
     <>
       <HomeLayoutPageHeader
@@ -24,14 +25,10 @@ function LearnerCoursesPageSimpleTest() {
       />
 
       <PageBody>
-        <div className="p-8">
-          <h1 className="text-2xl font-bold mb-4">Simple Test Page</h1>
-          <p>If you can see this, the basic page structure works.</p>
-          <p>The issue might be in the data loading or specific components.</p>
-        </div>
+        <LearnerCoursesDashboard />
       </PageBody>
     </>
   );
 }
 
-export default withI18n(LearnerCoursesPageSimpleTest);
+export default withI18n(LearnerCoursesPage);
