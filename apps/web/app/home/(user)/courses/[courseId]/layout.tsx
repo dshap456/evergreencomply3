@@ -49,34 +49,39 @@ export default function CourseLayout({ children }: { children: React.ReactNode }
           margin-left: 3rem !important;
         }
         
-        /* Override hover effects on collapsed sidebar */
-        .course-view-active [data-sidebar="sidebar"] button[data-sidebar-menu-button]:hover {
+        /* Aggressively disable ALL hover/active states on collapsed sidebar */
+        .course-view-active [data-sidebar="sidebar"] * {
+          --sidebar-accent: transparent !important;
+          --sidebar-accent-foreground: currentColor !important;
+        }
+        
+        /* Force remove all backgrounds on interactive elements */
+        .course-view-active [data-sidebar="sidebar"] button,
+        .course-view-active [data-sidebar="sidebar"] a,
+        .course-view-active [data-sidebar="sidebar"] [role="button"],
+        .course-view-active [data-sidebar="sidebar"] [data-sidebar-menu-button] {
+          background: transparent !important;
           background-color: transparent !important;
         }
         
-        .course-view-active [data-sidebar="sidebar"] a[data-sidebar-menu-button]:hover {
+        /* Override any hover state */
+        .course-view-active [data-sidebar="sidebar"] button:hover,
+        .course-view-active [data-sidebar="sidebar"] a:hover,
+        .course-view-active [data-sidebar="sidebar"] [role="button"]:hover,
+        .course-view-active [data-sidebar="sidebar"] [data-sidebar-menu-button]:hover {
+          background: transparent !important;
           background-color: transparent !important;
+          box-shadow: none !important;
         }
         
-        /* Target the specific hover classes used by shadcn sidebar */
-        .course-view-active [data-sidebar="sidebar"] .hover\\:bg-sidebar-accent:hover {
-          background-color: transparent !important;
+        /* Simple icon hover - just opacity */
+        .course-view-active [data-sidebar="sidebar"] svg {
+          transition: opacity 0.2s ease;
         }
         
-        .course-view-active [data-sidebar="sidebar"] .hover\\:text-sidebar-accent-foreground:hover {
-          color: inherit !important;
-        }
-        
-        /* Remove active state background in collapsed mode */
-        .course-view-active [data-sidebar="sidebar"] [data-active="true"] {
-          background-color: transparent !important;
-        }
-        
-        /* Simple icon-only hover effect */
         .course-view-active [data-sidebar="sidebar"] button:hover svg,
         .course-view-active [data-sidebar="sidebar"] a:hover svg {
-          opacity: 0.7;
-          transition: opacity 0.2s ease;
+          opacity: 0.6;
         }
       `}</style>
       {children}
