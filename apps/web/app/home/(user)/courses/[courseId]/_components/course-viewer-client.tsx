@@ -481,23 +481,26 @@ function LessonPlayer({
   const renderLessonContent = () => {
     switch (lesson.content_type) {
       case 'video':
+        // Use a sample video for testing when no video_url is set
+        const videoUrl = lesson.video_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+        const isPlaceholderVideo = !lesson.video_url;
+        
         return (
           <div className="aspect-video bg-black flex items-center justify-center">
-            {lesson.video_url ? (
+            <div className="w-full h-full relative">
               <video 
                 controls 
                 className="w-full h-full"
-                src={lesson.video_url}
+                src={videoUrl}
               >
                 Your browser does not support the video tag.
               </video>
-            ) : (
-              <div className="text-white text-center">
-                <div className="text-4xl mb-2">🎥</div>
-                <p>Video content placeholder</p>
-                <p className="text-sm opacity-75">Video URL: {lesson.video_url || 'Not set'}</p>
-              </div>
-            )}
+              {isPlaceholderVideo && (
+                <div className="absolute top-4 left-4 bg-yellow-500 text-black px-2 py-1 rounded text-xs">
+                  Sample Video - Content Not Yet Uploaded
+                </div>
+              )}
+            </div>
           </div>
         );
         
