@@ -8,8 +8,7 @@ import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 
 import { HomeLayoutPageHeader } from '../../_components/home-page-header';
-import { CourseViewerWorking } from './_components/course-viewer-working';
-// import { loadLearnerCourseDetails } from './_lib/server/learner-course-details.loader';
+import { CourseViewerClient } from './_components/course-viewer-client';
 
 interface LearnerCoursePageProps {
   params: Promise<{ courseId: string }>;
@@ -28,12 +27,7 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
       />
 
       <PageBody>
-        <div className="p-8">
-          <h1 className="text-2xl font-bold mb-4">Course Page Works!</h1>
-          <p>Course ID: {courseId}</p>
-          <p>If you see this, the page itself works fine.</p>
-          <p>The issue is in any async database operations.</p>
-        </div>
+        <CourseViewerClient courseId={courseId} />
       </PageBody>
     </>
   );
