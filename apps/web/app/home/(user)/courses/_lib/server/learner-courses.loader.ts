@@ -68,7 +68,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
   // Get available courses (published but not enrolled)
   const enrolledCourseIds = enrolledCoursesData?.map(enrollment => enrollment.course.id) || [];
   
-  const { data: availableCoursesData, error: availableError } = await client
+  let availableCoursesQuery = client
     .from('courses')
     .select(`
       id,
@@ -76,8 +76,14 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       description,
       is_published
     `)
-    .eq('is_published', true)
-    .not('id', 'in', `(${enrolledCourseIds.join(',') || 'null'})`);
+    .eq('is_published', true);
+
+  // Only add the NOT IN clause if there are enrolled courses
+  if (enrolledCourseIds.length > 0) {
+    availableCoursesQuery = availableCoursesQuery.not('id', 'in', `(${enrolledCourseIds.join(',')})`);
+  }
+
+  const { data: availableCoursesData, error: availableError } = await availableCoursesQuery;
 
   if (availableError) {
     throw availableError;
@@ -89,16 +95,25 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
     ...(availableCoursesData?.map(course => course.id) || [])
   ];
 
-  const { data: courseStats, error: statsError } = await client
-    .from('course_modules')
-    .select(`
-      course_id,
-      lessons!inner (id)
-    `)
-    .in('course_id', allCourseIds);
+  let courseStats = null;
+  let statsError = null;
 
-  if (statsError) {
-    throw statsError;
+  // Only query course stats if there are courses to query
+  if (allCourseIds.length > 0) {
+    const result = await client
+      .from('course_modules')
+      .select(`
+        course_id,
+        lessons!inner (id)
+      `)
+      .in('course_id', allCourseIds);
+    
+    courseStats = result.data;
+    statsError = result.error;
+
+    if (statsError) {
+      throw statsError;
+    }
   }
 
   // Process course statistics
