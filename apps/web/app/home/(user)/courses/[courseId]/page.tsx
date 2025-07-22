@@ -8,7 +8,7 @@ import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 
 import { HomeLayoutPageHeader } from '../../_components/home-page-header';
-import { CourseViewerSimple } from './_components/course-viewer-simple';
+import { CourseViewerMinimal } from './_components/course-viewer-minimal';
 import { loadLearnerCourseDetails } from './_lib/server/learner-course-details.loader';
 
 interface LearnerCoursePageProps {
@@ -42,7 +42,7 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
       />
 
       <PageBody>
-        <CourseViewerSimple courseId={courseId} />
+        <CourseViewerMinimal courseId={courseId} />
       </PageBody>
     </>
   );
