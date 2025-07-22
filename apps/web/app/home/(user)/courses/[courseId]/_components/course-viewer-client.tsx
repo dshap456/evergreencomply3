@@ -106,6 +106,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
   // Auto-select the first incomplete lesson when course loads
   useEffect(() => {
@@ -200,71 +201,115 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   return (
     <div className="flex h-[calc(100vh-64px)] bg-gray-50 absolute inset-0 top-16">
       {/* Sidebar - Course Navigation */}
-      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 ${sidebarMinimized ? 'w-16' : 'w-80'} bg-white shadow-xl transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4 border-b">
-            <div>
-              <h2 className="font-semibold text-lg truncate">{course.title}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-24 bg-gray-200 rounded-full h-1.5">
-                  <div 
-                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
-                    style={{ width: `${course.progress_percentage}%` }}
-                  />
+            {!sidebarMinimized ? (
+              <div>
+                <h2 className="font-semibold text-lg truncate">{course.title}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-24 bg-gray-200 rounded-full h-1.5">
+                    <div 
+                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                      style={{ width: `${course.progress_percentage}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-600">{course.progress_percentage}%</span>
                 </div>
-                <span className="text-xs text-gray-600">{course.progress_percentage}%</span>
               </div>
+            ) : (
+              <div className="w-full flex justify-center">
+                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                  📚
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSidebarMinimized(!sidebarMinimized)}
+                className="hidden lg:flex"
+                title={sidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
+              >
+                {sidebarMinimized ? '→' : '←'}
+              </Button>
+              <Button
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden"
+              >
+                ✕
+              </Button>
             </div>
-            <Button
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden"
-            >
-              ✕
-            </Button>
           </div>
 
           {/* Course Navigation */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {course.modules.map((module) => (
-              <div key={module.id} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-sm">{module.title}</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {module.lessons.filter(l => l.completed).length}/{module.lessons.length}
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  {module.lessons.map((lesson) => (
+            {sidebarMinimized ? (
+              // Minimized view - just lesson dots
+              <div className="space-y-2">
+                {course.modules.map((module) =>
+                  module.lessons.map((lesson) => (
                     <button
                       key={lesson.id}
                       onClick={() => handleSelectLesson(lesson.id)}
-                      className={`w-full flex items-center gap-3 p-2 text-left rounded-lg transition-all text-sm ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         currentLessonId === lesson.id 
-                          ? 'bg-blue-100 border border-blue-200 text-blue-900' 
+                          ? 'bg-blue-600 text-white' 
                           : lesson.completed 
-                            ? 'bg-green-50 hover:bg-green-100' 
-                            : 'hover:bg-gray-100'
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                       }`}
+                      title={`${lesson.title} (${module.title})`}
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        lesson.completed ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {lesson.completed ? '✓' : lesson.order_index}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1">
-                          <span className="truncate font-medium">{lesson.title}</span>
-                          <span className="text-xs">{getContentTypeIcon(lesson.content_type)}</span>
-                        </div>
-                      </div>
+                      {lesson.completed ? '✓' : lesson.order_index}
                     </button>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
-            ))}
+            ) : (
+              // Full view - modules and lessons
+              course.modules.map((module) => (
+                <div key={module.id} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium text-sm">{module.title}</h3>
+                    <Badge variant="outline" className="text-xs">
+                      {module.lessons.filter(l => l.completed).length}/{module.lessons.length}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    {module.lessons.map((lesson) => (
+                      <button
+                        key={lesson.id}
+                        onClick={() => handleSelectLesson(lesson.id)}
+                        className={`w-full flex items-center gap-3 p-2 text-left rounded-lg transition-all text-sm ${
+                          currentLessonId === lesson.id 
+                            ? 'bg-blue-100 border border-blue-200 text-blue-900' 
+                            : lesson.completed 
+                              ? 'bg-green-50 hover:bg-green-100' 
+                              : 'hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          lesson.completed ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {lesson.completed ? '✓' : lesson.order_index}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="truncate font-medium">{lesson.title}</span>
+                            <span className="text-xs">{getContentTypeIcon(lesson.content_type)}</span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
