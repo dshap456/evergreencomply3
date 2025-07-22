@@ -74,31 +74,42 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     throw new Error('Course not found or user not enrolled');
   }
 
-  // Get course modules and lessons
+  // Get course modules
   const { data: modules, error: modulesError } = await client
     .from('course_modules')
     .select(`
       id,
       title,
       description,
-      order_index,
-      lessons (
-        id,
-        title,
-        description,
-        content_type,
-        order_index,
-        video_url,
-        content,
-        asset_url,
-        is_final_quiz
-      )
+      order_index
     `)
     .eq('course_id', courseId)
     .order('order_index');
 
   if (modulesError) {
     throw modulesError;
+  }
+
+  // Get all lessons for this course
+  const { data: lessons, error: lessonsError } = await client
+    .from('lessons')
+    .select(`
+      id,
+      module_id,
+      title,
+      description,
+      content_type,
+      order_index,
+      video_url,
+      content,
+      asset_url,
+      is_final_quiz
+    `)
+    .in('module_id', (modules || []).map(m => m.id))
+    .order('order_index');
+
+  if (lessonsError) {
+    throw lessonsError;
   }
 
   // Get lesson progress
@@ -120,13 +131,22 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     });
   });
 
+  // Group lessons by module
+  const lessonsByModule = new Map<string, any[]>();
+  (lessons || []).forEach(lesson => {
+    if (!lessonsByModule.has(lesson.module_id)) {
+      lessonsByModule.set(lesson.module_id, []);
+    }
+    lessonsByModule.get(lesson.module_id)!.push(lesson);
+  });
+
   // Format modules with lessons and progress
   const formattedModules: CourseModule[] = (modules || []).map(module => ({
     id: module.id,
     title: module.title,
     description: module.description || '',
     order_index: module.order_index,
-    lessons: (module.lessons || [])
+    lessons: (lessonsByModule.get(module.id) || [])
       .sort((a, b) => a.order_index - b.order_index)
       .map(lesson => {
         const progress = progressMap.get(lesson.id) || { completed: false, time_spent: 0 };
