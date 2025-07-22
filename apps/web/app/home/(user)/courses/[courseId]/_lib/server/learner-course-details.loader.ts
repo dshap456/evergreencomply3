@@ -1,0 +1,160 @@
+import 'server-only';
+
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+
+export interface LearnerCourseDetails {
+  id: string;
+  title: string;
+  description: string;
+  // Enrollment info
+  enrollment_id: string;
+  progress_percentage: number;
+  enrolled_at: string;
+  completed_at: string | null;
+  final_score: number | null;
+  // Course structure
+  modules: CourseModule[];
+}
+
+export interface CourseModule {
+  id: string;
+  title: string;
+  description: string;
+  order_index: number;
+  lessons: CourseLesson[];
+}
+
+export interface CourseLesson {
+  id: string;
+  title: string;
+  description: string;
+  content_type: 'video' | 'text' | 'quiz' | 'asset';
+  order_index: number;
+  video_url: string | null;
+  content: string | null;
+  asset_url: string | null;
+  is_final_quiz: boolean;
+  // Progress
+  completed: boolean;
+  time_spent: number;
+}
+
+export async function loadLearnerCourseDetails(courseId: string): Promise<LearnerCourseDetails> {
+  const client = getSupabaseServerClient();
+  
+  // Get current user from Supabase auth
+  const { data: { user }, error: userError } = await client.auth.getUser();
+
+  if (!user || userError) {
+    throw new Error('User not authenticated');
+  }
+
+  // Get enrollment info
+  const { data: enrollment, error: enrollmentError } = await client
+    .from('course_enrollments')
+    .select(`
+      id,
+      progress_percentage,
+      enrolled_at,
+      completed_at,
+      final_score,
+      course:courses!inner (
+        id,
+        title,
+        description,
+        is_published
+      )
+    `)
+    .eq('user_id', user.id)
+    .eq('course_id', courseId)
+    .eq('courses.is_published', true)
+    .single();
+
+  if (enrollmentError || !enrollment) {
+    throw new Error('Course not found or user not enrolled');
+  }
+
+  // Get course modules and lessons
+  const { data: modules, error: modulesError } = await client
+    .from('course_modules')
+    .select(`
+      id,
+      title,
+      description,
+      order_index,
+      lessons (
+        id,
+        title,
+        description,
+        content_type,
+        order_index,
+        video_url,
+        content,
+        asset_url,
+        is_final_quiz
+      )
+    `)
+    .eq('course_id', courseId)
+    .order('order_index');
+
+  if (modulesError) {
+    throw modulesError;
+  }
+
+  // Get lesson progress
+  const { data: lessonProgress, error: progressError } = await client
+    .from('lesson_progress')
+    .select('lesson_id, status, time_spent')
+    .eq('user_id', user.id);
+
+  if (progressError) {
+    throw progressError;
+  }
+
+  // Create progress map
+  const progressMap = new Map<string, { completed: boolean; time_spent: number }>();
+  lessonProgress?.forEach(progress => {
+    progressMap.set(progress.lesson_id, {
+      completed: progress.status === 'completed',
+      time_spent: progress.time_spent || 0
+    });
+  });
+
+  // Format modules with lessons and progress
+  const formattedModules: CourseModule[] = (modules || []).map(module => ({
+    id: module.id,
+    title: module.title,
+    description: module.description || '',
+    order_index: module.order_index,
+    lessons: (module.lessons || [])
+      .sort((a, b) => a.order_index - b.order_index)
+      .map(lesson => {
+        const progress = progressMap.get(lesson.id) || { completed: false, time_spent: 0 };
+        return {
+          id: lesson.id,
+          title: lesson.title,
+          description: lesson.description || '',
+          content_type: lesson.content_type as 'video' | 'text' | 'quiz' | 'asset',
+          order_index: lesson.order_index,
+          video_url: lesson.video_url,
+          content: lesson.content,
+          asset_url: lesson.asset_url,
+          is_final_quiz: lesson.is_final_quiz,
+          completed: progress.completed,
+          time_spent: progress.time_spent
+        };
+      })
+  }));
+
+  return {
+    id: enrollment.course.id,
+    title: enrollment.course.title,
+    description: enrollment.course.description || '',
+    enrollment_id: enrollment.id,
+    progress_percentage: enrollment.progress_percentage || 0,
+    enrolled_at: enrollment.enrolled_at,
+    completed_at: enrollment.completed_at,
+    final_score: enrollment.final_score,
+    modules: formattedModules
+  };
+}

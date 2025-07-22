@@ -148,7 +148,7 @@ function CourseCard({ course }: { course: LearnerCourse }) {
         {/* Action Buttons */}
         <div className="flex gap-2">
           <Button asChild className="flex-1">
-            <Link href={`/home/(user)/courses/${course.id}`}>
+            <Link href={`/home/courses/${course.id}`}>
               {isCompleted ? (
                 <Trans i18nKey="courses:learner.review" />
               ) : hasStarted ? (

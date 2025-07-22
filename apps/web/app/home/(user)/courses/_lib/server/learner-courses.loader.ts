@@ -45,29 +45,21 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
 
   // Get enrolled courses with progress
   const { data: enrolledCoursesData, error: enrolledError } = await client
-    .from('course_progress')
+    .from('course_enrollments')
     .select(`
-      enrollment_date: created_at,
+      enrollment_date: enrolled_at,
       progress_percentage,
-      last_accessed,
       completed_at,
-      final_quiz_score,
-      certificate_url,
-      completed_modules,
-      completed_lessons,
+      final_score,
       course:courses!inner (
         id,
         title,
         description,
-        thumbnail_url,
-        duration_minutes,
-        language,
-        level,
-        status
+        is_published
       )
     `)
     .eq('user_id', user.id)
-    .eq('courses.status', 'published');
+    .eq('courses.is_published', true);
 
   if (enrolledError) {
     throw enrolledError;
@@ -82,13 +74,9 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       id,
       title,
       description,
-      thumbnail_url,
-      duration_minutes,
-      language,
-      level,
-      status
+      is_published
     `)
-    .eq('status', 'published')
+    .eq('is_published', true)
     .not('id', 'in', `(${enrolledCourseIds.join(',') || 'null'})`);
 
   if (availableError) {
@@ -102,7 +90,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
   ];
 
   const { data: courseStats, error: statsError } = await client
-    .from('modules')
+    .from('course_modules')
     .select(`
       course_id,
       lessons!inner (id)
@@ -128,17 +116,24 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
     const stats = statsMap.get(enrollment.course.id) || { totalModules: 0, totalLessons: 0 };
     
     return {
-      ...enrollment.course,
+      id: enrollment.course.id,
+      title: enrollment.course.title,
+      description: enrollment.course.description || '',
+      thumbnail_url: null,
+      duration_minutes: null,
+      language: 'en',
+      level: 'beginner',
+      status: 'published' as const,
       enrollment_date: enrollment.enrollment_date,
       progress_percentage: enrollment.progress_percentage || 0,
-      last_accessed: enrollment.last_accessed,
+      last_accessed: null,
       completed_at: enrollment.completed_at,
-      final_quiz_score: enrollment.final_quiz_score,
-      certificate_url: enrollment.certificate_url,
+      final_quiz_score: enrollment.final_score,
+      certificate_url: null,
       total_modules: stats.totalModules,
-      completed_modules: enrollment.completed_modules || 0,
+      completed_modules: 0, // TODO: Calculate from lesson progress
       total_lessons: stats.totalLessons,
-      completed_lessons: enrollment.completed_lessons || 0,
+      completed_lessons: 0, // TODO: Calculate from lesson progress
     };
   }) || [];
 
@@ -147,7 +142,14 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
     const stats = statsMap.get(course.id) || { totalModules: 0, totalLessons: 0 };
     
     return {
-      ...course,
+      id: course.id,
+      title: course.title,
+      description: course.description || '',
+      thumbnail_url: null,
+      duration_minutes: null,
+      language: 'en',
+      level: 'beginner',
+      status: 'published' as const,
       enrollment_date: '',
       progress_percentage: 0,
       last_accessed: null,
