@@ -49,19 +49,34 @@ export default function CourseLayout({ children }: { children: React.ReactNode }
           margin-left: 3rem !important;
         }
         
-        /* Disable hover effects on collapsed sidebar items */
-        .course-view-active [data-sidebar="sidebar"] a:hover,
-        .course-view-active [data-sidebar="sidebar"] button:hover {
+        /* Override hover effects on collapsed sidebar */
+        .course-view-active [data-sidebar="sidebar"] button[data-sidebar-menu-button]:hover {
           background-color: transparent !important;
+        }
+        
+        .course-view-active [data-sidebar="sidebar"] a[data-sidebar-menu-button]:hover {
+          background-color: transparent !important;
+        }
+        
+        /* Target the specific hover classes used by shadcn sidebar */
+        .course-view-active [data-sidebar="sidebar"] .hover\\:bg-sidebar-accent:hover {
+          background-color: transparent !important;
+        }
+        
+        .course-view-active [data-sidebar="sidebar"] .hover\\:text-sidebar-accent-foreground:hover {
           color: inherit !important;
         }
         
-        /* Optional: Add subtle hover effect just for the icons */
-        .course-view-active [data-sidebar="sidebar"] a:hover svg,
-        .course-view-active [data-sidebar="sidebar"] button:hover svg {
+        /* Remove active state background in collapsed mode */
+        .course-view-active [data-sidebar="sidebar"] [data-active="true"] {
+          background-color: transparent !important;
+        }
+        
+        /* Simple icon-only hover effect */
+        .course-view-active [data-sidebar="sidebar"] button:hover svg,
+        .course-view-active [data-sidebar="sidebar"] a:hover svg {
           opacity: 0.7;
-          transform: scale(1.1);
-          transition: all 0.2s ease;
+          transition: opacity 0.2s ease;
         }
       `}</style>
       {children}
