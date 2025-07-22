@@ -95,6 +95,14 @@
     "start": "Start Course",
     "continue": "Continue",
     "review": "Review",
-    "certificate": "Certificate"
+    "certificate": "Certificate",
+    "courseViewDescription": "View your course content and track your progress",
+    "courseNotFound": "Course Not Found",
+    "progress": "Progress",
+    "courseContent": "Course Content",
+    "courseNavigation": "Course Navigation",
+    "noModulesAvailable": "No modules available",
+    "startLesson": "Start Lesson",
+    "resetProgress": "Reset Progress"
   }
 }

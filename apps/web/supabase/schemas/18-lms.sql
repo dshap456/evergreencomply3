@@ -156,11 +156,8 @@ CREATE POLICY "courses_read" ON public.courses FOR SELECT
     TO authenticated USING (
         -- Course owners (account members) can read
         public.has_role_on_account(account_id) OR
-        -- Enrolled users can read published courses
-        (is_published AND EXISTS (
-            SELECT 1 FROM public.course_enrollments 
-            WHERE course_id = courses.id AND user_id = auth.uid()
-        ))
+        -- Published courses are readable by all authenticated users
+        is_published
     );
 
 CREATE POLICY "courses_manage" ON public.courses FOR ALL
