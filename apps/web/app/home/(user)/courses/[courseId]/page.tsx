@@ -19,16 +19,21 @@ export const generateMetadata = async ({ params }: LearnerCoursePageProps) => {
   const { courseId } = use(params);
   const i18n = await createI18nServerInstance();
   
-  try {
-    const course = await loadLearnerCourseDetails(courseId);
-    return {
-      title: course.title,
-    };
-  } catch {
-    return {
-      title: i18n.t('courses:learner.courseNotFound'),
-    };
-  }
+  // Temporarily disable to isolate error
+  return {
+    title: 'Course Page',
+  };
+  
+  // try {
+  //   const course = await loadLearnerCourseDetails(courseId);
+  //   return {
+  //     title: course.title,
+  //   };
+  // } catch {
+  //   return {
+  //     title: i18n.t('courses:learner.courseNotFound'),
+  //   };
+  // }
 };
 
 function LearnerCoursePage({ params }: LearnerCoursePageProps) {
