@@ -37,6 +37,26 @@ export async function POST(
       return NextResponse.json({ error: progressError.message }, { status: 500 });
     }
 
+    // Debug: Check progress before update
+    const { data: beforeProgress } = await client
+      .from('course_enrollments')
+      .select('progress_percentage')
+      .eq('user_id', user.id)
+      .eq('course_id', (
+        await client
+          .from('lessons')
+          .select('course_modules!inner(course_id)')
+          .eq('id', lessonId)
+          .single()
+      ).data?.course_modules?.course_id)
+      .single();
+
+    console.log('🔍 Debug - Progress BEFORE update:', {
+      lessonId,
+      userId: user.id,
+      beforeProgress: beforeProgress?.progress_percentage
+    });
+
     // Update course enrollment progress
     const { error: enrollmentError } = await client.rpc('update_course_progress', {
       p_user_id: user.id,
@@ -44,8 +64,10 @@ export async function POST(
     });
 
     if (enrollmentError) {
-      console.error('Error updating course progress:', enrollmentError);
+      console.error('❌ Error updating course progress:', enrollmentError);
       // Don't fail the request if this fails, as the lesson is still marked complete
+    } else {
+      console.log('✅ Course progress update RPC called successfully');
     }
 
     // Get updated course progress to return fresh data
@@ -64,8 +86,18 @@ export async function POST(
       .eq('course_id', courseId)
       .single();
 
+    console.log('🔍 Debug - Progress AFTER update:', {
+      lessonId,
+      userId: user.id,
+      courseId,
+      afterProgress: courseProgress?.progress_percentage,
+      completed_at: courseProgress?.completed_at,
+      changed: beforeProgress?.progress_percentage !== courseProgress?.progress_percentage
+    });
+
     // Revalidate relevant pages to show updated progress
     if (courseId) {
+      console.log('🔄 Revalidating paths:', [`/home/courses/${courseId}`, '/home/courses']);
       revalidatePath(`/home/courses/${courseId}`);
       revalidatePath('/home/courses');
     }
