@@ -84,17 +84,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         const isLocked = !previousLessonCompleted;
         
         // Check if lesson meets completion criteria
-        let isFullyCompleted = false;
-        if (lesson.content_type === 'video') {
-          // Videos need 95% completion (but we're using 100% in practice)
-          isFullyCompleted = lesson.completed && (lesson.video_progress || 0) >= 95;
-        } else if (lesson.content_type === 'quiz') {
-          // Quizzes need 80% score
-          isFullyCompleted = lesson.completed && (lesson.quiz_score || 0) >= 80;
-        } else {
-          // Other content types just need to be marked complete
-          isFullyCompleted = lesson.completed;
-        }
+        // For now, we rely on the lesson.completed flag from lesson_progress table
+        // which already validates completion requirements (95% video, 80% quiz score)
+        const isFullyCompleted = lesson.completed;
         
         // Update previous lesson completed state for next iteration
         if (!isLocked) {
