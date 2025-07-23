@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Spinner } from '@kit/ui/spinner';
 import { Button } from '@kit/ui/button';
@@ -324,7 +325,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           <div className="flex items-center justify-between p-4">
             {!sidebarMinimized ? (
               <div>
-                <h2 className="font-semibold text-lg truncate">{course.title}</h2>
+                <Link href="/home" className="font-semibold text-lg truncate hover:text-blue-600 transition-colors cursor-pointer">
+                  {course.title}
+                </Link>
               </div>
             ) : (
               <div className="w-full flex justify-center">
@@ -461,7 +464,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">Welcome to {course.title}</h2>
+                <h2 className="text-2xl font-bold mb-2">
+                  Welcome to <Link href="/home" className="hover:text-blue-600 transition-colors cursor-pointer">{course.title}</Link>
+                </h2>
                 <p className="text-gray-600 mb-4">Select a lesson from the sidebar to get started</p>
                 <Button onClick={() => setSidebarOpen(true)} className="lg:hidden">
                   Open Course Menu
