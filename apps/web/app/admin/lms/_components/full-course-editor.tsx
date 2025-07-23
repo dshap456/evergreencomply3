@@ -152,13 +152,18 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
       const moduleIndex = modules.findIndex(m => m.id === moduleId);
       const module = modules[moduleIndex];
       
+      // Calculate the next order_index by finding the maximum existing order_index
+      const maxOrderIndex = module.lessons.length > 0 
+        ? Math.max(...module.lessons.map(l => l.order_index)) 
+        : -1;
+      
       const newLesson = {
         type: 'lesson',
         module_id: moduleId,
         title: 'New Lesson',
         description: '',
         content_type: 'video',
-        order_index: module.lessons.length
+        order_index: maxOrderIndex + 1
       };
 
       const response = await fetch(`/api/admin/courses/${course.id}/lessons`, {
@@ -174,7 +179,9 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
         setModules(updatedModules);
         toast.success('Lesson added');
       } else {
-        toast.error('Failed to add lesson');
+        const errorData = await response.json();
+        console.error('Error adding lesson:', errorData);
+        toast.error(`Failed to add lesson: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error adding lesson:', error);
