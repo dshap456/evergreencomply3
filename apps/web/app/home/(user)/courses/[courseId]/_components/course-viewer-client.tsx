@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Spinner } from '@kit/ui/spinner';
 import { Button } from '@kit/ui/button';
 import { Badge } from '@kit/ui/badge';
+import { StorageVideoPlayer } from './storage-video-player';
 
 interface CourseViewerClientProps {
   courseId: string;
@@ -488,16 +489,11 @@ function LessonPlayer({
   const renderLessonContent = () => {
     switch (lesson.content_type) {
       case 'video':
-        // Use a sample video for testing when no video_url is set
-        const videoUrl = lesson.video_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
-        const isPlaceholderVideo = !lesson.video_url;
-        
         return (
           <div className="aspect-video bg-black flex items-center justify-center">
             <div className="w-full h-full relative">
-              <VideoPlayer 
-                src={videoUrl}
-                isPlaceholder={isPlaceholderVideo}
+              <StorageVideoPlayer 
+                lessonId={lesson.id}
                 onProgress={(progress) => {
                   // TODO: Track video progress for completion requirements
                   console.log('Video progress:', progress);
