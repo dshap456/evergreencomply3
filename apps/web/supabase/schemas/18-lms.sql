@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS public.quiz_questions (
     question_type VARCHAR(50) DEFAULT 'multiple_choice',
     options JSONB, -- Array of answer options for multiple choice
     correct_answer TEXT NOT NULL,
+    explanation TEXT, -- Optional explanation for the answer
     points INTEGER DEFAULT 1,
     order_index INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
