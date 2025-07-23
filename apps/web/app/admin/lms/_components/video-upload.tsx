@@ -187,13 +187,37 @@ export function VideoUpload({ lessonId, onVideoUploaded, existingVideo }: VideoU
                 {getProcessingStatusText(existingVideo.processing_status)}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedFile(null)}
-            >
-              Replace
-            </Button>
+            <div className="flex gap-2">
+              {existingVideo.processing_status === 'pending' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/admin/video/fix-pending', {
+                        method: 'POST'
+                      });
+                      if (response.ok) {
+                        toast.success('Video status updated to ready');
+                        // Refresh the video metadata
+                        window.location.reload();
+                      }
+                    } catch (error) {
+                      toast.error('Failed to update video status');
+                    }
+                  }}
+                >
+                  Mark Ready
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedFile(null)}
+              >
+                Replace
+              </Button>
+            </div>
           </div>
         </div>
       )}

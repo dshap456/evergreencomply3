@@ -1,20 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 export async function POST(request: NextRequest) {
   try {
-    const client = getSupabaseServerClient();
+    const client = getSupabaseServerAdminClient();
     const body = await request.json();
 
-    const { data: metadata, error } = await client.rpc('create_video_metadata', {
-      p_lesson_id: body.lesson_id,
-      p_language_code: body.language_code || 'en',
-      p_storage_path: body.storage_path,
-      p_original_filename: body.original_filename,
-      p_file_size: body.file_size,
-      p_duration: body.duration || null,
-      p_quality: body.quality || '720p'
-    });
+    // Create video metadata with ready status since we're not doing background processing
+    const { data: metadata, error } = await client
+      .from('video_metadata')
+      .insert({
+        lesson_id: body.lesson_id,
+        language_code: body.language_code || 'en',
+        storage_path: body.storage_path,
+        original_filename: body.original_filename,
+        file_size: body.file_size,
+        duration: body.duration || null,
+        quality: body.quality || '720p',
+        processing_status: 'ready', // Mark as ready immediately
+        created_by: null
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error('Error creating video metadata:', error);
