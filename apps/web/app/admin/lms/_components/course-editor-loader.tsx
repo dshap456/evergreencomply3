@@ -2,7 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { Spinner } from '@kit/ui/spinner';
-import { CourseEditor } from './course-editor';
+import dynamic from 'next/dynamic';
+
+// Dynamically import CourseEditor to prevent hydration issues
+const CourseEditor = dynamic(() => import('./course-editor').then(mod => ({ default: mod.CourseEditor })), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-96">
+      <div className="text-center">
+        <Spinner className="mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading course editor...</p>
+      </div>
+    </div>
+  )
+});
 
 interface CourseEditorLoaderProps {
   courseId: string;
@@ -13,6 +26,12 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courseData, setCourseData] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component only renders on client side
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function loadCourse() {
@@ -51,14 +70,26 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
       }
     }
 
-    if (courseId) {
+    if (courseId && mounted) {
       loadCourse();
-    } else {
+    } else if (mounted && !courseId) {
       console.error('❌ CourseEditorLoader: No courseId provided');
       setError('No course ID provided');
       setLoading(false);
     }
-  }, [courseId]);
+  }, [courseId, mounted]);
+
+  // Don't render anything until mounted on client
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <Spinner className="mx-auto mb-4" />
+          <p className="text-muted-foreground">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
