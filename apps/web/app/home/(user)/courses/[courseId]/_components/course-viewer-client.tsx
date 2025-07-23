@@ -232,7 +232,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const handleNextLesson = () => {
     const nextLesson = getNextLessonInSequence();
     if (nextLesson) {
+      console.log('🎯 Manual navigation to next lesson:', nextLesson.lesson.title);
       setCurrentLessonId(nextLesson.lesson.id);
+    } else {
+      console.log('❌ No next lesson available');
     }
   };
 
@@ -247,8 +250,45 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
       if (response.ok) {
         console.log('✅ Lesson completion saved to database');
-        // Reload course data to update progress and unlock next lessons
-        await loadCourseData();
+        
+        // Update course state locally to mark lesson as completed
+        if (course) {
+          const updatedCourse = {
+            ...course,
+            modules: course.modules.map(module => ({
+              ...module,
+              lessons: module.lessons.map(lesson => 
+                lesson.id === lessonId 
+                  ? { ...lesson, completed: true }
+                  : lesson
+              )
+            }))
+          };
+          
+          // Reprocess lesson lock states with updated completion
+          const processedCourse = processLessonLockStates(updatedCourse);
+          setCourse(processedCourse);
+        }
+        
+        // Find next lesson based on updated course data
+        const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
+        updatedCourse.modules.forEach(module => {
+          module.lessons.forEach(lesson => {
+            allLessons.push({ module, lesson });
+          });
+        });
+
+        const currentIndex = allLessons.findIndex(item => item.lesson.id === lessonId);
+        if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
+          const nextLessonData = allLessons[currentIndex + 1];
+          
+          // Auto-advance to next lesson after a short delay
+          setTimeout(() => {
+            console.log('🚀 Auto-advancing to next lesson:', nextLessonData.lesson.title);
+            setCurrentLessonId(nextLessonData.lesson.id);
+          }, 1500); // 1.5 second delay to show completion
+        }
+        
       } else {
         console.error('❌ Failed to save lesson completion');
       }
