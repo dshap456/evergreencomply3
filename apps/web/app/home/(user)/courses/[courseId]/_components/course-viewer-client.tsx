@@ -468,6 +468,13 @@ function LessonPlayer({
   hasNextLesson: boolean;
   isLastLesson: boolean;
 }) {
+  const [currentLessonCompleted, setCurrentLessonCompleted] = useState(lesson.completed);
+  
+  // Reset completion state when lesson changes
+  useEffect(() => {
+    setCurrentLessonCompleted(lesson.completed);
+  }, [lesson.id, lesson.completed]);
+
   const getContentTypeIcon = (contentType: string) => {
     switch (contentType) {
       case 'video': return '🎥';
@@ -494,6 +501,13 @@ function LessonPlayer({
                 onProgress={(progress) => {
                   // TODO: Track video progress for completion requirements
                   console.log('Video progress:', progress);
+                }}
+                onCompletion={(completed) => {
+                  if (completed) {
+                    setCurrentLessonCompleted(true);
+                    // TODO: Save completion to database
+                    console.log('Video completed, lesson unlocked for next');
+                  }
                 }}
               />
             </div>
@@ -576,7 +590,7 @@ function LessonPlayer({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {lesson.completed && (
+            {currentLessonCompleted && (
               <Badge variant="secondary" className="bg-green-100 text-green-800">
                 ✓ Completed
               </Badge>
@@ -584,7 +598,8 @@ function LessonPlayer({
             <Button 
               onClick={onNext} 
               variant="default"
-              disabled={!hasNextLesson && !isLastLesson}
+              disabled={!currentLessonCompleted || (!hasNextLesson && !isLastLesson)}
+              className={currentLessonCompleted ? 'bg-green-600 hover:bg-green-700' : ''}
             >
               {isLastLesson ? 'Course Complete' : 'Next Lesson →'}
             </Button>
@@ -604,17 +619,20 @@ function LessonPlayer({
 function VideoPlayer({ 
   src, 
   isPlaceholder,
-  onProgress 
+  onProgress,
+  onCompletion
 }: { 
   src: string; 
   isPlaceholder: boolean;
   onProgress: (progress: number) => void;
+  onCompletion: (completed: boolean) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [maxWatchedTime, setMaxWatchedTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -633,6 +651,12 @@ function VideoPlayer({
       if (duration > 0) {
         const progress = (maxWatchedTime / duration) * 100;
         onProgress(progress);
+        
+        // Check if video is 100% completed
+        if (progress >= 100 && !isCompleted) {
+          setIsCompleted(true);
+          onCompletion(true);
+        }
       }
     };
 
@@ -666,7 +690,7 @@ function VideoPlayer({
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
     };
-  }, [maxWatchedTime, duration, onProgress]);
+  }, [maxWatchedTime, duration, onProgress, onCompletion, isCompleted]);
 
   const handleRewind = () => {
     const video = videoRef.current;
