@@ -47,9 +47,24 @@ export async function POST(
       // Don't fail the request if this fails, as the lesson is still marked complete
     }
 
+    // Get updated course progress to return fresh data
+    const { data: courseProgress, error: courseProgressError } = await client
+      .from('course_enrollments')
+      .select('progress_percentage, completed_at')
+      .eq('user_id', user.id)
+      .eq('course_id', (
+        await client
+          .from('lessons')
+          .select('course_modules!inner(course_id)')
+          .eq('id', lessonId)
+          .single()
+      ).data?.course_modules?.course_id)
+      .single();
+
     return NextResponse.json({ 
       success: true, 
       progress,
+      courseProgress: courseProgress || null,
       message: 'Lesson completed successfully'
     });
 

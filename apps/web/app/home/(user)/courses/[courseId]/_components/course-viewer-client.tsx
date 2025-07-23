@@ -251,42 +251,38 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       if (response.ok) {
         console.log('✅ Lesson completion saved to database');
         
-        // Update course state locally to mark lesson as completed
-        if (course) {
-          const updatedCourse = {
-            ...course,
-            modules: course.modules.map(module => ({
-              ...module,
-              lessons: module.lessons.map(lesson => 
-                lesson.id === lessonId 
-                  ? { ...lesson, completed: true }
-                  : lesson
-              )
-            }))
-          };
-          
-          // Reprocess lesson lock states with updated completion
-          const processedCourse = processLessonLockStates(updatedCourse);
-          setCourse(processedCourse);
-        }
+        // Get fresh course data from server to ensure consistency
+        const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}`);
+        const courseResult = await courseResponse.json();
         
-        // Find next lesson based on updated course data
-        const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
-        updatedCourse.modules.forEach(module => {
-          module.lessons.forEach(lesson => {
-            allLessons.push({ module, lesson });
-          });
-        });
-
-        const currentIndex = allLessons.findIndex(item => item.lesson.id === lessonId);
-        if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
-          const nextLessonData = allLessons[currentIndex + 1];
+        if (courseResult.success) {
+          // Process lessons to determine locked state with fresh server data
+          const processedCourse = processLessonLockStates(courseResult.course);
+          setCourse(processedCourse);
           
-          // Auto-advance to next lesson after a short delay
-          setTimeout(() => {
-            console.log('🚀 Auto-advancing to next lesson:', nextLessonData.lesson.title);
-            setCurrentLessonId(nextLessonData.lesson.id);
-          }, 1500); // 1.5 second delay to show completion
+          // Preserve current lesson selection (don't reset to first lesson)
+          const preserveCurrentLesson = currentLessonId;
+          
+          // Find next lesson based on server data
+          const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
+          processedCourse.modules.forEach(module => {
+            module.lessons.forEach(lesson => {
+              allLessons.push({ module, lesson });
+            });
+          });
+
+          const currentIndex = allLessons.findIndex(item => item.lesson.id === lessonId);
+          if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
+            const nextLessonData = allLessons[currentIndex + 1];
+            
+            // Auto-advance to next lesson after a short delay
+            setTimeout(() => {
+              console.log('🚀 Auto-advancing to next lesson:', nextLessonData.lesson.title);
+              setCurrentLessonId(nextLessonData.lesson.id);
+            }, 1500); // 1.5 second delay to show completion
+          }
+        } else {
+          console.error('❌ Failed to refresh course data after completion');
         }
         
       } else {
