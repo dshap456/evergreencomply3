@@ -65,6 +65,7 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
   const [modules, setModules] = useState<Module[]>([]);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<string | null>(null);
+  const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [lessonVideoMetadata, setLessonVideoMetadata] = useState<{[key: string]: any}>({});
 
@@ -235,6 +236,64 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
     }
   };
 
+  const handleEditModule = (module: Module) => {
+    setEditingModule(module);
+  };
+
+  const handleSaveModule = async (moduleData: { title: string; description: string }) => {
+    if (!editingModule) return;
+
+    try {
+      const response = await fetch(`/api/admin/modules/${editingModule.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: moduleData.title,
+          description: moduleData.description,
+          order_index: editingModule.order_index
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const updatedModules = modules.map(m => 
+          m.id === editingModule.id 
+            ? { ...m, title: result.module.title, description: result.module.description }
+            : m
+        );
+        setModules(updatedModules);
+        setEditingModule(null);
+        toast.success('Module updated');
+      } else {
+        toast.error('Failed to update module');
+      }
+    } catch (error) {
+      console.error('Error updating module:', error);
+      toast.error('Error updating module');
+    }
+  };
+
+  const handleDeleteModule = async (moduleId: string) => {
+    if (!confirm('Are you sure you want to delete this module and all its lessons?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/modules/${moduleId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        const updatedModules = modules.filter(m => m.id !== moduleId);
+        setModules(updatedModules);
+        toast.success('Module deleted');
+      } else {
+        toast.error('Failed to delete module');
+      }
+    } catch (error) {
+      console.error('Error deleting module:', error);
+      toast.error('Error deleting module');
+    }
+  };
+
   const loadQuizQuestions = async (lessonId: string) => {
     try {
       const response = await fetch(`/api/admin/lessons/${lessonId}/quiz`);
@@ -384,13 +443,30 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
                         <p className="text-gray-600 text-sm mt-1">{module.description}</p>
                       )}
                     </div>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleAddLesson(module.id)}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Lesson
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleEditModule(module)}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Module
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAddLesson(module.id)}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Lesson
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive"
+                        onClick={() => handleDeleteModule(module.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   
                   {module.lessons.length > 0 ? (
@@ -485,6 +561,22 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
                   [editingLesson.id]: metadata
                 }));
               }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Module Editor Dialog */}
+      <Dialog open={!!editingModule} onOpenChange={() => setEditingModule(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Module</DialogTitle>
+          </DialogHeader>
+          {editingModule && (
+            <ModuleEditorForm
+              module={editingModule}
+              onSave={handleSaveModule}
+              onCancel={() => setEditingModule(null)}
             />
           )}
         </DialogContent>
@@ -660,5 +752,57 @@ function QuizEditorForm({
         </Button>
       </div>
     </div>
+  );
+}
+
+// Module Editor Component
+function ModuleEditorForm({ 
+  module, 
+  onSave, 
+  onCancel 
+}: {
+  module: Module;
+  onSave: (moduleData: { title: string; description: string }) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(module.title);
+  const [description, setDescription] = useState(module.description || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({ title, description });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-2">Module Title</label>
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter module title"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Description (Optional)</label>
+        <Textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter module description"
+          rows={3}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit">
+          Save Module
+        </Button>
+      </div>
+    </form>
   );
 }
