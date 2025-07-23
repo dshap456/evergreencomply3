@@ -601,9 +601,6 @@ Download Asset
                 <p className="text-sm text-gray-600">{module.title}</p>
               </div>
             </div>
-            {lesson.description && (
-              <p className="text-gray-700 mt-2">{lesson.description}</p>
-            )}
           </div>
           <div className="flex items-center gap-2">
             {currentLessonCompleted && (
