@@ -654,8 +654,8 @@ function VideoPlayer({
         const progress = (maxWatchedTime / duration) * 100;
         onProgress(progress);
         
-        // Check if video is 100% completed
-        if (progress >= 100 && !isCompleted) {
+        // Check if video meets completion requirement (95%)
+        if (progress >= 95 && !isCompleted) {
           setIsCompleted(true);
           onCompletion(true);
         }
