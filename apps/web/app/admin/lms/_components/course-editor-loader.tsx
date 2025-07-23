@@ -2,20 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Spinner } from '@kit/ui/spinner';
-import dynamic from 'next/dynamic';
-
-// Dynamically import CourseEditor to prevent hydration issues
-const CourseEditor = dynamic(() => import('./course-editor').then(mod => ({ default: mod.CourseEditor })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center min-h-96">
-      <div className="text-center">
-        <Spinner className="mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading course editor...</p>
-      </div>
-    </div>
-  )
-});
+import { SimpleCourseEditor } from './simple-course-editor';
 
 interface CourseEditorLoaderProps {
   courseId: string;
@@ -137,7 +124,7 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
   }
 
   return (
-    <CourseEditor 
+    <SimpleCourseEditor 
       course={courseData.course} 
       onBack={onBack} 
       onSave={(updatedCourse) => {
