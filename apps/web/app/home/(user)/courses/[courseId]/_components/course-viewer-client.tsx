@@ -85,7 +85,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         // Check if lesson meets completion criteria
         let isFullyCompleted = false;
         if (lesson.content_type === 'video') {
-          // Videos need 95% completion
+          // Videos need 95% completion (but we're using 100% in practice)
           isFullyCompleted = lesson.completed && (lesson.video_progress || 0) >= 95;
         } else if (lesson.content_type === 'quiz') {
           // Quizzes need 80% score
@@ -531,15 +531,17 @@ function LessonPlayer({
         
       case 'quiz':
         return (
-          <div className="bg-white rounded-lg p-6 text-center">
-            <div className="text-4xl mb-4">📊</div>
-            <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
-            <p className="text-gray-600 mb-4">Quiz content will be rendered here</p>
-            {lesson.is_final_quiz && (
-              <Badge variant="destructive" className="mb-4">Final Quiz</Badge>
-            )}
-            <p className="text-sm text-gray-500">Quiz implementation coming soon...</p>
-          </div>
+          <QuizPlayer 
+            lesson={lesson}
+            currentScore={lesson.quiz_score}
+            onQuizComplete={(score, passed) => {
+              if (passed && score >= 80) {
+                setCurrentLessonCompleted(true);
+                // TODO: Save quiz completion to database
+                console.log('Quiz passed with score:', score);
+              }
+            }}
+          />
         );
         
       case 'asset':
@@ -784,6 +786,332 @@ function VideoPlayer({
           Sample Video - Content Not Yet Uploaded
         </div>
       )}
+    </div>
+  );
+}
+
+// Quiz Question Interface
+interface QuizQuestion {
+  id: string;
+  question: string;
+  question_type: string;
+  options: string[];
+  correct_answer: string;
+  points: number;
+  order_index: number;
+}
+
+// Quiz Player Component
+function QuizPlayer({ 
+  lesson, 
+  currentScore,
+  onQuizComplete 
+}: { 
+  lesson: CourseLesson;
+  currentScore?: number;
+  onQuizComplete: (score: number, passed: boolean) => void;
+}) {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
+  const [selectedAnswer, setSelectedAnswer] = useState('');
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const [finalScore, setFinalScore] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Mock quiz questions for demonstration (in real app, fetch from API)
+  useEffect(() => {
+    // Simulate loading quiz questions
+    const mockQuestions: QuizQuestion[] = [
+      {
+        id: '1',
+        question: 'What is the primary purpose of this learning management system?',
+        question_type: 'multiple_choice',
+        options: [
+          'Entertainment',
+          'Employee training and education',
+          'Social networking',
+          'File storage'
+        ],
+        correct_answer: 'Employee training and education',
+        points: 1,
+        order_index: 1
+      },
+      {
+        id: '2',
+        question: 'Which completion percentage is required for video lessons?',
+        question_type: 'multiple_choice',
+        options: [
+          '75%',
+          '80%',
+          '90%',
+          '95%'
+        ],
+        correct_answer: '95%',
+        points: 1,
+        order_index: 2
+      },
+      {
+        id: '3',
+        question: 'What minimum score is required to pass a quiz?',
+        question_type: 'multiple_choice',
+        options: [
+          '70%',
+          '75%',
+          '80%',
+          '85%'
+        ],
+        correct_answer: '80%',
+        points: 1,
+        order_index: 3
+      },
+      {
+        id: '4',
+        question: 'Can you fast-forward through video content?',
+        question_type: 'multiple_choice',
+        options: [
+          'Yes, always',
+          'No, you must watch sequentially',
+          'Only in the last 10 minutes',
+          'Only with premium access'
+        ],
+        correct_answer: 'No, you must watch sequentially',
+        points: 1,
+        order_index: 4
+      },
+      {
+        id: '5',
+        question: 'How are lessons unlocked in this system?',
+        question_type: 'multiple_choice',
+        options: [
+          'All lessons are available immediately',
+          'Lessons unlock after completing previous ones',
+          'Lessons unlock after a time delay',
+          'Random unlock pattern'
+        ],
+        correct_answer: 'Lessons unlock after completing previous ones',
+        points: 1,
+        order_index: 5
+      }
+    ];
+
+    setTimeout(() => {
+      setQuestions(mockQuestions);
+      setLoading(false);
+    }, 500);
+  }, [lesson.id]);
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const totalQuestions = questions.length;
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+
+  const handleAnswerSelect = (answer: string) => {
+    setSelectedAnswer(answer);
+  };
+
+  const handleNextQuestion = () => {
+    if (selectedAnswer) {
+      setUserAnswers(prev => ({
+        ...prev,
+        [currentQuestion.id]: selectedAnswer
+      }));
+
+      if (isLastQuestion) {
+        submitQuiz();
+      } else {
+        setCurrentQuestionIndex(prev => prev + 1);
+        setSelectedAnswer('');
+      }
+    }
+  };
+
+  const submitQuiz = () => {
+    const finalAnswers = {
+      ...userAnswers,
+      [currentQuestion.id]: selectedAnswer
+    };
+
+    // Calculate score
+    let correctAnswers = 0;
+    let totalPoints = 0;
+
+    questions.forEach(question => {
+      totalPoints += question.points;
+      if (finalAnswers[question.id] === question.correct_answer) {
+        correctAnswers += question.points;
+      }
+    });
+
+    const scorePercentage = Math.round((correctAnswers / totalPoints) * 100);
+    const passed = scorePercentage >= 80;
+
+    setFinalScore(scorePercentage);
+    setQuizCompleted(true);
+    setIsSubmitted(true);
+
+    // Notify parent component
+    onQuizComplete(scorePercentage, passed);
+  };
+
+  const retakeQuiz = () => {
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setSelectedAnswer('');
+    setQuizCompleted(false);
+    setIsSubmitted(false);
+    setFinalScore(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg p-6 text-center">
+        <Spinner className="mx-auto mb-4" />
+        <p>Loading quiz questions...</p>
+      </div>
+    );
+  }
+
+  if (quizCompleted) {
+    const passed = finalScore! >= 80;
+    return (
+      <div className="bg-white rounded-lg p-6 text-center">
+        <div className="text-6xl mb-4">
+          {passed ? '🎉' : '📚'}
+        </div>
+        <h2 className="text-2xl font-bold mb-4">
+          {passed ? 'Congratulations!' : 'Keep Learning!'}
+        </h2>
+        <div className="mb-4">
+          <div className={`text-4xl font-bold ${passed ? 'text-green-600' : 'text-red-600'}`}>
+            {finalScore}%
+          </div>
+          <p className="text-gray-600">
+            You scored {finalScore}% ({passed ? 'Passed' : 'Failed'})
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Minimum passing score: 80%
+          </p>
+        </div>
+        
+        {lesson.is_final_quiz && (
+          <Badge variant="destructive" className="mb-4">Final Quiz</Badge>
+        )}
+
+        {passed ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <p className="text-green-800 font-medium">
+              ✅ Quiz completed successfully! You can now proceed to the next lesson.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-800 font-medium">
+              ❌ Score too low. You need at least 80% to pass.
+            </p>
+            <Button 
+              onClick={retakeQuiz}
+              variant="outline"
+              className="mt-3"
+            >
+              Retake Quiz
+            </Button>
+          </div>
+        )}
+
+        {currentScore && currentScore !== finalScore && (
+          <p className="text-sm text-gray-500">
+            Previous best score: {currentScore}%
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg p-6">
+      {/* Quiz Header */}
+      <div className="mb-6 text-center">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-2xl">📊</span>
+          <h2 className="text-xl font-bold">{lesson.title}</h2>
+          {lesson.is_final_quiz && (
+            <Badge variant="destructive">Final Quiz</Badge>
+          )}
+        </div>
+        <div className="text-sm text-gray-500">
+          Question {currentQuestionIndex + 1} of {totalQuestions}
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <div 
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Question */}
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-4">
+          {currentQuestion.question}
+        </h3>
+        
+        <div className="space-y-3">
+          {currentQuestion.options.map((option, index) => (
+            <label
+              key={index}
+              className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
+                selectedAnswer === option 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200'
+              }`}
+            >
+              <input
+                type="radio"
+                name="quiz-answer"
+                value={option}
+                checked={selectedAnswer === option}
+                onChange={(e) => handleAnswerSelect(e.target.value)}
+                className="sr-only"
+              />
+              <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
+                selectedAnswer === option 
+                  ? 'border-blue-500 bg-blue-500' 
+                  : 'border-gray-300'
+              }`}>
+                {selectedAnswer === option && (
+                  <div className="w-2 h-2 rounded-full bg-white" />
+                )}
+              </div>
+              <span className="text-gray-800">{option}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-500">
+          {selectedAnswer ? 'Answer selected' : 'Please select an answer'}
+        </div>
+        
+        <Button
+          onClick={handleNextQuestion}
+          disabled={!selectedAnswer}
+          className={selectedAnswer ? 'bg-blue-600 hover:bg-blue-700' : ''}
+        >
+          {isLastQuestion ? 'Submit Quiz' : 'Next Question →'}
+        </Button>
+      </div>
+
+      {/* Quiz Info */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+        <div className="text-sm text-gray-600">
+          <p><strong>Passing Score:</strong> 80% ({Math.ceil(totalQuestions * 0.8)}/{totalQuestions} questions correct)</p>
+          <p><strong>Questions:</strong> {totalQuestions} multiple choice</p>
+          <p><strong>Attempts:</strong> Unlimited retakes allowed</p>
+        </div>
+      </div>
     </div>
   );
 }
