@@ -19,6 +19,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kit/ui/select';
 import { Checkbox } from '@kit/ui/checkbox';
 import { toast } from '@kit/ui/sonner';
+import { SimpleQuizBuilder } from './simple-quiz-builder';
 
 interface FullCourseEditorProps {
   course: any;
@@ -47,15 +48,6 @@ interface Lesson {
   passing_score: number;
 }
 
-interface QuizQuestion {
-  id: string;
-  question: string;
-  question_type: string;
-  options: string[];
-  correct_answer: string;
-  points: number;
-  order_index: number;
-}
 
 export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorProps) {
   const [title, setTitle] = useState(course?.title || '');
@@ -66,7 +58,6 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<string | null>(null);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
-  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [lessonVideoMetadata, setLessonVideoMetadata] = useState<{[key: string]: any}>({});
 
   // Load course structure
@@ -301,21 +292,6 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
     }
   };
 
-  const loadQuizQuestions = async (lessonId: string) => {
-    try {
-      const response = await fetch(`/api/admin/lessons/${lessonId}/quiz`);
-      const result = await response.json();
-      
-      if (response.ok) {
-        setQuizQuestions(result.questions || []);
-      } else {
-        toast.error('Failed to load quiz questions');
-      }
-    } catch (error) {
-      console.error('Error loading quiz questions:', error);
-      toast.error('Error loading quiz questions');
-    }
-  };
 
   const loadVideoMetadata = async (lessonId: string) => {
     try {
@@ -513,7 +489,6 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
                                 size="sm"
                                 onClick={() => {
                                   setEditingQuiz(lesson.id);
-                                  loadQuizQuestions(lesson.id);
                                 }}
                               >
                                 <HelpCircle className="h-4 w-4" />
@@ -595,17 +570,20 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
           <DialogHeader>
             <DialogTitle>Edit Quiz Questions</DialogTitle>
           </DialogHeader>
-          {editingQuiz && (
-            <QuizEditorForm
-              lessonId={editingQuiz}
-              questions={quizQuestions}
-              onSave={() => {
-                setEditingQuiz(null);
-                toast.success('Quiz updated');
-              }}
-              onCancel={() => setEditingQuiz(null)}
-            />
-          )}
+          {editingQuiz && (() => {
+            // Find the lesson to get the is_final_quiz flag
+            const lesson = modules
+              .flatMap(m => m.lessons)
+              .find(l => l.id === editingQuiz);
+            
+            return (
+              <SimpleQuizBuilder
+                lessonId={editingQuiz}
+                isFinalQuiz={lesson?.is_final_quiz || false}
+                onClose={() => setEditingQuiz(null)}
+              />
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
@@ -729,38 +707,6 @@ function LessonEditorForm({
   );
 }
 
-// Quiz Editor Component  
-function QuizEditorForm({ 
-  lessonId, 
-  questions, 
-  onSave, 
-  onCancel 
-}: { 
-  lessonId: string; 
-  questions: QuizQuestion[]; 
-  onSave: () => void; 
-  onCancel: () => void; 
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="text-center py-8">
-        <p className="text-gray-500 mb-4">Quiz editor coming soon...</p>
-        <p className="text-sm text-gray-400">
-          Questions: {questions.length}
-        </p>
-      </div>
-      
-      <div className="flex justify-end gap-2 pt-4">
-        <Button variant="outline" onClick={onCancel}>
-          Close
-        </Button>
-        <Button onClick={onSave}>
-          Save Quiz
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 // Module Editor Component
 function ModuleEditorForm({ 
