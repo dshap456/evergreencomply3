@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 interface RouteContext {
@@ -81,5 +81,34 @@ export async function GET(request: Request, context: RouteContext) {
       error: 'Unexpected error',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest, context: RouteContext) {
+  try {
+    const { courseId } = await context.params;
+    const client = getSupabaseServerAdminClient();
+    const body = await request.json();
+
+    const { data, error } = await client
+      .from('courses')
+      .update({
+        title: body.title,
+        description: body.description,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', courseId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating course:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, course: data });
+  } catch (error) {
+    console.error('Error updating course:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

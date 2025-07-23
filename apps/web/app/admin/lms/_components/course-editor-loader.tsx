@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Spinner } from '@kit/ui/spinner';
-import { SimpleCourseEditor } from './simple-course-editor';
+import { FullCourseEditor } from './full-course-editor';
 
 interface CourseEditorLoaderProps {
   courseId: string;
@@ -124,7 +124,7 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
   }
 
   return (
-    <SimpleCourseEditor 
+    <FullCourseEditor 
       course={courseData.course} 
       onBack={onBack} 
       onSave={(updatedCourse) => {
