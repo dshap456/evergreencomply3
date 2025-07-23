@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { Spinner } from '@kit/ui/spinner';
 import { CourseEditor } from './course-editor';
-import { loadCourseAction } from '../_lib/server/load-course-action';
 
 interface CourseEditorLoaderProps {
   courseId: string;
@@ -21,9 +20,19 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
         setLoading(true);
         setError(null);
 
-        // Use server action to load course data (bypasses RLS issues)
-        const result = await loadCourseAction({ courseId });
-        setCourseData(result);
+        // Use API route to load course data
+        const response = await fetch(`/api/admin/courses/${courseId}`);
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to load course');
+        }
+        
+        if (result.success) {
+          setCourseData(result);
+        } else {
+          throw new Error(result.error || 'Failed to load course data');
+        }
       } catch (err) {
         console.error('Error loading course:', err);
         setError(err instanceof Error ? err.message : 'Failed to load course');
