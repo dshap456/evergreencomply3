@@ -5,7 +5,6 @@ import { formatDistanceToNow } from 'date-fns';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
-import { Badge } from '@kit/ui/badge';
 import { Progress } from '@kit/ui/progress';
 import { Trans } from '@kit/ui/trans';
 
@@ -65,27 +64,6 @@ function CourseCard({ course }: { course: LearnerCourse }) {
     });
   }
   
-  const getStatusBadge = () => {
-    if (isCompleted) {
-      return (
-        <Badge className="bg-green-100 text-green-800">
-          <Trans i18nKey="courses:learner.completed" />
-        </Badge>
-      );
-    }
-    if (hasStarted) {
-      return (
-        <Badge className="bg-blue-100 text-blue-800">
-          <Trans i18nKey="courses:learner.inProgress" />
-        </Badge>
-      );
-    }
-    return (
-      <Badge className="bg-gray-100 text-gray-800">
-        <Trans i18nKey="courses:learner.notStarted" />
-      </Badge>
-    );
-  };
 
   const getLastAccessedText = () => {
     if (!course.last_accessed) return null;
@@ -118,7 +96,6 @@ function CourseCard({ course }: { course: LearnerCourse }) {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start gap-2">
           <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-          {getStatusBadge()}
         </div>
         
         {course.description && (
