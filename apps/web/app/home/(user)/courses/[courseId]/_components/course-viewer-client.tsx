@@ -334,15 +334,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             {!sidebarMinimized ? (
               <div>
                 <h2 className="font-semibold text-lg truncate">{course.title}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-24 bg-gray-200 rounded-full h-1.5">
-                    <div 
-                      className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
-                      style={{ width: `${course.progress_percentage}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-gray-600">{course.progress_percentage}%</span>
-                </div>
               </div>
             ) : (
               <div className="w-full flex justify-center">
@@ -405,9 +396,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                 <div key={module.id} className="space-y-2">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-sm">{module.title}</h3>
-                    <Badge variant="outline" className="text-xs">
-                      {module.lessons.filter(l => l.completed).length}/{module.lessons.length}
-                    </Badge>
                   </div>
                   <div className="space-y-1">
                     {module.lessons.map((lesson) => (
