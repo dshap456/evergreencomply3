@@ -325,7 +325,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           <div className="flex items-center justify-between p-4">
             {!sidebarMinimized ? (
               <div>
-                <Link href="/home" className="font-semibold text-lg truncate hover:text-blue-600 transition-colors cursor-pointer">
+                <Link href="/home/courses" className="font-semibold text-lg truncate hover:text-blue-600 transition-colors cursor-pointer">
                   {course.title}
                 </Link>
               </div>
@@ -465,7 +465,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <h2 className="text-2xl font-bold mb-2">
-                  Welcome to <Link href="/home" className="hover:text-blue-600 transition-colors cursor-pointer">{course.title}</Link>
+                  Welcome to <Link href="/home/courses" className="hover:text-blue-600 transition-colors cursor-pointer">{course.title}</Link>
                 </h2>
                 <p className="text-gray-600 mb-4">Select a lesson from the sidebar to get started</p>
                 <Button onClick={() => setSidebarOpen(true)} className="lg:hidden">
