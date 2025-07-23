@@ -8,6 +8,7 @@ import { Textarea } from '@kit/ui/textarea';
 import { Badge } from '@kit/ui/badge';
 import { Spinner } from '@kit/ui/spinner';
 import { Plus, Edit, Trash2, Video, FileText, HelpCircle, Save } from 'lucide-react';
+import { VideoUpload } from './video-upload';
 import { 
   Dialog, 
   DialogContent, 
@@ -65,6 +66,7 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [editingQuiz, setEditingQuiz] = useState<string | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [lessonVideoMetadata, setLessonVideoMetadata] = useState<{[key: string]: any}>({});
 
   // Load course structure
   useEffect(() => {
@@ -249,6 +251,22 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
     }
   };
 
+  const loadVideoMetadata = async (lessonId: string) => {
+    try {
+      const response = await fetch(`/api/admin/lessons/${lessonId}/video`);
+      const result = await response.json();
+      
+      if (response.ok && result.metadata) {
+        setLessonVideoMetadata(prev => ({
+          ...prev,
+          [lessonId]: result.metadata
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading video metadata:', error);
+    }
+  };
+
   const getContentTypeIcon = (type: string) => {
     switch (type) {
       case 'video': return <Video className="h-4 w-4" />;
@@ -397,7 +415,12 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => setEditingLesson(lesson)}
+                              onClick={() => {
+                                setEditingLesson(lesson);
+                                if (lesson.content_type === 'video') {
+                                  loadVideoMetadata(lesson.id);
+                                }
+                              }}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -455,6 +478,13 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
               lesson={editingLesson}
               onSave={handleSaveLesson}
               onCancel={() => setEditingLesson(null)}
+              videoMetadata={lessonVideoMetadata[editingLesson.id]}
+              onVideoUploaded={(metadata) => {
+                setLessonVideoMetadata(prev => ({
+                  ...prev,
+                  [editingLesson.id]: metadata
+                }));
+              }}
             />
           )}
         </DialogContent>
@@ -487,11 +517,15 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
 function LessonEditorForm({ 
   lesson, 
   onSave, 
-  onCancel 
+  onCancel,
+  videoMetadata,
+  onVideoUploaded
 }: { 
   lesson: Lesson; 
   onSave: (lesson: Lesson) => void; 
   onCancel: () => void; 
+  videoMetadata?: any;
+  onVideoUploaded?: (metadata: any) => void;
 }) {
   const [formData, setFormData] = useState(lesson);
 
@@ -532,15 +566,12 @@ function LessonEditorForm({
         </Select>
       </div>
 
-      {formData.content_type === 'video' && (
-        <div>
-          <label className="block text-sm font-medium mb-2">Video URL</label>
-          <Input
-            value={formData.video_url || ''}
-            onChange={(e) => setFormData({ ...formData, video_url: e.target.value })}
-            placeholder="https://example.com/video.mp4"
-          />
-        </div>
+      {formData.content_type === 'video' && onVideoUploaded && (
+        <VideoUpload
+          lessonId={lesson.id}
+          onVideoUploaded={onVideoUploaded}
+          existingVideo={videoMetadata}
+        />
       )}
 
       {formData.content_type === 'text' && (

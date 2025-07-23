@@ -16,7 +16,6 @@ export async function PUT(
         title: body.title,
         description: body.description,
         content_type: body.content_type,
-        video_url: body.video_url,
         asset_url: body.asset_url,
         content: body.content,
         order_index: body.order_index,
