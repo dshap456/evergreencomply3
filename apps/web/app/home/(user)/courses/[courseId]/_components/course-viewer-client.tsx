@@ -236,6 +236,27 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     }
   };
 
+  const handleLessonCompletion = async (lessonId: string, timeSpent?: number) => {
+    try {
+      // Mark lesson as complete in database
+      const response = await fetch(`/api/lessons/${lessonId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ time_spent: timeSpent })
+      });
+
+      if (response.ok) {
+        console.log('✅ Lesson completion saved to database');
+        // Reload course data to update progress and unlock next lessons
+        await loadCourseData();
+      } else {
+        console.error('❌ Failed to save lesson completion');
+      }
+    } catch (error) {
+      console.error('❌ Error saving lesson completion:', error);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -429,6 +450,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
               onNext={handleNextLesson}
               hasNextLesson={!!getNextLessonInSequence()}
               isLastLesson={isLastLesson()}
+              onLessonComplete={handleLessonCompletion}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -461,13 +483,15 @@ function LessonPlayer({
   module, 
   onNext,
   hasNextLesson,
-  isLastLesson 
+  isLastLesson,
+  onLessonComplete
 }: { 
   lesson: CourseLesson; 
   module: CourseModule;
   onNext: () => void;
   hasNextLesson: boolean;
   isLastLesson: boolean;
+  onLessonComplete: (lessonId: string, timeSpent?: number) => void;
 }) {
   const [currentLessonCompleted, setCurrentLessonCompleted] = useState(lesson.completed);
   
@@ -501,8 +525,8 @@ function LessonPlayer({
                 onCompletion={(completed) => {
                   if (completed) {
                     setCurrentLessonCompleted(true);
-                    // TODO: Save completion to database
-                    console.log('Video completed, lesson unlocked for next');
+                    // Save completion to database and refresh course data
+                    onLessonComplete(lesson.id);
                   }
                 }}
               />
@@ -533,8 +557,8 @@ function LessonPlayer({
             onQuizComplete={(score, passed) => {
               if (passed && score >= 80) {
                 setCurrentLessonCompleted(true);
-                // TODO: Save quiz completion to database
-                console.log('Quiz passed with score:', score);
+                // Save quiz completion to database and refresh course data
+                onLessonComplete(lesson.id);
               }
             }}
           />
