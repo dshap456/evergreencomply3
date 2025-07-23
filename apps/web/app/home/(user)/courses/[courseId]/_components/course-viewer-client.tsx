@@ -597,7 +597,7 @@ Download Asset
   return (
     <div className="h-full flex flex-col">
       {/* Lesson Header */}
-      <div className="bg-white p-4">
+      <div className="hidden lg:block bg-white p-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
