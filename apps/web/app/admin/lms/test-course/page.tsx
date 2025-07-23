@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminGuard } from '@kit/admin/components/admin-guard';
 
 function TestCoursePage() {
   const [mounted, setMounted] = useState(false);
@@ -75,4 +74,4 @@ function TestCoursePage() {
   );
 }
 
-export default AdminGuard(TestCoursePage);
+export default TestCoursePage;
