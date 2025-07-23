@@ -116,15 +116,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     loadCourseData();
   }, [courseId]);
 
-  const getContentTypeIcon = (contentType: string) => {
-    switch (contentType) {
-      case 'video': return '🎥';
-      case 'text': return '📝';
-      case 'quiz': return '📊';
-      case 'asset': return '📎';
-      default: return '📄';
-    }
-  };
 
   const getContentTypeColor = (contentType: string) => {
     switch (contentType) {
@@ -427,7 +418,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                             <span className={`truncate font-medium ${lesson.is_locked ? 'text-gray-500' : ''}`}>
                               {lesson.title}
                             </span>
-                            <span className="text-xs">{getContentTypeIcon(lesson.content_type)}</span>
                           </div>
                           {lesson.is_locked && (
                             <p className="text-xs text-gray-500 mt-0.5">Complete previous lesson to unlock</p>
@@ -516,15 +506,6 @@ function LessonPlayer({
     setCurrentLessonCompleted(lesson.completed);
   }, [lesson.id, lesson.completed]);
 
-  const getContentTypeIcon = (contentType: string) => {
-    switch (contentType) {
-      case 'video': return '🎥';
-      case 'text': return '📝';
-      case 'quiz': return '📊';
-      case 'asset': return '📎';
-      default: return '📄';
-    }
-  };
 
   const renderLessonContent = () => {
     switch (lesson.content_type) {
@@ -558,7 +539,7 @@ function LessonPlayer({
               <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
             ) : (
               <div>
-                <p>📝 Text lesson content will be displayed here.</p>
+                <p>Text lesson content will be displayed here.</p>
                 <p className="text-gray-500">Content: {lesson.content || 'No content set'}</p>
               </div>
             )}
@@ -583,7 +564,6 @@ function LessonPlayer({
       case 'asset':
         return (
           <div className="bg-white rounded-lg p-6 text-center">
-            <div className="text-4xl mb-4">📎</div>
             <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
             <p className="text-gray-600 mb-4">Asset content</p>
             {lesson.asset_url && (
@@ -593,7 +573,7 @@ function LessonPlayer({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"
               >
-                📎 Download Asset
+Download Asset
               </a>
             )}
           </div>
@@ -602,7 +582,6 @@ function LessonPlayer({
       default:
         return (
           <div className="bg-white rounded-lg p-6 text-center">
-            <div className="text-4xl mb-4">📄</div>
             <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
             <p className="text-gray-600">Unknown content type: {lesson.content_type}</p>
           </div>
@@ -617,7 +596,6 @@ function LessonPlayer({
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl">{getContentTypeIcon(lesson.content_type)}</span>
               <div>
                 <h1 className="text-xl font-bold">{lesson.title}</h1>
                 <p className="text-sm text-gray-600">{module.title}</p>
@@ -1050,7 +1028,6 @@ function QuizPlayer({
       {/* Quiz Header */}
       <div className="mb-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <span className="text-2xl">📊</span>
           <h2 className="text-xl font-bold">{lesson.title}</h2>
           {lesson.is_final_quiz && (
             <Badge variant="destructive">Final Quiz</Badge>
