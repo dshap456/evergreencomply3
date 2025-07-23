@@ -5,47 +5,62 @@ export async function GET(request: NextRequest) {
   try {
     const client = getSupabaseServerClient();
 
-    // Check if quiz_questions table exists and get its structure
-    const { data: tableInfo, error: tableError } = await client
-      .from('information_schema.columns')
-      .select('column_name, data_type, is_nullable')
-      .eq('table_name', 'quiz_questions')
-      .eq('table_schema', 'public');
+    // Check if we can access the quiz_questions table
+    const { data: existingRows, error: selectError } = await client
+      .from('quiz_questions')
+      .select('*')
+      .limit(5);
 
-    if (tableError) {
-      return NextResponse.json({ error: 'Failed to get table info', details: tableError }, { status: 500 });
+    if (selectError) {
+      return NextResponse.json({ 
+        error: 'Cannot access quiz_questions table', 
+        details: selectError,
+        step: 'select_check'
+      }, { status: 500 });
     }
 
-    // Try to insert a test row
+    // Try to insert a test row with all fields
     const testQuestion = {
-      lesson_id: '00000000-0000-0000-0000-000000000000', // dummy UUID
+      lesson_id: '123e4567-e89b-12d3-a456-426614174000', // dummy UUID
       question: 'Test question',
       question_type: 'multiple_choice',
       options: ['A', 'B', 'C'],
       correct_answer: 'A',
       explanation: 'Test explanation',
-      order_index: 1,
+      order_index: 999,
     };
 
-    const { error: insertError } = await client
+    const { data: insertData, error: insertError } = await client
       .from('quiz_questions')
-      .insert([testQuestion]);
+      .insert([testQuestion])
+      .select();
 
-    // Clean up - delete the test row (it will fail due to foreign key, but that's expected)
-    await client
-      .from('quiz_questions')
-      .delete()
-      .eq('lesson_id', '00000000-0000-0000-0000-000000000000');
+    // Try to clean up the test row
+    if (insertData && insertData.length > 0) {
+      await client
+        .from('quiz_questions')
+        .delete()
+        .eq('id', insertData[0].id);
+    }
 
     return NextResponse.json({
-      tableExists: tableInfo && tableInfo.length > 0,
-      columns: tableInfo,
-      insertError: insertError ? insertError.message : null,
-      testResult: insertError ? 'Insert failed as expected' : 'Insert succeeded'
+      tableAccessible: !selectError,
+      existingRowsCount: existingRows?.length || 0,
+      existingRows: existingRows,
+      insertTest: {
+        success: !insertError,
+        error: insertError ? insertError.message : null,
+        errorCode: insertError ? insertError.code : null,
+        errorDetails: insertError ? insertError.details : null,
+        insertedData: insertData
+      }
     });
 
   } catch (error) {
     console.error('Debug API error:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : String(error) 
+    }, { status: 500 });
   }
 }
