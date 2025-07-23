@@ -280,7 +280,7 @@ export function SimpleQuizBuilder({ lessonId, isFinalQuiz = false, onClose }: Si
                       )}
                     </div>
 
-                    {/* Explanation */}
+                    {/* Explanation - Temporarily hidden until database migration is applied
                     <div>
                       <label className="block text-sm font-medium mb-2">
                         Explanation (Optional)
@@ -292,6 +292,7 @@ export function SimpleQuizBuilder({ lessonId, isFinalQuiz = false, onClose }: Si
                         className="min-h-[60px]"
                       />
                     </div>
+                    */}
                   </CardContent>
                 </Card>
               ))}

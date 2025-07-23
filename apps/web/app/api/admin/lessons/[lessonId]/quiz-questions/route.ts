@@ -90,8 +90,8 @@ export async function POST(
         question_type: 'multiple_choice',
         options: q.options.filter((opt: string) => opt.trim() !== ''), // Remove empty options
         correct_answer: q.correct_answer,
-        explanation: q.explanation || null,
         order_index: index + 1,
+        // Note: explanation field temporarily removed until database migration is applied
       }));
 
       const { error: insertError } = await client
