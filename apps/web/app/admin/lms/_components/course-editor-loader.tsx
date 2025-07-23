@@ -17,31 +17,47 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
   useEffect(() => {
     async function loadCourse() {
       try {
+        console.log('🔄 CourseEditorLoader: Starting to load course:', courseId);
         setLoading(true);
         setError(null);
 
         // Use API route to load course data
-        const response = await fetch(`/api/admin/courses/${courseId}`);
+        const apiUrl = `/api/admin/courses/${courseId}`;
+        console.log('📞 CourseEditorLoader: Calling API:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        console.log('📡 CourseEditorLoader: Response status:', response.status);
+        
         const result = await response.json();
+        console.log('📥 CourseEditorLoader: Response data:', result);
         
         if (!response.ok) {
+          console.error('❌ CourseEditorLoader: API response not ok:', response.status, result);
           throw new Error(result.error || 'Failed to load course');
         }
         
         if (result.success) {
+          console.log('✅ CourseEditorLoader: Setting course data:', result);
           setCourseData(result);
         } else {
+          console.error('❌ CourseEditorLoader: Result not successful:', result);
           throw new Error(result.error || 'Failed to load course data');
         }
       } catch (err) {
-        console.error('Error loading course:', err);
+        console.error('❌ CourseEditorLoader: Error loading course:', err);
         setError(err instanceof Error ? err.message : 'Failed to load course');
       } finally {
         setLoading(false);
       }
     }
 
-    loadCourse();
+    if (courseId) {
+      loadCourse();
+    } else {
+      console.error('❌ CourseEditorLoader: No courseId provided');
+      setError('No course ID provided');
+      setLoading(false);
+    }
   }, [courseId]);
 
   if (loading) {

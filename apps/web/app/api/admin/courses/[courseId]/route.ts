@@ -7,13 +7,18 @@ interface RouteContext {
 
 export async function GET(request: Request, context: RouteContext) {
   try {
+    console.log('🔍 Admin course API called');
     const { courseId } = await context.params;
+    console.log('📋 Course ID:', courseId);
     
     if (!courseId) {
+      console.error('❌ No courseId provided');
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
     }
 
+    console.log('🔧 Creating admin client...');
     const client = getSupabaseServerAdminClient();
+    console.log('✅ Admin client created');
 
     // Load course data using admin client to bypass RLS
     const { data: course, error: courseError } = await client
