@@ -106,6 +106,8 @@ export const completeLessonAction = enhanceAction(
 
     // Revalidate the course page to show updated progress
     revalidatePath(`/home/courses/${data.courseId}`);
+    // Also revalidate the courses list page to update button status
+    revalidatePath('/home/courses');
 
     return { success: true, message: 'Lesson completed successfully!' };
   },
@@ -118,16 +120,27 @@ export const completeLessonAction = enhanceAction(
 // Helper function to calculate and update overall course progress
 async function updateCourseProgress(client: any, userId: string, courseId: string) {
   try {
-    // Get all lessons in the course
+    // Get all lessons in the course (lessons belong to modules, modules belong to courses)
     const { data: courseLessons, error: lessonsError } = await client
       .from('lessons')
-      .select('id')
-      .eq('course_id', courseId);
+      .select(`
+        id,
+        course_modules!inner (
+          course_id
+        )
+      `)
+      .eq('course_modules.course_id', courseId);
 
     if (lessonsError || !courseLessons) {
       console.error('Error fetching course lessons:', lessonsError);
       return;
     }
+
+    console.log('🔧 Debug - updateCourseProgress:', {
+      courseId,
+      userId,
+      totalLessonsFound: courseLessons.length
+    });
 
     const totalLessons = courseLessons.length;
     
@@ -151,6 +164,16 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
     const completedCount = completedLessons?.length || 0;
     const overallProgress = Math.round((completedCount / totalLessons) * 100);
 
+    console.log('📊 Debug - Progress calculation:', {
+      courseId,
+      userId,
+      completedCount,
+      totalLessons,
+      overallProgress,
+      lessonIds: courseLessons.map(l => l.id),
+      completedLessonIds: completedLessons?.map(l => l.lesson_id) || []
+    });
+
     // Check if course is now complete
     const isCompleted = completedCount === totalLessons;
 
@@ -163,6 +186,12 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
       updateData.completed_at = new Date().toISOString();
     }
 
+    console.log('💾 Debug - Updating course enrollment:', {
+      courseId,
+      userId,
+      updateData
+    });
+
     const { error: updateError } = await client
       .from('course_enrollments')
       .update(updateData)
@@ -171,6 +200,8 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
 
     if (updateError) {
       console.error('Error updating course progress:', updateError);
+    } else {
+      console.log('✅ Debug - Course progress updated successfully');
     }
 
   } catch (error) {

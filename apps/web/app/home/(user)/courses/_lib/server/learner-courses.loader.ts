@@ -130,6 +130,18 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
   const enrolledCourses: LearnerCourse[] = enrolledCoursesData?.map(enrollment => {
     const stats = statsMap.get(enrollment.course.id) || { totalModules: 0, totalLessons: 0 };
     
+    // Debug logging (temporary - remove in production)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Debug - Course enrollment data:', {
+        courseId: enrollment.course.id,
+        title: enrollment.course.title,
+        progress_percentage: enrollment.progress_percentage,
+        completed_at: enrollment.completed_at,
+        hasStarted: (enrollment.progress_percentage || 0) > 0,
+        isCompleted: !!enrollment.completed_at
+      });
+    }
+    
     return {
       id: enrollment.course.id,
       title: enrollment.course.title,

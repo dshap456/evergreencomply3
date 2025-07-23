@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 export async function POST(
@@ -48,18 +49,26 @@ export async function POST(
     }
 
     // Get updated course progress to return fresh data
+    const lessonData = await client
+      .from('lessons')
+      .select('course_modules!inner(course_id)')
+      .eq('id', lessonId)
+      .single();
+
+    const courseId = lessonData.data?.course_modules?.course_id;
+
     const { data: courseProgress, error: courseProgressError } = await client
       .from('course_enrollments')
       .select('progress_percentage, completed_at')
       .eq('user_id', user.id)
-      .eq('course_id', (
-        await client
-          .from('lessons')
-          .select('course_modules!inner(course_id)')
-          .eq('id', lessonId)
-          .single()
-      ).data?.course_modules?.course_id)
+      .eq('course_id', courseId)
       .single();
+
+    // Revalidate relevant pages to show updated progress
+    if (courseId) {
+      revalidatePath(`/home/courses/${courseId}`);
+      revalidatePath('/home/courses');
+    }
 
     return NextResponse.json({ 
       success: true, 

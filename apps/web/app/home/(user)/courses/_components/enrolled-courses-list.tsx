@@ -39,6 +39,19 @@ function CourseCard({ course }: { course: LearnerCourse }) {
   const isCompleted = !!course.completed_at;
   const hasStarted = course.progress_percentage > 0;
   
+  // Debug logging (temporary - remove in production)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🎯 Debug - CourseCard render:', {
+      courseId: course.id,
+      title: course.title,
+      progress_percentage: course.progress_percentage,
+      completed_at: course.completed_at,
+      hasStarted,
+      isCompleted,
+      buttonText: isCompleted ? 'review' : hasStarted ? 'continue' : 'start'
+    });
+  }
+  
   const getStatusBadge = () => {
     if (isCompleted) {
       return (
