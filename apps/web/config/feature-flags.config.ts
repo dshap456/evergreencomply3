@@ -8,7 +8,7 @@ const FeatureFlagsSchema = z.object({
     required_error: 'Provide the variable NEXT_PUBLIC_ENABLE_THEME_TOGGLE',
   }),
   enableAccountDeletion: z.boolean({
-    description: 'Enable personal account deletion.',
+    description: 'Enable individual account deletion.',
     required_error:
       'Provide the variable NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_DELETION',
   }),
@@ -27,7 +27,7 @@ const FeatureFlagsSchema = z.object({
       'Provide the variable NEXT_PUBLIC_ENABLE_TEAM_ACCOUNTS_CREATION',
   }),
   enablePersonalAccountBilling: z.boolean({
-    description: 'Enable personal account billing.',
+    description: 'Enable individual account billing.',
     required_error:
       'Provide the variable NEXT_PUBLIC_ENABLE_PERSONAL_ACCOUNT_BILLING',
   }),

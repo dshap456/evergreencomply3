@@ -145,8 +145,8 @@ export const loadUsersAction = enhanceAction(
           id: account.id, // Account ID for display
           name: account.name || 'Unknown User',
           email: account.email || 'No email',
-          role: 'learner', // Default role for personal accounts
-          account: 'Personal', // Personal accounts
+          role: 'learner', // Default role for individual accounts
+          account: 'Individual', // Individual accounts
           enrollments: stats.enrollments,
           completions: stats.completions,
           last_active: stats.lastActive,

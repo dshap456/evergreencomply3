@@ -39,7 +39,7 @@ export default async function DebugUserPage() {
           </section>
           
           <section>
-            <h2 className="text-lg font-semibold">Personal Accounts</h2>
+            <h2 className="text-lg font-semibold">Individual Accounts</h2>
             <pre className="bg-gray-100 p-4 rounded text-sm overflow-auto">
               {JSON.stringify({ accounts, accountsError }, null, 2)}
             </pre>

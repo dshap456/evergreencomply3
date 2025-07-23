@@ -42,7 +42,7 @@ export default function SetupMfaPage() {
               <div className="space-y-4">
                 <h3 className="font-medium">To access admin features:</h3>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-muted-foreground">
-                  <li>Go to your personal account settings</li>
+                  <li>Go to your individual account settings</li>
                   <li>Set up Multi-Factor Authentication (TOTP)</li>
                   <li>Scan the QR code with an authenticator app</li>
                   <li>Enter the verification code to complete setup</li>
