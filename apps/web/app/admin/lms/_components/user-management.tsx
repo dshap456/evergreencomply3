@@ -157,7 +157,7 @@ export function UserManagement() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -192,17 +192,6 @@ export function UserManagement() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Completion</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round(users.reduce((acc, u) => acc + (u.completions / u.enrollments || 0), 0) / users.length * 100)}%
-            </div>
-            <p className="text-xs text-muted-foreground">Course completion rate</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Filters */}
