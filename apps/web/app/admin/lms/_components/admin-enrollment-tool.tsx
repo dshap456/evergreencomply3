@@ -19,8 +19,9 @@ interface Course {
 
 interface User {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
+  created_at?: string | null;
 }
 
 export function AdminEnrollmentTool() {
@@ -38,8 +39,8 @@ export function AdminEnrollmentTool() {
   const loadData = async () => {
     try {
       const [coursesData, usersData] = await Promise.all([
-        loadCoursesAction(),
-        listUsersForEnrollmentAction()
+        loadCoursesAction({}),
+        listUsersForEnrollmentAction({})
       ]);
       
       setCourses(coursesData.filter((c: Course) => c.status === 'published'));
