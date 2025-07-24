@@ -53,7 +53,7 @@ export const loadCoursesAction = enhanceAction(
     try {
       const { data: lessonData, error: lessonCountsError } = await client
         .from('lessons')
-        .select('course_id');
+        .select('module_id, course_modules!inner(course_id)');
 
       if (lessonCountsError) {
         console.warn('⚠️ LoadCoursesAction: Lessons table may not exist:', lessonCountsError.message);
@@ -61,7 +61,8 @@ export const loadCoursesAction = enhanceAction(
       } else if (lessonData) {
         // Count lessons per course
         lessonCounts = lessonData.reduce((acc, lesson) => {
-          acc[lesson.course_id] = (acc[lesson.course_id] || 0) + 1;
+          const courseId = lesson.course_modules.course_id;
+          acc[courseId] = (acc[courseId] || 0) + 1;
           return acc;
         }, {} as Record<string, number>);
       }
