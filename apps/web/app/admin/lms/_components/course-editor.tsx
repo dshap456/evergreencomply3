@@ -194,6 +194,43 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
     }
   };
 
+  const handlePublish = async () => {
+    try {
+      setIsSaving(true);
+      
+      console.log('🔄 CourseEditor: Publishing course...', {
+        id: courseData.id,
+        title: courseData.title,
+        currentStatus: courseData.status
+      });
+      
+      // Update course status to published and save all changes
+      const updatedCourse = {
+        ...courseData,
+        status: 'published' as const
+      };
+      
+      const result = await updateCourseAction({
+        id: updatedCourse.id,
+        title: updatedCourse.title,
+        description: updatedCourse.description,
+        status: updatedCourse.status,
+      });
+      
+      console.log('✅ CourseEditor: Publish result:', result);
+      
+      toast.success('Course published successfully');
+      setCourseData(updatedCourse);
+      setIsDirty(false);
+      onSave(updatedCourse);
+    } catch (error) {
+      console.error('❌ CourseEditor: Failed to publish course:', error);
+      toast.error(`Failed to publish course: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -227,6 +264,22 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
               'Save Changes'
             )}
           </Button>
+          {courseData.status !== 'published' && (
+            <Button 
+              onClick={handlePublish} 
+              disabled={isSaving}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSaving ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Publishing...
+                </>
+              ) : (
+                'Publish Course'
+              )}
+            </Button>
+          )}
         </div>
       </div>
 

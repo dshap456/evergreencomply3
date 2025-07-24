@@ -125,6 +125,26 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
     });
   };
 
+  const handlePublish = () => {
+    startTransition(async () => {
+      try {
+        await updateCourseAction({
+          id: courseData.id,
+          title: courseData.title,
+          description: courseData.description,
+          is_published: true,
+        });
+        
+        setCourseData(prev => ({ ...prev, is_published: true }));
+        toast.success('Course published successfully');
+        setIsDirty(false);
+      } catch (error) {
+        console.error('Failed to publish course:', error);
+        toast.error('Failed to publish course');
+      }
+    });
+  };
+
   const lessonCount = modules.reduce((acc, module) => acc + module.lessons.length, 0);
 
   return (
@@ -161,6 +181,22 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
               'Save Changes'
             )}
           </Button>
+          {!courseData.is_published && (
+            <Button 
+              onClick={handlePublish} 
+              disabled={isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isPending ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Publishing...
+                </>
+              ) : (
+                'Publish Course'
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
