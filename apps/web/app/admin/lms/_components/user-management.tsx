@@ -248,35 +248,14 @@ export function UserManagement() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h4 className="font-medium">{user.name}</h4>
-                      <Badge variant="secondary" className={getRoleBadgeColor(user.role)}>
-                        {getRoleLabel(user.role)}
-                      </Badge>
-                      <Badge variant="secondary" className={getStatusBadgeColor(user.status)}>
-                        {user.status}
-                      </Badge>
                     </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
+                    <div className="text-sm text-muted-foreground">
                       <div className="flex items-center gap-4">
                         <span>{user.email}</span>
                         <span>•</span>
                         <span>{user.account}</span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span>{user.enrollments} enrolled</span>
-                        <span>•</span>
-                        <span>{user.completions} completed</span>
-                        <span>•</span>
-                        <span>Last active: {new Date(user.last_active).toLocaleDateString()}</span>
-                      </div>
                     </div>
-                  </div>
-
-                  {/* Progress */}
-                  <div className="text-center">
-                    <div className="text-lg font-bold">
-                      {user.enrollments > 0 ? Math.round((user.completions / user.enrollments) * 100) : 0}%
-                    </div>
-                    <p className="text-xs text-muted-foreground">completion</p>
                   </div>
 
                   {/* Actions */}
