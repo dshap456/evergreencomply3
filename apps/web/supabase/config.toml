@@ -81,7 +81,7 @@ url = ""
 email_sent = 1000
 
 [auth.email.template.invite]
-subject = "You are invited to Makerkit"
+subject = "You are invited to Evergreen Comply"
 content_path = "./supabase/templates/invite-user.html"
 
 [auth.email.template.confirmation]
@@ -97,7 +97,7 @@ subject = "Confirm your email change"
 content_path = "./supabase/templates/change-email-address.html"
 
 [auth.email.template.magic_link]
-subject = "Sign in to Makerkit"
+subject = "Sign in to Evergreen Comply"
 content_path = "./supabase/templates/magic-link.html"
 
 [analytics]

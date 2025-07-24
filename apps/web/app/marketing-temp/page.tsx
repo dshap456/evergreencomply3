@@ -77,7 +77,7 @@ function Home() {
                 .{' '}
                 <span className="text-muted-foreground font-normal tracking-tighter">
                   Unleash your creativity and build your SaaS faster than ever
-                  with Makerkit.
+                  with Evergreen Comply.
                 </span>
               </>
             }
@@ -92,13 +92,13 @@ function Home() {
               <FeatureCard
                 className={'relative col-span-1 overflow-hidden'}
                 label={'Beautiful Dashboard'}
-                description={`Makerkit provides a beautiful dashboard to manage your SaaS business.`}
+                description={`Evergreen Comply provides a beautiful dashboard to manage your SaaS business.`}
               ></FeatureCard>
 
               <FeatureCard
                 className={'relative col-span-1 w-full overflow-hidden'}
                 label={'Authentication'}
-                description={`Makerkit provides a variety of providers to allow your users to sign in.`}
+                description={`Evergreen Comply provides a variety of providers to allow your users to sign in.`}
               ></FeatureCard>
 
               <FeatureCard
@@ -110,7 +110,7 @@ function Home() {
               <FeatureCard
                 className={'relative col-span-1 overflow-hidden md:col-span-2'}
                 label={'Billing'}
-                description={`Makerkit supports multiple payment gateways to charge your customers.`}
+                description={`Evergreen Comply supports multiple payment gateways to charge your customers.`}
               />
 
               <FeatureCard
