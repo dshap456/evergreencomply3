@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,13 +38,10 @@ import { toast } from '@kit/ui/sonner';
 import { createCourseAction } from '../_lib/server/course-actions';
 
 const CreateCourseSchema = z.object({
-  account_id: z.string().min(1, 'Account is required'),
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required').max(1000),
   category: z.string().min(1, 'Category is required'),
   estimated_duration: z.string().min(1, 'Estimated duration is required').max(100),
-  sku: z.string().optional(),
-  price: z.coerce.number().min(0).default(0),
 });
 
 type CreateCourseForm = z.infer<typeof CreateCourseSchema>;
@@ -74,58 +71,25 @@ export function CreateCourseDialog({
   onCourseCreated,
 }: CreateCourseDialogProps) {
   const [isPending, startTransition] = useTransition();
-  const [accounts, setAccounts] = useState<Array<{ id: string; name: string }>>([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(true);
 
   const form = useForm<CreateCourseForm>({
     resolver: zodResolver(CreateCourseSchema),
     defaultValues: {
-      account_id: '',
       title: '',
       description: '',
       category: '',
       estimated_duration: '',
-      sku: '',
-      price: 0,
     },
   });
-
-  // Load accounts when dialog opens
-  useEffect(() => {
-    if (open) {
-      loadAccounts();
-    }
-  }, [open]);
-
-  const loadAccounts = async () => {
-    try {
-      setLoadingAccounts(true);
-      const response = await fetch('/api/admin/accounts');
-      if (response.ok) {
-        const data = await response.json();
-        setAccounts(data.accounts || []);
-      } else {
-        throw new Error('Failed to load accounts');
-      }
-    } catch (error) {
-      console.error('Error loading accounts:', error);
-      toast.error('Failed to load accounts');
-    } finally {
-      setLoadingAccounts(false);
-    }
-  };
 
   const onSubmit = (data: CreateCourseForm) => {
     startTransition(async () => {
       try {
-        // Note: We're storing the estimated_duration as metadata for now
-        // The actual course schema doesn't have this field
+        // Super admin creates all courses under their personal account
+        // We'll get the current user's account_id automatically in the server action
         const courseData = {
-          account_id: data.account_id,
           title: data.title,
           description: data.description,
-          sku: data.sku || undefined,
-          price: data.price,
         };
 
         const result = await createCourseAction(courseData);
@@ -170,39 +134,7 @@ export function CreateCourseDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Information */}
             <div className="space-y-4">
-              <h3 className="text-lg font-medium">Basic Information</h3>
-              
-              <FormField
-                control={form.control}
-                name="account_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={loadingAccounts || isPending}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={loadingAccounts ? "Loading accounts..." : "Select an account"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accounts.map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Select the account this course belongs to
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <h3 className="text-lg font-medium">Course Information</h3>
               
               <FormField
                 control={form.control}
@@ -270,52 +202,6 @@ export function CreateCourseDialog({
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU (Optional)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="COURSE-001"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Stock keeping unit for tracking
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Price</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          {...field}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Course price in dollars
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
               <FormField
                 control={form.control}

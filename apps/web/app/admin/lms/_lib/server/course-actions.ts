@@ -82,27 +82,30 @@ export const updateCourseAction = enhanceAction(
 );
 
 const CreateCourseSchema = z.object({
-  account_id: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
-  sku: z.string().optional(),
-  price: z.number().min(0).optional(),
 });
 
 export const createCourseAction = enhanceAction(
-  async function (data) {
+  async function (data, user) {
     const client = getSupabaseServerAdminClient();
 
     console.log('🔄 CreateCourseAction: Starting course creation with data:', data);
+    console.log('🔄 CreateCourseAction: User:', user?.id);
+
+    // Get the user's personal account ID (same as user ID for personal accounts)
+    const userAccountId = user?.id;
+    
+    if (!userAccountId) {
+      throw new Error('User account not found');
+    }
 
     const { data: course, error } = await client
       .from('courses')
       .insert({
-        account_id: data.account_id,
+        account_id: userAccountId,
         title: data.title,
         description: data.description,
-        sku: data.sku,
-        price: data.price,
         is_published: false,
       })
       .select()
