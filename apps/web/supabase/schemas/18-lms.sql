@@ -155,6 +155,8 @@ ALTER TABLE public.course_completions ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for Courses
 CREATE POLICY "courses_read" ON public.courses FOR SELECT
     TO authenticated USING (
+        -- Super admins can read all courses
+        public.is_super_admin() OR
         -- Course owners (account members) can read
         public.has_role_on_account(account_id) OR
         -- Published courses are readable by all authenticated users
