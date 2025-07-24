@@ -126,8 +126,7 @@ export function UserManagement() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">User Management</h2>
-            <p className="text-muted-foreground">Manage users across all accounts and tenants</p>
-          </div>
+            </div>
         </div>
         <Card>
           <CardContent className="flex items-center justify-center p-8">
@@ -145,14 +144,8 @@ export function UserManagement() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">User Management</h2>
-          <p className="text-muted-foreground">Manage users across all accounts and tenants</p>
         </div>
         <div className="flex items-center gap-2">
-          {lastRefresh && (
-            <span className="text-xs text-muted-foreground">
-              Last updated: {lastRefresh.toLocaleTimeString()}
-            </span>
-          )}
           <Button variant="outline" onClick={loadUsers} disabled={loading}>
             🔄 Refresh
           </Button>
