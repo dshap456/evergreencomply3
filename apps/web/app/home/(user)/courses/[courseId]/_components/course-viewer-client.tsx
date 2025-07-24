@@ -448,7 +448,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           >
             ☰ Course Menu
           </Button>
-          <h1 className="font-medium truncate">{currentLesson?.lesson.title || 'Select a lesson'}</h1>
+          <h1 className="font-medium truncate">{currentLesson?.lesson.title || ''}</h1>
         </div>
 
         {/* Lesson Player */}
