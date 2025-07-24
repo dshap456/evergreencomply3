@@ -93,6 +93,8 @@ export const createCourseAction = enhanceAction(
   async function (data) {
     const client = getSupabaseServerAdminClient();
 
+    console.log('🔄 CreateCourseAction: Starting course creation with data:', data);
+
     const { data: course, error } = await client
       .from('courses')
       .insert({
@@ -107,8 +109,15 @@ export const createCourseAction = enhanceAction(
       .single();
 
     if (error) {
+      console.error('❌ CreateCourseAction: Failed to create course:', error);
       throw new Error(`Failed to create course: ${error.message}`);
     }
+
+    console.log('✅ CreateCourseAction: Course created successfully:', course);
+
+    // Revalidate the admin LMS pages to refresh cached data
+    revalidatePath('/admin/lms');
+    revalidatePath('/admin/lms/courses');
 
     return { success: true, course };
   },
