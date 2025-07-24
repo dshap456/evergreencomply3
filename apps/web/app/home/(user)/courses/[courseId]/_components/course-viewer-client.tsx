@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Spinner } from '@kit/ui/spinner';
 import { Button } from '@kit/ui/button';
@@ -827,6 +828,7 @@ function QuizPlayer({
   currentScore?: number;
   onQuizComplete: (score: number, passed: boolean) => void;
 }) {
+  const router = useRouter();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
@@ -835,6 +837,7 @@ function QuizPlayer({
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
 
   // Fetch quiz questions from database
   useEffect(() => {
@@ -917,6 +920,14 @@ function QuizPlayer({
 
     // Notify parent component
     onQuizComplete(scorePercentage, passed);
+
+    // If this is a final quiz and user passed, redirect to My Learning after 3 seconds
+    if (lesson.is_final_quiz && passed) {
+      setRedirecting(true);
+      setTimeout(() => {
+        router.push('/home/courses');
+      }, 3000);
+    }
   };
 
   const retakeQuiz = () => {
@@ -1000,6 +1011,12 @@ function QuizPlayer({
             <p className="text-green-800 font-medium">
               ✅ Quiz completed successfully!
             </p>
+            {lesson.is_final_quiz && redirecting && (
+              <p className="text-green-700 text-sm mt-2 flex items-center gap-2">
+                <Spinner className="h-3 w-3" />
+                Redirecting to My Learning in 3 seconds...
+              </p>
+            )}
           </div>
         ) : (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
