@@ -149,7 +149,7 @@ export function QuizPlayer({
       const { data: attemptsData } = await supabase
         .from('quiz_attempts')
         .select('*')
-        .eq('quiz_id', quizData.id)
+        .eq('lesson_id', lessonId)
         .order('attempt_number', { ascending: false });
 
       if (attemptsData) {
@@ -244,21 +244,43 @@ export function QuizPlayer({
       const { data: attemptData, error: attemptError } = await supabase
         .from('quiz_attempts')
         .insert({
-          quiz_id: quiz.id,
+          lesson_id: lessonId,
           user_id: (await supabase.auth.getUser()).data.user?.id,
           score,
-          max_score: 100,
+          total_points: questions.length,
           passed,
           attempt_number: attemptNumber,
-          answers: answers,
-          time_taken: quiz.time_limit_minutes ? 
-            (quiz.time_limit_minutes * 60 - (timeRemaining || 0)) : null
+          answers: answers
         })
         .select()
         .single();
 
       if (attemptError) {
         throw new Error(`Failed to save quiz attempt: ${attemptError.message}`);
+      }
+
+      // If this is a final quiz, update the final score in course_enrollments
+      if (isFinalQuiz && passed) {
+        const user = await supabase.auth.getUser();
+        if (user.data.user) {
+          // Get the course_id from the lesson
+          const { data: lessonData } = await supabase
+            .from('lessons')
+            .select('module_id, course_modules!inner(course_id)')
+            .eq('id', lessonId)
+            .single();
+
+          if (lessonData) {
+            const courseId = lessonData.course_modules.course_id;
+            
+            // Update the final_score in course_enrollments
+            await supabase
+              .from('course_enrollments')
+              .update({ final_score: score })
+              .eq('user_id', user.data.user.id)
+              .eq('course_id', courseId);
+          }
+        }
       }
 
       setResults({
