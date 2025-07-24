@@ -38,16 +38,34 @@ export function AdminEnrollmentTool() {
 
   const loadData = async () => {
     try {
+      console.log('🔄 AdminEnrollmentTool: Starting to load data...');
+      
       const [coursesData, usersData] = await Promise.all([
         loadCoursesAction({}),
         listUsersForEnrollmentAction({})
       ]);
       
-      setCourses(coursesData.filter((c: Course) => c.status === 'published'));
+      console.log('📊 AdminEnrollmentTool: Raw data loaded:', {
+        coursesCount: coursesData?.length || 0,
+        usersCount: usersData?.length || 0,
+        courses: coursesData?.map(c => ({ id: c.id, title: c.title, status: c.status })),
+        users: usersData?.map(u => ({ email: u.email, name: u.name }))
+      });
+      
+      const publishedCourses = coursesData.filter((c: Course) => c.status === 'published');
+      console.log('📚 AdminEnrollmentTool: Published courses:', publishedCourses.length);
+      
+      setCourses(publishedCourses);
       setUsers(usersData);
+      
+      console.log('✅ AdminEnrollmentTool: Data loaded successfully');
     } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load courses and users');
+      console.error('❌ AdminEnrollmentTool: Failed to load data:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
+      toast.error(`Failed to load courses and users: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -59,6 +77,11 @@ export function AdminEnrollmentTool() {
       return;
     }
 
+    console.log('🔄 AdminEnrollmentTool: Starting enrollment...', {
+      courseId: selectedCourse,
+      userEmail: userEmail.trim()
+    });
+
     setEnrolling(true);
     try {
       const result = await adminEnrollUserAction({
@@ -66,11 +89,18 @@ export function AdminEnrollmentTool() {
         userEmail: userEmail.trim()
       });
       
+      console.log('✅ AdminEnrollmentTool: Enrollment successful:', result);
       toast.success(result.message);
       setUserEmail('');
       setSelectedCourse('');
     } catch (error) {
-      console.error('Enrollment failed:', error);
+      console.error('❌ AdminEnrollmentTool: Enrollment failed:', error);
+      console.error('❌ Enrollment error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        courseId: selectedCourse,
+        userEmail: userEmail.trim()
+      });
       toast.error(error instanceof Error ? error.message : 'Failed to enroll user');
     } finally {
       setEnrolling(false);

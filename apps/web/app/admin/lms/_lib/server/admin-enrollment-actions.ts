@@ -11,8 +11,11 @@ const AdminEnrollUserSchema = z.object({
 
 export const adminEnrollUserAction = enhanceAction(
   async function (data) {
+    console.log('🚀 AdminEnrollUser: Action called with data:', data);
+    
     try {
       const client = getSupabaseServerAdminClient();
+      console.log('✅ AdminEnrollUser: Got admin client');
 
       console.log('🔄 AdminEnrollUser: Starting enrollment...', data);
 
@@ -103,6 +106,11 @@ export const adminEnrollUserAction = enhanceAction(
       };
     } catch (error) {
       console.error('❌ AdminEnrollUser: Unexpected error:', error);
+      console.error('❌ AdminEnrollUser: Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace',
+        name: error instanceof Error ? error.name : 'Unknown error type'
+      });
       throw error;
     }
   },
@@ -115,7 +123,10 @@ export const adminEnrollUserAction = enhanceAction(
 // Helper to list all users for admin selection
 export const listUsersForEnrollmentAction = enhanceAction(
   async function () {
+    console.log('🚀 ListUsersForEnrollment: Action called');
+    
     const client = getSupabaseServerAdminClient();
+    console.log('✅ ListUsersForEnrollment: Got admin client');
 
     try {
       console.log('🔄 Loading users for enrollment...');

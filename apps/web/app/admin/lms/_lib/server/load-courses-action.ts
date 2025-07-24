@@ -5,7 +5,10 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 
 export const loadCoursesAction = enhanceAction(
   async function () {
+    console.log('🚀 LoadCoursesAction: Action called');
+    
     const client = getSupabaseServerAdminClient();
+    console.log('✅ LoadCoursesAction: Got admin client');
 
     console.log('🔍 LoadCoursesAction: Starting to load courses from database...');
 
