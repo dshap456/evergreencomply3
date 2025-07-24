@@ -91,7 +91,7 @@ export const loadUsersAction = enhanceAction(
           userEnrollmentStats[enrollment.user_id].enrollments++;
           
           // Consider completed if progress is 100%
-          if (enrollment.progress_percentage >= 100) {
+          if (enrollment.progress_percentage && enrollment.progress_percentage >= 100) {
             userEnrollmentStats[enrollment.user_id].completions++;
           }
 
@@ -138,9 +138,9 @@ export const loadUsersAction = enhanceAction(
           account: 'Individual', // Individual accounts
           enrollments: stats.enrollments,
           completions: stats.completions,
-          last_active: stats.lastActive,
+          last_active: stats.lastActive || account.created_at || new Date().toISOString(),
           status: 'active', // Default status
-          created_at: account.created_at
+          created_at: account.created_at || new Date().toISOString()
         };
       });
 

@@ -34,15 +34,17 @@ export const loadVideoDataAction = enhanceAction(
       video_metadata_id: lessonData.video_metadata_id ? 'present' : 'missing'
     });
 
-    // Load video metadata using admin client
-    const { data: metadataData, error: metadataError } = await client
-      .from('video_metadata')
-      .select('*')
-      .eq('lesson_id', data.lessonId)
-      .eq('language_code', data.languageCode)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // TEMPORARILY DISABLED: Load video metadata using admin client
+    // const { data: metadataData, error: metadataError } = await client
+    //   .from('video_metadata')
+    //   .select('*')
+    //   .eq('lesson_id', data.lessonId)
+    //   .eq('language_code', data.languageCode)
+    //   .order('created_at', { ascending: false })
+    //   .limit(1)
+    //   .maybeSingle();
+    const metadataData = null;
+    const metadataError = null;
 
     if (metadataError) {
       console.error('❌ LoadVideoDataAction: Error loading video metadata:', metadataError);
