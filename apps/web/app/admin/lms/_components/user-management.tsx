@@ -244,11 +244,6 @@ export function UserManagement() {
             <div className="space-y-4">
               {filteredUsers.map((user) => (
                 <div key={user.id} className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50">
-                  {/* User Avatar */}
-                  <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-full text-primary font-medium">
-                    {user.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-
                   {/* User Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
