@@ -58,56 +58,40 @@ export const getUserDetailsAction = enhanceAction(
         return { success: true, data: mockUserDetails };
       }
 
-      // For real UUIDs, try to get from database
-      // First try auth.users table
-      const { data: authUser, error: authError } = await client
-        .from('auth.users')
-        .select('id, email, raw_user_meta_data')
-        .eq('id', data.userId)
+      // For real UUIDs, get user info from accounts table
+      const { data: account, error: accountError } = await client
+        .from('accounts')
+        .select('id, name, email, primary_owner_user_id')
+        .eq('primary_owner_user_id', data.userId)
+        .eq('is_personal_account', true)
         .single();
-
-      if (authError || !authUser) {
-        console.error('❌ GetUserDetailsAction: User not found in auth.users:', authError);
         
-        // Try accounts table as fallback
-        const { data: account, error: accountError } = await client
-          .from('accounts')
-          .select('id, name, email')
-          .eq('id', data.userId)
-          .eq('is_personal_account', true)
-          .single();
-          
-        if (accountError || !account) {
-          console.error('❌ GetUserDetailsAction: User not found in accounts either:', accountError);
-          throw new Error('User not found');
-        }
-        
-        // Use account data
-        var user = account;
-      } else {
-        // Use auth user data
-        var user = {
-          id: authUser.id,
-          name: authUser.raw_user_meta_data?.name || authUser.email?.split('@')[0] || 'Unknown',
-          email: authUser.email || 'No email',
-        };
+      if (accountError || !account) {
+        console.error('❌ GetUserDetailsAction: User not found in accounts:', accountError);
+        throw new Error('User not found');
       }
+        
+      // Use account data
+      const user = {
+        id: account.primary_owner_user_id,
+        name: account.name || account.email?.split('@')[0] || 'Unknown',
+        email: account.email || 'No email',
+      };
 
       console.log('✅ GetUserDetailsAction: Found user:', user);
 
       // Get course completions with quiz scores
       const { data: completions, error: completionsError } = await client
-        .from('course_progress')
+        .from('course_enrollments')
         .select(`
           completed_at,
-          final_quiz_score,
+          final_score,
           course_id,
           courses!inner (
             title
           )
         `)
         .eq('user_id', data.userId)
-        .eq('status', 'completed')
         .not('completed_at', 'is', null)
         .order('completed_at', { ascending: false });
 
@@ -119,7 +103,7 @@ export const getUserDetailsAction = enhanceAction(
       const courseCompletions: UserCourseCompletion[] = (completions || []).map(completion => ({
         courseName: completion.courses?.title || 'Unknown Course',
         completionDate: completion.completed_at,
-        finalQuizScore: completion.final_quiz_score,
+        finalQuizScore: completion.final_score,
       }));
 
       console.log('✅ GetUserDetailsAction: Found completions:', {
