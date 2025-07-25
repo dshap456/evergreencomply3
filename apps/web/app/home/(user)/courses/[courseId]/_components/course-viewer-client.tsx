@@ -456,19 +456,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           >
             ☰ <span className="hidden xs:inline">Course Menu</span>
           </Button>
-          
-          {/* Show Next Lesson button on mobile if lesson is completed */}
-          {currentLesson && currentLesson.lesson.completed && (
-            <Button 
-              onClick={handleNextLesson} 
-              variant="default"
-              size="sm"
-              disabled={!getNextLessonInSequence() && !isLastLesson()}
-              className="shrink-0 bg-green-600 hover:bg-green-700 text-xs px-2"
-            >
-              {isLastLesson() ? 'Complete' : 'Next →'}
-            </Button>
-          )}
         </div>
 
         {/* Lesson Player */}
