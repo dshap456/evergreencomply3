@@ -1,5 +1,8 @@
 'use client';
 
+// Import Video.js CSS globally for this page
+import 'video.js/dist/video-js.css';
+
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
