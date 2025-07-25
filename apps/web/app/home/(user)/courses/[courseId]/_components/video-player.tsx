@@ -28,6 +28,8 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showPlayButton, setShowPlayButton] = useState(true);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [maxWatchedTime, setMaxWatchedTime] = useState(0);
+  const [maxWatchedProgress, setMaxWatchedProgress] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -60,19 +62,38 @@ export function VideoPlayer({
       setCurrentTime(current);
       setDuration(total);
       
+      // Update max watched time only if moving forward
+      if (current > maxWatchedTime) {
+        setMaxWatchedTime(current);
+      }
+      
       if (total > 0) {
         const progressPercent = (current / total) * 100;
         setProgress(progressPercent);
         
-        // Call onProgress callback
+        // Update max watched progress
+        const maxProgress = (maxWatchedTime / total) * 100;
+        setMaxWatchedProgress(maxProgress);
+        
+        // Call onProgress callback with max watched progress
         if (onProgress) {
-          onProgress(progressPercent);
+          onProgress(maxProgress);
         }
         
         // Check for completion (95% threshold)
-        if (progressPercent >= 95 && onCompletion) {
+        if (maxProgress >= 95 && onCompletion) {
           onCompletion(true);
         }
+      }
+    };
+    
+    const handleSeeking = () => {
+      const current = video.currentTime;
+      
+      // Prevent seeking beyond the maximum watched time
+      if (current > maxWatchedTime + 1) { // +1 second buffer for smooth playback
+        video.currentTime = maxWatchedTime;
+        console.log('⏪ Prevented forward skip beyond', maxWatchedTime);
       }
     };
 
@@ -124,6 +145,7 @@ export function VideoPlayer({
     video.addEventListener('error', handleError);
     video.addEventListener('loadstart', handleLoadStart);
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('seeking', handleSeeking);
 
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
@@ -133,8 +155,9 @@ export function VideoPlayer({
       video.removeEventListener('error', handleError);
       video.removeEventListener('loadstart', handleLoadStart);
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('seeking', handleSeeking);
     };
-  }, [onProgress, onCompletion]);
+  }, [onProgress, onCompletion, maxWatchedTime]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -153,10 +176,20 @@ export function VideoPlayer({
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !duration) return;
 
-    const seekTime = (parseFloat(e.target.value) / 100) * duration;
-    video.currentTime = seekTime;
+    const seekPercent = parseFloat(e.target.value);
+    const seekTime = (seekPercent / 100) * duration;
+    
+    // Only allow seeking within already watched portion
+    const maxAllowedTime = maxWatchedTime + 1; // 1 second buffer
+    if (seekTime <= maxAllowedTime) {
+      video.currentTime = seekTime;
+    } else {
+      // Reset slider to max watched position
+      e.target.value = maxWatchedProgress.toString();
+      console.log('⏪ Cannot skip ahead. Watch the video to progress.');
+    }
   };
 
   const toggleMute = () => {
@@ -239,18 +272,26 @@ export function VideoPlayer({
       {/* Video Controls - Always visible on mobile */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-3 md:p-4 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         {/* Progress Bar */}
-        <div className="mb-2 md:mb-3 py-2 -my-2">
+        <div className="mb-2 md:mb-3 py-2 -my-2 relative">
           <input
             type="range"
             min="0"
             max="100"
             value={progress}
             onChange={handleSeek}
-            className="w-full h-2 md:h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-2 md:h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer relative z-10"
             style={{
-              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${progress}%, #4b5563 ${progress}%, #4b5563 100%)`
+              background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${progress}%, #6b7280 ${progress}%, #6b7280 ${maxWatchedProgress}%, #374151 ${maxWatchedProgress}%, #374151 100%)`
             }}
+            title={progress > maxWatchedProgress ? "You cannot skip ahead" : "Seek within watched portion"}
           />
+          {/* Visual indicator of max watched progress */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div 
+              className="h-full bg-gray-500 opacity-30 rounded-lg"
+              style={{ width: `${maxWatchedProgress}%` }}
+            />
+          </div>
         </div>
 
         {/* Controls Row */}
