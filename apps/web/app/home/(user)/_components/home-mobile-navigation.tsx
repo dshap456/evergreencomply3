@@ -27,7 +27,16 @@ import type { UserWorkspace } from '../_lib/server/load-user-workspace';
 export function HomeMobileNavigation(props: { workspace: UserWorkspace }) {
   const signOut = useSignOut();
 
-  const Links = personalAccountNavigationConfig.routes.map((item, index) => {
+  // Filter navigation config based on user role
+  const isSuperAdmin = props.workspace.user.app_metadata?.role === 'super-admin';
+  
+  const navigationRoutes = isSuperAdmin
+    ? personalAccountNavigationConfig.routes
+    : personalAccountNavigationConfig.routes.filter(
+        route => route.label !== 'Admin'
+      );
+
+  const Links = navigationRoutes.map((item, index) => {
     if ('children' in item) {
       return item.children.map((child) => {
         return (
