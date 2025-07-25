@@ -28,7 +28,7 @@ export function VideoJSPlayer({
     if (!videoRef.current) return;
 
     const videoElement = document.createElement('video-js');
-    videoElement.classList.add('vjs-big-play-centered', 'vjs-fluid');
+    videoElement.classList.add('vjs-big-play-centered', 'vjs-fill');
     videoRef.current.appendChild(videoElement);
 
     // Video.js options with mobile optimizations
@@ -39,7 +39,8 @@ export function VideoJSPlayer({
       }],
       controls: true,
       preload: 'auto',
-      fluid: true,
+      fluid: false, // Disable fluid to have more control
+      fill: true, // Fill the container
       responsive: true,
       playbackRates: [], // Disable playback speed control
       html5: {
@@ -215,7 +216,7 @@ export function VideoJSPlayer({
 
   return (
     <div className={`video-js-container ${className}`}>
-      <div ref={videoRef} />
+      <div ref={videoRef} className="w-full h-full" />
       <style jsx global>{`
         /* Video.js custom styles */
         .video-js-container {
@@ -229,6 +230,25 @@ export function VideoJSPlayer({
         .video-js {
           width: 100% !important;
           height: 100% !important;
+        }
+        
+        /* Ensure video fits properly on mobile */
+        .video-js video {
+          object-fit: contain;
+        }
+        
+        /* Adjust big play button for mobile */
+        @media (max-width: 768px) {
+          .video-js .vjs-big-play-button {
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            font-size: 1.5em;
+            left: 50%;
+            top: 50%;
+            margin-left: -25px;
+            margin-top: -25px;
+          }
         }
         
         /* Custom progress bar styling to show watched portion */
@@ -265,16 +285,16 @@ export function VideoJSPlayer({
         /* Mobile control bar adjustments */
         @media (max-width: 768px) {
           .video-js .vjs-control-bar {
-            height: 3.5em;
+            height: 3em;
           }
           
           .video-js .vjs-button {
-            width: 3.5em;
+            width: 3em;
           }
           
           .video-js .vjs-time-control {
-            padding: 0 0.5em;
-            font-size: 1.2em;
+            padding: 0 0.3em;
+            font-size: 1em;
           }
         }
         

@@ -447,14 +447,14 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white gap-2">
+        <div className="lg:hidden flex items-center justify-between p-2 sm:p-3 bg-white gap-2 flex-shrink-0">
           <Button
             variant="ghost" 
             size="sm" 
             onClick={() => setSidebarOpen(true)}
-            className="shrink-0"
+            className="shrink-0 text-xs sm:text-sm"
           >
-            ☰ Course Menu
+            ☰ <span className="hidden xs:inline">Course Menu</span>
           </Button>
           
           {/* Show Next Lesson button on mobile if lesson is completed */}
@@ -472,7 +472,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         </div>
 
         {/* Lesson Player */}
-        <div className="flex-1 bg-white overflow-y-auto">
+        <div className="flex-1 bg-white overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
           {currentLesson ? (
             <LessonPlayer 
               lesson={currentLesson.lesson} 
@@ -537,7 +537,7 @@ function LessonPlayer({
     switch (lesson.content_type) {
       case 'video':
         return (
-          <div className="bg-black flex items-center justify-center w-full" style={{ height: 'clamp(50vh, 60vh, 80vh)' }}>
+          <div className="bg-black flex items-center justify-center w-full h-[25vh] sm:h-[35vh] md:h-[50vh] lg:h-[60vh] max-h-[200px] sm:max-h-[300px] md:max-h-[400px] lg:max-h-[500px]">
             <div className="w-full h-full relative flex items-center justify-center">
               <StorageVideoPlayer 
                 lessonId={lesson.id}
@@ -589,8 +589,8 @@ function LessonPlayer({
         
       case 'asset':
         return (
-          <div className="bg-white rounded-lg p-6 text-center">
-            <h2 className="text-xl font-bold mb-2">{lesson.title}</h2>
+          <div className="bg-white rounded-lg p-3 sm:p-4 md:p-6 text-center">
+            <h2 className="text-lg sm:text-xl font-bold mb-2">{lesson.title}</h2>
             <p className="text-gray-600 mb-4">Asset content</p>
             {lesson.asset_url && (
               <a 
@@ -616,38 +616,41 @@ Download Asset
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Lesson Header */}
-      <div className="hidden lg:block bg-white p-4">
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Lesson Header - Mobile and Desktop */}
+      <div className="bg-white p-2 sm:p-3 lg:p-4 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <div>
-                <h1 className="text-xl font-bold">{lesson.title}</h1>
-                <p className="text-sm text-gray-600">{module.title}</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg lg:text-xl font-bold truncate">{lesson.title}</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{module.title}</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {currentLessonCompleted && (
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                ✓ Completed
+              <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs sm:text-sm px-2 py-0.5">
+                <span className="hidden sm:inline">✓ Completed</span>
+                <span className="sm:hidden">✓</span>
               </Badge>
             )}
             <Button 
               onClick={onNext} 
               variant="default"
+              size="sm"
               disabled={!currentLessonCompleted || (!hasNextLesson && !isLastLesson)}
-              className={currentLessonCompleted ? 'bg-green-600 hover:bg-green-700' : ''}
+              className={`text-xs sm:text-sm ${currentLessonCompleted ? 'bg-green-600 hover:bg-green-700' : ''}`}
             >
-              {isLastLesson ? 'Course Complete' : 'Next Lesson →'}
+              <span className="hidden sm:inline">{isLastLesson ? 'Course Complete' : 'Next Lesson →'}</span>
+              <span className="sm:hidden">{isLastLesson ? 'Complete' : 'Next →'}</span>
             </Button>
           </div>
         </div>
       </div>
 
       {/* Lesson Content */}
-      <div className="flex-1 p-6 bg-gray-50">
+      <div className="flex-1 p-2 sm:p-4 md:p-6 bg-gray-50 overflow-y-auto">
         {renderLessonContent()}
       </div>
     </div>
