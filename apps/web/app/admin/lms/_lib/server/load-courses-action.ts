@@ -77,8 +77,9 @@ async function formatCourses(courses: any[], client: any) {
 }
 
 export const loadCoursesAction = enhanceAction(
-  async function () {
+  async function (_, user) {
     console.log('🚀 LoadCoursesAction: Action called');
+    console.log('👤 LoadCoursesAction: Called by user:', user?.id);
     
     // Since this is in the admin panel, we know the user is authenticated and a super admin
     // We'll use the regular client which will have the user context, allowing RLS policies

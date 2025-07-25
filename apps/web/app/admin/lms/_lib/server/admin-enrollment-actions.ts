@@ -10,8 +10,9 @@ const AdminEnrollUserSchema = z.object({
 });
 
 export const adminEnrollUserAction = enhanceAction(
-  async function (data) {
+  async function (data, user) {
     console.log('🚀 AdminEnrollUser: Action called with data:', data);
+    console.log('👤 AdminEnrollUser: Called by user:', user?.id);
     
     try {
       const client = getSupabaseServerClient();
@@ -122,8 +123,9 @@ export const adminEnrollUserAction = enhanceAction(
 
 // Helper to list all users for admin selection
 export const listUsersForEnrollmentAction = enhanceAction(
-  async function () {
+  async function (_, user) {
     console.log('🚀 ListUsersForEnrollment: Action called');
+    console.log('👤 ListUsersForEnrollment: Called by user:', user?.id);
     
     const client = getSupabaseServerClient();
     console.log('✅ ListUsersForEnrollment: Got client');
@@ -171,7 +173,7 @@ export const listUsersForEnrollmentAction = enhanceAction(
 
 // Test enrollment with known test user
 export const testEnrollmentAction = enhanceAction(
-  async function (data: { courseId: string }) {
+  async function (data: { courseId: string }, user) {
     const testUserEmail = 'learner@test.com';
     
     console.log('🔄 Testing enrollment with:', testUserEmail);
