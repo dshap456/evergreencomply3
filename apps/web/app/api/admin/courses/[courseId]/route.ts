@@ -90,25 +90,37 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const client = getSupabaseServerAdminClient();
     const body = await request.json();
 
+    console.log('🔄 Updating course:', { courseId, body });
+
+    // Prepare the update data
+    const updateData: any = {
+      title: body.title,
+      description: body.description,
+      updated_at: new Date().toISOString()
+    };
+
+    // Handle status/publish state
+    if (body.status !== undefined) {
+      updateData.is_published = body.status === 'published';
+      console.log('📝 Setting publication status:', updateData.is_published);
+    }
+
     const { data, error } = await client
       .from('courses')
-      .update({
-        title: body.title,
-        description: body.description,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', courseId)
       .select()
       .single();
 
     if (error) {
-      console.error('Error updating course:', error);
+      console.error('❌ Error updating course:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    console.log('✅ Course updated successfully:', data);
     return NextResponse.json({ success: true, course: data });
   } catch (error) {
-    console.error('Error updating course:', error);
+    console.error('❌ Error updating course:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -7,7 +7,7 @@ import { Input } from '@kit/ui/input';
 import { Textarea } from '@kit/ui/textarea';
 import { Badge } from '@kit/ui/badge';
 import { Spinner } from '@kit/ui/spinner';
-import { Plus, Edit, Trash2, Video, FileText, HelpCircle, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Video, FileText, HelpCircle, Save, CheckCircle } from 'lucide-react';
 import { VideoUpload } from './video-upload';
 import { 
   Dialog, 
@@ -60,6 +60,15 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [lessonVideoMetadata, setLessonVideoMetadata] = useState<{[key: string]: any}>({});
 
+  // Debug logging
+  console.log('🎯 FullCourseEditor: Course data received:', {
+    id: course?.id,
+    title: course?.title,
+    status: course?.status,
+    is_published: course?.is_published,
+    shouldShowPublishButton: (!course?.is_published && course?.status !== 'published')
+  });
+
   // Load course structure
   useEffect(() => {
     async function loadCourseStructure() {
@@ -105,6 +114,45 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
     } catch (error) {
       console.error('Error saving course:', error);
       toast.error('Error saving course');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePublishCourse = async () => {
+    setSaving(true);
+    try {
+      console.log('🔄 Publishing course...', {
+        id: course.id,
+        title: course.title,
+        currentStatus: course.status
+      });
+
+      const response = await fetch(`/api/admin/courses/${course.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          title, 
+          description, 
+          status: 'published' 
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Course published successfully');
+        // Update the course status locally
+        course.status = 'published';
+        if (onSave) {
+          onSave({ ...course, title, description, status: 'published' });
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to publish course:', errorData);
+        toast.error('Failed to publish course');
+      }
+    } catch (error) {
+      console.error('Error publishing course:', error);
+      toast.error('Error publishing course');
     } finally {
       setSaving(false);
     }
@@ -354,6 +402,25 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
               </>
             )}
           </Button>
+          {(!course?.is_published && course?.status !== 'published') && (
+            <Button 
+              onClick={handlePublishCourse} 
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {saving ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Publishing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Publish Course
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
