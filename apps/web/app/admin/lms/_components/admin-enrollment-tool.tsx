@@ -10,6 +10,7 @@ import { Spinner } from '@kit/ui/spinner';
 
 import { adminEnrollUserAction, listUsersForEnrollmentAction } from '../_lib/server/admin-enrollment-actions';
 import { loadCoursesAction } from '../_lib/server/load-courses-action';
+import { simpleEnrollUserAction } from '../_lib/server/simple-enrollment-action';
 
 interface Course {
   id: string;
@@ -84,15 +85,17 @@ export function AdminEnrollmentTool() {
 
     setEnrolling(true);
     try {
-      const result = await adminEnrollUserAction({
-        courseId: selectedCourse,
-        userEmail: userEmail.trim()
-      });
+      // Use the simpler action without enhanceAction wrapper
+      const result = await simpleEnrollUserAction(userEmail.trim(), selectedCourse);
       
-      console.log('✅ AdminEnrollmentTool: Enrollment successful:', result);
-      toast.success(result.message);
-      setUserEmail('');
-      setSelectedCourse('');
+      if (result.success) {
+        console.log('✅ AdminEnrollmentTool: Enrollment successful:', result);
+        toast.success(result.message);
+        setUserEmail('');
+        setSelectedCourse('');
+      } else {
+        throw new Error(result.error || 'Enrollment failed');
+      }
     } catch (error) {
       console.error('❌ AdminEnrollmentTool: Enrollment failed:', error);
       console.error('❌ Enrollment error details:', {

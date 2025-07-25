@@ -17,6 +17,11 @@ export const adminEnrollUserAction = enhanceAction(
     try {
       const client = getSupabaseServerClient();
       console.log('✅ AdminEnrollUser: Got client');
+      
+      // Add error boundary to catch any issues
+      if (!client) {
+        throw new Error('Failed to get Supabase client');
+      }
 
       console.log('🔄 AdminEnrollUser: Starting enrollment...', data);
 
@@ -82,7 +87,7 @@ export const adminEnrollUserAction = enhanceAction(
 
       console.log('✅ User not already enrolled, proceeding...');
 
-      // Create enrollment
+      // Skip all the complex function calls and just insert directly
       const { data: enrollment, error: enrollError } = await client
         .from('course_enrollments')
         .insert({
@@ -95,6 +100,12 @@ export const adminEnrollUserAction = enhanceAction(
 
       if (enrollError) {
         console.error('❌ Enrollment creation error:', enrollError);
+        console.error('❌ Full error details:', {
+          code: enrollError.code,
+          message: enrollError.message,
+          details: enrollError.details,
+          hint: enrollError.hint
+        });
         throw new Error(`Failed to create enrollment: ${enrollError.message}`);
       }
 
