@@ -12,5 +12,5 @@ export default async function RootPage() {
     redirect(pathsConfig.app.home);
   }
 
-  redirect(pathsConfig.auth.signIn);
+  redirect('/marketing-temp');
 }

@@ -14,25 +14,17 @@ import { Trans } from '@kit/ui/trans';
 import { SiteNavigationItem } from './site-navigation-item';
 
 const links = {
-  Blog: {
-    label: 'marketing:blog',
-    path: '/blog',
+  Features: {
+    label: 'Features',
+    path: '#features',
   },
-  Docs: {
-    label: 'marketing:documentation',
-    path: '/docs',
-  },
-  Pricing: {
-    label: 'marketing:pricing',
-    path: '/pricing',
-  },
-  FAQ: {
-    label: 'marketing:faq',
-    path: '/faq',
+  Courses: {
+    label: 'Courses',
+    path: '#courses',
   },
   Contact: {
-    label: 'marketing:contact',
-    path: '/contact',
+    label: 'Contact',
+    path: '#contact',
   },
 };
 
@@ -40,7 +32,7 @@ export function SiteNavigation() {
   const NavItems = Object.values(links).map((item) => {
     return (
       <SiteNavigationItem key={item.path} path={item.path}>
-        <Trans i18nKey={item.label} />
+        {item.label}
       </SiteNavigationItem>
     );
   });
@@ -76,7 +68,7 @@ function MobileDropdown() {
           return (
             <DropdownMenuItem key={item.path} asChild>
               <Link className={className} href={item.path}>
-                <Trans i18nKey={item.label} />
+                {item.label}
               </Link>
             </DropdownMenuItem>
           );
