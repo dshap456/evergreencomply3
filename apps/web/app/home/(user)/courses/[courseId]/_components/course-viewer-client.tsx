@@ -224,13 +224,17 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     }
   };
 
-  const handleLessonCompletion = async (lessonId: string, timeSpent?: number) => {
+  const handleLessonCompletion = async (lessonId: string, timeSpent?: number, quizScore?: number) => {
     try {
       // Mark lesson as complete in database
       const response = await fetch(`/api/lessons/${lessonId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ time_spent: timeSpent })
+        body: JSON.stringify({ 
+          time_spent: timeSpent,
+          quiz_score: quizScore,
+          is_quiz: quizScore !== undefined
+        })
       });
 
       if (response.ok) {
@@ -573,8 +577,8 @@ function LessonPlayer({
             onQuizComplete={(score, passed) => {
               if (passed && score >= 80) {
                 setCurrentLessonCompleted(true);
-                // Save quiz completion to database and refresh course data
-                onLessonComplete(lesson.id);
+                // Save quiz completion to database with score
+                onLessonComplete(lesson.id, 0, score);
               }
             }}
           />

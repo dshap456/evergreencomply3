@@ -80,8 +80,9 @@ export const getUserDetailsAction = enhanceAction(
 
       console.log('✅ GetUserDetailsAction: Found user:', user);
 
-      // Get course completions with quiz scores
-      const { data: completions, error: completionsError } = await client
+      // Get course completions with quiz scores - try both tables
+      // First, get enrollments
+      const { data: enrollments, error: enrollmentsError } = await client
         .from('course_enrollments')
         .select(`
           completed_at,
@@ -95,18 +96,76 @@ export const getUserDetailsAction = enhanceAction(
         .not('completed_at', 'is', null)
         .order('completed_at', { ascending: false });
 
-      if (completionsError) {
-        console.error('❌ GetUserDetailsAction: Error fetching completions:', completionsError);
-        // Don't throw error, just log and continue with empty completions
+      if (enrollmentsError) {
+        console.error('❌ GetUserDetailsAction: Error fetching enrollments:', enrollmentsError);
       }
 
-      const courseCompletions: UserCourseCompletion[] = (completions || []).map(completion => ({
-        courseName: completion.courses?.title || 'Unknown Course',
-        completionDate: completion.completed_at,
-        finalQuizScore: completion.final_score,
-      }));
+      // Also get completions from course_completions table
+      const { data: completions, error: completionsError } = await client
+        .from('course_completions')
+        .select(`
+          completed_at,
+          final_quiz_score,
+          final_quiz_passed,
+          course_name,
+          course_id
+        `)
+        .eq('user_id', data.userId)
+        .order('completed_at', { ascending: false });
 
+      if (completionsError) {
+        console.error('❌ GetUserDetailsAction: Error fetching completions:', completionsError);
+      }
+
+      // Create a map to combine data from both sources
+      const courseScoresMap = new Map<string, UserCourseCompletion>();
+
+      // Process enrollments first
+      (enrollments || []).forEach(enrollment => {
+        const courseId = enrollment.course_id;
+        courseScoresMap.set(courseId, {
+          courseName: enrollment.courses?.title || 'Unknown Course',
+          completionDate: enrollment.completed_at,
+          finalQuizScore: enrollment.final_score ? Number(enrollment.final_score) : null,
+        });
+      });
+
+      // Then update with completion data (which may have more accurate quiz scores)
+      (completions || []).forEach(completion => {
+        const courseId = completion.course_id;
+        const existing = courseScoresMap.get(courseId) || {
+          courseName: completion.course_name,
+          completionDate: completion.completed_at,
+          finalQuizScore: null,
+        };
+        
+        // Update with final quiz score from completions if available
+        if (completion.final_quiz_score !== null) {
+          existing.finalQuizScore = Number(completion.final_quiz_score);
+        }
+        
+        courseScoresMap.set(courseId, existing);
+      });
+
+      const courseCompletions: UserCourseCompletion[] = Array.from(courseScoresMap.values());
+
+      console.log('✅ GetUserDetailsAction: Found enrollments:', {
+        count: enrollments?.length || 0,
+        enrollments: enrollments?.map(e => ({ 
+          course: e.courses?.title, 
+          finalScore: e.final_score
+        }))
+      });
+      
       console.log('✅ GetUserDetailsAction: Found completions:', {
+        count: completions?.length || 0,
+        completions: completions?.map(c => ({ 
+          course: c.course_name, 
+          finalQuizScore: c.final_quiz_score
+        }))
+      });
+      
+      console.log('✅ GetUserDetailsAction: Combined course completions:', {
         count: courseCompletions.length,
         completions: courseCompletions.map(c => ({ 
           course: c.courseName, 

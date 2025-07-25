@@ -16,6 +16,9 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Extract quiz score if provided
+    const { time_spent, quiz_score, is_quiz } = body;
+
     // Update or create lesson progress
     const { data: progress, error: progressError } = await client
       .from('lesson_progress')
@@ -24,7 +27,7 @@ export async function POST(
         lesson_id: lessonId,
         status: 'completed',
         completed_at: new Date().toISOString(),
-        time_spent: body.time_spent || 0,
+        time_spent: time_spent || 0,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'user_id,lesson_id'
@@ -70,14 +73,94 @@ export async function POST(
       console.log('✅ Course progress update RPC called successfully');
     }
 
-    // Get updated course progress to return fresh data
+    // Get lesson details to check if it's a quiz and get course ID
     const lessonData = await client
       .from('lessons')
-      .select('course_modules!inner(course_id)')
+      .select('course_modules!inner(course_id), is_final_quiz, content_type')
       .eq('id', lessonId)
       .single();
 
     const courseId = lessonData.data?.course_modules?.course_id;
+    const isQuizLesson = lessonData.data?.content_type === 'quiz';
+    const isFinalQuiz = lessonData.data?.is_final_quiz || false;
+
+    // If this is a quiz lesson and we have a score, save it
+    if (isQuizLesson && quiz_score !== undefined) {
+      console.log('💯 Saving quiz score:', { 
+        lessonId, 
+        userId: user.id, 
+        score: quiz_score,
+        isFinalQuiz 
+      });
+
+      // Save quiz attempt
+      const { error: quizError } = await client
+        .from('quiz_attempts')
+        .insert({
+          user_id: user.id,
+          lesson_id: lessonId,
+          score: quiz_score,
+          total_points: 100, // Assuming 100 point scale
+          passed: quiz_score >= 80,
+          answers: {}, // Empty for now
+          attempt_number: 1 // Can be enhanced to track multiple attempts
+        });
+
+      if (quizError) {
+        console.error('❌ Error saving quiz attempt:', quizError);
+      }
+
+      // If it's a final quiz, update the enrollment with the final score
+      if (isFinalQuiz && courseId) {
+        console.log('🎯 Updating final quiz score in enrollment');
+        
+        const { error: enrollmentError } = await client
+          .from('course_enrollments')
+          .update({ 
+            final_score: quiz_score,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('course_id', courseId);
+
+        if (enrollmentError) {
+          console.error('❌ Error updating enrollment final score:', enrollmentError);
+        }
+
+        // Check if course is complete
+        const { data: allProgress } = await client
+          .from('lesson_progress')
+          .select('lesson_id')
+          .eq('user_id', user.id)
+          .eq('status', 'completed');
+
+        const { data: allLessons } = await client
+          .from('lessons')
+          .select('id, module_id')
+          .in('module_id', (
+            await client
+              .from('course_modules')
+              .select('id')
+              .eq('course_id', courseId)
+          ).data?.map(m => m.id) || []);
+
+        const allLessonsCompleted = allLessons?.length === allProgress?.length;
+
+        if (allLessonsCompleted && quiz_score >= 80) {
+          console.log('🎉 Course completed with passing final quiz score');
+          
+          // Trigger course completion
+          const { error: completionError } = await client.rpc('complete_course', {
+            p_user_id: user.id,
+            p_course_id: courseId
+          });
+
+          if (completionError) {
+            console.error('❌ Error completing course:', completionError);
+          }
+        }
+      }
+    }
 
     const { data: courseProgress, error: courseProgressError } = await client
       .from('course_enrollments')
