@@ -322,7 +322,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const currentLesson = getCurrentLesson();
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-gray-50 absolute inset-0 top-16">
+    <div className="flex h-[calc(100vh-64px)] bg-gray-50 absolute inset-0 top-16 overflow-hidden">
       {/* Sidebar - Course Navigation */}
       <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 ${sidebarMinimized ? 'w-16' : 'w-80'} bg-white transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="flex flex-col h-full">
@@ -442,7 +442,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-4 bg-white gap-2">
           <Button
@@ -469,7 +469,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         </div>
 
         {/* Lesson Player */}
-        <div className="flex-1 bg-white">
+        <div className="flex-1 bg-white overflow-y-auto">
           {currentLesson ? (
             <LessonPlayer 
               lesson={currentLesson.lesson} 
@@ -534,8 +534,8 @@ function LessonPlayer({
     switch (lesson.content_type) {
       case 'video':
         return (
-          <div className="aspect-video bg-black flex items-center justify-center">
-            <div className="w-full h-full relative">
+          <div className="bg-black flex items-center justify-center w-full" style={{ height: 'clamp(50vh, 60vh, 80vh)' }}>
+            <div className="w-full h-full relative flex items-center justify-center">
               <StorageVideoPlayer 
                 lessonId={lesson.id}
                 onProgress={(progress) => {
@@ -664,15 +664,25 @@ function VideoPlayer({
   onCompletion: (completed: boolean) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [maxWatchedTime, setMaxWatchedTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showPlayButton, setShowPlayButton] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Set up video for mobile compatibility
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('webkit-playsinline', 'true');
+    
+    // Try to load video metadata for mobile
+    video.load();
 
     const handleTimeUpdate = () => {
       const current = video.currentTime;
@@ -710,7 +720,10 @@ function VideoPlayer({
       setDuration(video.duration);
     };
 
-    const handlePlay = () => setIsPlaying(true);
+    const handlePlay = () => {
+      setIsPlaying(true);
+      setShowPlayButton(false);
+    };
     const handlePause = () => setIsPlaying(false);
 
     video.addEventListener('timeupdate', handleTimeUpdate);
@@ -741,8 +754,25 @@ function VideoPlayer({
       if (isPlaying) {
         video.pause();
       } else {
-        video.play();
+        video.play().catch(err => {
+          console.log('Playback failed:', err);
+          // Show play button again if autoplay fails
+          setShowPlayButton(true);
+        });
       }
+    }
+  };
+
+  const toggleFullscreen = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (!document.fullscreenElement) {
+      container.requestFullscreen().catch(err => {
+        console.log('Fullscreen failed:', err);
+      });
+    } else {
+      document.exitFullscreen();
     }
   };
 
@@ -752,33 +782,66 @@ function VideoPlayer({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    if (!video || !duration) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickPercent = clickX / rect.width;
+    const newTime = clickPercent * duration;
+
+    // Only allow seeking within already watched portion
+    if (newTime <= maxWatchedTime) {
+      video.currentTime = newTime;
+    }
+  };
+
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
   const maxProgressPercentage = duration > 0 ? (maxWatchedTime / duration) * 100 : 0;
 
   return (
-    <div className="w-full h-full relative bg-black">
+    <div ref={containerRef} className="w-full h-full relative bg-black">
       <video 
         ref={videoRef}
-        className="w-full h-full"
+        className="w-full h-full object-contain"
         src={src}
+        playsInline
+        preload="metadata"
+        controls={false}
         onContextMenu={(e) => e.preventDefault()} // Disable right-click menu
+        {...{ 'webkit-playsinline': 'true' } as any}
       >
         Your browser does not support the video tag.
       </video>
       
+      {/* Play Button Overlay for Mobile */}
+      {showPlayButton && !isPlaying && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+          onClick={togglePlayPause}
+        >
+          <div className="bg-white/90 rounded-full p-4 md:p-6">
+            <svg className="w-12 h-12 md:w-16 md:h-16 text-black" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
+      )}
+      
       {/* Custom Controls Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 md:p-4">
         {/* Progress Bar */}
-        <div className="mb-3">
-          <div className="w-full bg-gray-600 rounded-full h-1 relative">
+        <div className="mb-2 md:mb-3 py-2 -my-2" onClick={handleProgressClick}>
+          <div className="w-full bg-gray-600 rounded-full h-3 md:h-1 relative cursor-pointer">
             {/* Max watched progress (gray) */}
             <div 
-              className="bg-gray-400 h-1 rounded-full absolute top-0 left-0"
+              className="bg-gray-400 h-full rounded-full absolute top-0 left-0"
               style={{ width: `${maxProgressPercentage}%` }}
             />
             {/* Current progress (blue) */}
             <div 
-              className="bg-blue-500 h-1 rounded-full absolute top-0 left-0"
+              className="bg-blue-500 h-full rounded-full absolute top-0 left-0"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -786,30 +849,38 @@ function VideoPlayer({
         
         {/* Control Buttons */}
         <div className="flex items-center justify-between text-white">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
+          <div className="flex items-center gap-2 md:gap-3">
+            <button
               onClick={handleRewind}
-              className="text-white hover:bg-white/20 p-2"
+              className="text-white hover:bg-white/20 p-3 md:p-2 rounded-full min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors"
               title="Rewind 10 seconds"
             >
-              ⏪
-            </Button>
+              <span className="text-xl md:text-base">⏪</span>
+            </button>
             
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={togglePlayPause}
-              className="text-white hover:bg-white/20 p-2"
+              className="text-white hover:bg-white/20 p-3 md:p-2 rounded-full min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors"
               title={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? '⏸️' : '▶️'}
-            </Button>
+              <span className="text-xl md:text-base">{isPlaying ? '⏸️' : '▶️'}</span>
+            </button>
           </div>
           
-          <div className="text-sm">
-            {formatTime(currentTime)} / {formatTime(duration)}
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="text-xs md:text-sm">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+            
+            <button
+              onClick={toggleFullscreen}
+              className="text-white hover:bg-white/20 p-3 md:p-2 rounded-full min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors"
+              title="Fullscreen"
+            >
+              <svg className="w-5 h-5 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 11-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12zm-7 7a1 1 0 012 0v1.586l2.293-2.293a1 1 0 111.414 1.414L6.414 15H8a1 1 0 010 2H4a1 1 0 01-1-1v-4zm13-1a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 010-2h1.586l-2.293-2.293a1 1 0 111.414-1.414L15 13.586V12a1 1 0 011-1z"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
