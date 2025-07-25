@@ -1,15 +1,18 @@
 'use server';
 
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 export async function simpleEnrollUserAction(userEmail: string, courseId: string) {
   console.log('🚀 SimpleEnroll: Called with:', { userEmail, courseId });
   
   try {
+    // Use admin client to bypass RLS when looking up users
+    const adminClient = getSupabaseServerAdminClient();
     const client = getSupabaseServerClient();
     
-    // Find user by email
-    const { data: userAccount, error: userError } = await client
+    // Find user by email using admin client
+    const { data: userAccount, error: userError } = await adminClient
       .from('accounts')
       .select('primary_owner_user_id')
       .eq('email', userEmail)
@@ -17,6 +20,7 @@ export async function simpleEnrollUserAction(userEmail: string, courseId: string
       .single();
     
     if (userError || !userAccount) {
+      console.error('❌ User lookup error:', userError);
       throw new Error(`User not found: ${userEmail}`);
     }
     
