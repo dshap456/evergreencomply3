@@ -31,6 +31,12 @@ interface User {
   last_active: string;
   status: 'active' | 'inactive' | 'suspended';
   created_at: string;
+  finalQuizScores?: Array<{
+    courseName: string;
+    score: number;
+    passed: boolean;
+    completedAt: string;
+  }>;
 }
 
 export function UserManagement() {
@@ -255,6 +261,19 @@ export function UserManagement() {
                         <span>•</span>
                         <span>{user.account}</span>
                       </div>
+                      {/* Final Quiz Scores */}
+                      {user.finalQuizScores && user.finalQuizScores.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {user.finalQuizScores.map((quiz, index) => (
+                            <div key={index} className="flex items-center gap-1 text-xs">
+                              <span className="font-medium">{quiz.courseName}:</span>
+                              <span className={quiz.passed ? "text-green-600" : "text-red-600"}>
+                                {quiz.score}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 

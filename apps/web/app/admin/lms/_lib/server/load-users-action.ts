@@ -14,6 +14,12 @@ interface UserWithStats {
   last_active: string;
   status: 'active' | 'inactive' | 'suspended';
   created_at: string;
+  finalQuizScores?: Array<{
+    courseName: string;
+    score: number;
+    passed: boolean;
+    completedAt: string;
+  }>;
 }
 
 export const loadUsersAction = enhanceAction(
@@ -56,7 +62,23 @@ export const loadUsersAction = enhanceAction(
         .select(`
           user_id,
           progress_percentage,
-          enrolled_at
+          enrolled_at,
+          final_score,
+          course_id,
+          courses!inner(
+            title
+          )
+        `);
+
+      // Also load final quiz scores from course completions
+      const { data: completions, error: completionsError } = await client
+        .from('course_completions')
+        .select(`
+          user_id,
+          course_name,
+          final_quiz_score,
+          final_quiz_passed,
+          completed_at
         `);
 
       if (enrollmentError) {
@@ -71,8 +93,25 @@ export const loadUsersAction = enhanceAction(
         console.log(`✅ LoadUsersAction: Successfully loaded ${enrollmentStats?.length || 0} enrollment records`);
       }
 
+      if (completionsError) {
+        console.error('❌ LoadUsersAction: Error loading completions:', completionsError);
+        // Continue without completion data
+      } else {
+        console.log(`✅ LoadUsersAction: Successfully loaded ${completions?.length || 0} completion records`);
+      }
+
       // Process enrollment stats
-      const userEnrollmentStats: Record<string, { enrollments: number; completions: number; lastActive: string }> = {};
+      const userEnrollmentStats: Record<string, { 
+        enrollments: number; 
+        completions: number; 
+        lastActive: string;
+        finalQuizScores: Array<{
+          courseName: string;
+          score: number;
+          passed: boolean;
+          completedAt: string;
+        }>;
+      }> = {};
       
       if (enrollmentStats) {
         console.log(`📊 LoadUsersAction: Processing ${enrollmentStats.length} enrollment records`);
@@ -84,7 +123,8 @@ export const loadUsersAction = enhanceAction(
             userEnrollmentStats[enrollment.user_id] = {
               enrollments: 0,
               completions: 0,
-              lastActive: enrollment.enrolled_at
+              lastActive: enrollment.enrolled_at,
+              finalQuizScores: []
             };
           }
           
@@ -93,6 +133,16 @@ export const loadUsersAction = enhanceAction(
           // Consider completed if progress is 100%
           if (enrollment.progress_percentage && enrollment.progress_percentage >= 100) {
             userEnrollmentStats[enrollment.user_id].completions++;
+            
+            // If there's a final score, add it to the quiz scores
+            if (enrollment.final_score !== null && enrollment.final_score !== undefined) {
+              userEnrollmentStats[enrollment.user_id].finalQuizScores.push({
+                courseName: enrollment.courses.title,
+                score: Number(enrollment.final_score),
+                passed: Number(enrollment.final_score) >= 80,
+                completedAt: enrollment.enrolled_at
+              });
+            }
           }
 
           // Track most recent activity
@@ -100,6 +150,38 @@ export const loadUsersAction = enhanceAction(
             userEnrollmentStats[enrollment.user_id].lastActive = enrollment.enrolled_at;
           }
         });
+        
+        // Process completion records for final quiz scores
+        if (completions) {
+          console.log(`📊 LoadUsersAction: Processing ${completions.length} completion records`);
+          
+          completions.forEach(completion => {
+            if (!userEnrollmentStats[completion.user_id]) {
+              userEnrollmentStats[completion.user_id] = {
+                enrollments: 0,
+                completions: 0,
+                lastActive: completion.completed_at,
+                finalQuizScores: []
+              };
+            }
+            
+            // Add final quiz score from completions if not already present
+            if (completion.final_quiz_score !== null && completion.final_quiz_score !== undefined) {
+              const alreadyHasScore = userEnrollmentStats[completion.user_id].finalQuizScores.some(
+                score => score.courseName === completion.course_name
+              );
+              
+              if (!alreadyHasScore) {
+                userEnrollmentStats[completion.user_id].finalQuizScores.push({
+                  courseName: completion.course_name,
+                  score: Number(completion.final_quiz_score),
+                  passed: completion.final_quiz_passed || false,
+                  completedAt: completion.completed_at
+                });
+              }
+            }
+          });
+        }
         
         console.log('📊 Enrollment stats by user:', userEnrollmentStats);
         
@@ -117,7 +199,12 @@ export const loadUsersAction = enhanceAction(
       // Format user data
       const formattedUsers: UserWithStats[] = accounts.map(account => {
         const authUserId = account.primary_owner_user_id; // This is the auth.users.id
-        const stats = userEnrollmentStats[authUserId] || { enrollments: 0, completions: 0, lastActive: account.created_at };
+        const stats = userEnrollmentStats[authUserId] || { 
+          enrollments: 0, 
+          completions: 0, 
+          lastActive: account.created_at,
+          finalQuizScores: []
+        };
         
         console.log(`👤 Processing account: ${account.email} (auth_id: ${authUserId}) -> enrollments: ${stats.enrollments}`);
         
@@ -140,13 +227,15 @@ export const loadUsersAction = enhanceAction(
           completions: stats.completions,
           last_active: stats.lastActive || account.created_at || new Date().toISOString(),
           status: 'active', // Default status
-          created_at: account.created_at || new Date().toISOString()
+          created_at: account.created_at || new Date().toISOString(),
+          finalQuizScores: stats.finalQuizScores
         };
       });
 
       console.log('✅ LoadUsersAction: Returning formatted users:', {
         count: formattedUsers.length,
-        withEnrollments: formattedUsers.filter(u => u.enrollments > 0).length
+        withEnrollments: formattedUsers.filter(u => u.enrollments > 0).length,
+        withFinalScores: formattedUsers.filter(u => u.finalQuizScores && u.finalQuizScores.length > 0).length
       });
 
       return formattedUsers;
