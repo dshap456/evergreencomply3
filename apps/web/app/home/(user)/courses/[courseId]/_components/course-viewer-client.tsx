@@ -440,15 +440,28 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white">
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white gap-2">
           <Button
             variant="ghost" 
             size="sm" 
             onClick={() => setSidebarOpen(true)}
+            className="shrink-0"
           >
             ☰ Course Menu
           </Button>
-          <h1 className="font-medium truncate">{currentLesson?.lesson.title || ''}</h1>
+          
+          {/* Show Next Lesson button on mobile if lesson is completed */}
+          {currentLesson && currentLesson.lesson.completed && (
+            <Button 
+              onClick={handleNextLesson} 
+              variant="default"
+              size="sm"
+              disabled={!getNextLessonInSequence() && !isLastLesson()}
+              className="shrink-0 bg-green-600 hover:bg-green-700 text-xs px-2"
+            >
+              {isLastLesson() ? 'Complete' : 'Next →'}
+            </Button>
+          )}
         </div>
 
         {/* Lesson Player */}
