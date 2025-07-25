@@ -22,9 +22,13 @@ export function StorageVideoPlayer({ lessonId, onProgress, onCompletion }: Stora
       try {
         setLoading(true);
         setError(null);
+        
+        console.log('🎥 Loading video for lesson:', lessonId);
 
         const response = await fetch(`/api/video/secure-url/${lessonId}`);
         const result = await response.json();
+        
+        console.log('🔍 Video API response:', result);
 
         if (!response.ok) {
           throw new Error(result.error || 'Failed to load video');
@@ -34,6 +38,7 @@ export function StorageVideoPlayer({ lessonId, onProgress, onCompletion }: Stora
         setStatus(result.status || 'unknown');
 
         if (result.video_url) {
+          console.log('✅ Got video URL:', result.video_url.substring(0, 50) + '...');
           setVideoUrl(result.video_url);
         } else if (result.has_video && result.status === 'pending') {
           setError('Video is still processing. Please try again in a few minutes.');
