@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 interface RouteContext {
   params: Promise<{ courseId: string }>;
@@ -16,11 +16,18 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
     }
 
-    console.log('🔧 Creating admin client...');
-    const client = getSupabaseServerAdminClient();
-    console.log('✅ Admin client created');
+    console.log('🔧 Creating client...');
+    const client = getSupabaseServerClient();
+    console.log('✅ Client created');
 
-    // Load course data using admin client to bypass RLS
+    // Check if user is authenticated
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) {
+      console.error('❌ User not authenticated');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Load course data - RLS will handle permissions
     const { data: course, error: courseError } = await client
       .from('courses')
       .select('*')
@@ -34,7 +41,7 @@ export async function GET(request: Request, context: RouteContext) {
       }, { status: 500 });
     }
 
-    // Load modules with lessons using admin client
+    // Load modules with lessons - RLS will handle permissions
     const { data: modules, error: modulesError } = await client
       .from('course_modules')
       .select(`
@@ -87,7 +94,14 @@ export async function GET(request: Request, context: RouteContext) {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { courseId } = await context.params;
-    const client = getSupabaseServerAdminClient();
+    const client = getSupabaseServerClient();
+    
+    // Check if user is authenticated
+    const { data: { user } } = await client.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const body = await request.json();
 
     console.log('🔄 Updating course:', { courseId, body });
