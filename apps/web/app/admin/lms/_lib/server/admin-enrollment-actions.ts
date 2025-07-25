@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { enhanceAction } from '@kit/next/actions';
-import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 const AdminEnrollUserSchema = z.object({
   userEmail: z.string().email(),
@@ -14,8 +14,8 @@ export const adminEnrollUserAction = enhanceAction(
     console.log('🚀 AdminEnrollUser: Action called with data:', data);
     
     try {
-      const client = getSupabaseServerAdminClient();
-      console.log('✅ AdminEnrollUser: Got admin client');
+      const client = getSupabaseServerClient();
+      console.log('✅ AdminEnrollUser: Got client');
 
       console.log('🔄 AdminEnrollUser: Starting enrollment...', data);
 
@@ -125,8 +125,8 @@ export const listUsersForEnrollmentAction = enhanceAction(
   async function () {
     console.log('🚀 ListUsersForEnrollment: Action called');
     
-    const client = getSupabaseServerAdminClient();
-    console.log('✅ ListUsersForEnrollment: Got admin client');
+    const client = getSupabaseServerClient();
+    console.log('✅ ListUsersForEnrollment: Got client');
 
     try {
       console.log('🔄 Loading users for enrollment...');
