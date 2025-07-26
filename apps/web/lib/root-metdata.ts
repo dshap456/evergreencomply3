@@ -31,6 +31,19 @@ export const generateRootMetadata = async (): Promise<Metadata> => {
       title: appConfig.title,
       description: appConfig.description,
     },
-    // Icons are now handled by app/icon.tsx and app/apple-icon.tsx
+    icons: {
+      icon: [
+        { url: '/favicon.ico' },
+        { url: '/images/favicon/favicon-96x96.png', sizes: '96x96', type: 'image/png' }
+      ],
+      apple: '/images/favicon/apple-touch-icon.png',
+      other: [
+        {
+          rel: 'mask-icon',
+          url: '/images/favicon/safari-pinned-tab.svg',
+          color: '#2D5A2B'
+        }
+      ]
+    },
   };
 };
