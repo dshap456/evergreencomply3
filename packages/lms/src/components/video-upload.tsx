@@ -99,6 +99,14 @@ export function VideoUpload({
       });
 
       // Create or update video metadata record
+      console.log('Creating video metadata with:', {
+        lessonId,
+        languageCode,
+        storagePath,
+        filename: file.name,
+        fileSize: file.size
+      });
+
       const { data: metadataData, error: metadataError } = await supabase.rpc(
         'create_video_metadata',
         {
@@ -111,6 +119,8 @@ export function VideoUpload({
         }
       );
 
+      console.log('Video metadata response:', { metadataData, metadataError });
+
       if (metadataError) {
         throw new Error(`Failed to create metadata: ${metadataError.message}`);
       }
@@ -118,7 +128,7 @@ export function VideoUpload({
       setProgress({
         percentage: 80,
         phase: 'processing',
-        message: 'Video uploaded successfully! Processing thumbnail...'
+        message: 'Video uploaded successfully! Finalizing...'
       });
 
       // Update lesson with video URL
@@ -133,6 +143,27 @@ export function VideoUpload({
 
       if (lessonUpdateError) {
         console.warn('Failed to update lesson video URL:', lessonUpdateError);
+      }
+
+      // Update video metadata to ready status (since we're not actually processing)
+      if (metadataData && metadataData.id) {
+        console.log('Updating video status to ready for metadata ID:', metadataData.id);
+        
+        const { error: statusUpdateError } = await supabase.rpc(
+          'update_video_processing_status',
+          {
+            p_video_metadata_id: metadataData.id,
+            p_status: 'ready'
+          }
+        );
+
+        if (statusUpdateError) {
+          console.error('Failed to update video status to ready:', statusUpdateError);
+        } else {
+          console.log('Video status updated to ready successfully');
+        }
+      } else {
+        console.warn('No metadata ID returned from create_video_metadata, cannot update status');
       }
 
       setProgress({
