@@ -21,7 +21,7 @@ export const generateMetadata = async () => {
   };
 };
 
-async function UserHomePage() {
+function UserHomePage() {
   return (
     <>
       <HomeLayoutPageHeader
