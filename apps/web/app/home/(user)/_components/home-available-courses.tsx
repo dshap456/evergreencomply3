@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
-import { Badge } from '@kit/ui/badge';
 import { Trans } from '@kit/ui/trans';
 
 import type { AvailableCourse } from '../_lib/server/load-available-courses';
@@ -47,20 +46,6 @@ function PurchasableCourseCard({ course }: { course: AvailableCourse }) {
     }).format(price);
   };
 
-  const getLevelBadge = (level: string) => {
-    const colorMap = {
-      beginner: 'bg-green-100 text-green-800',
-      intermediate: 'bg-yellow-100 text-yellow-800',
-      advanced: 'bg-red-100 text-red-800',
-    };
-    
-    return (
-      <Badge className={colorMap[level as keyof typeof colorMap] || 'bg-gray-100 text-gray-800'}>
-        {level.charAt(0).toUpperCase() + level.slice(1)}
-      </Badge>
-    );
-  };
-
   // For now, link to the courses page where they can enroll
   // In the future, this could link to a dedicated course details page
   const courseDetailsLink = `/home/courses`;
@@ -68,10 +53,7 @@ function PurchasableCourseCard({ course }: { course: AvailableCourse }) {
   return (
     <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-          {getLevelBadge(course.level)}
-        </div>
+        <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
         
         {course.description && (
           <p className="text-sm text-muted-foreground line-clamp-3">
