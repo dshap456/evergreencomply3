@@ -6,11 +6,12 @@ import { VideoPlayer } from './video-player';
 
 interface StorageVideoPlayerProps {
   lessonId: string;
+  languageCode?: 'en' | 'es';
   onProgress: (progress: number) => void;
   onCompletion: (completed: boolean) => void;
 }
 
-export function StorageVideoPlayer({ lessonId, onProgress, onCompletion }: StorageVideoPlayerProps) {
+export function StorageVideoPlayer({ lessonId, languageCode = 'en', onProgress, onCompletion }: StorageVideoPlayerProps) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +26,7 @@ export function StorageVideoPlayer({ lessonId, onProgress, onCompletion }: Stora
         
         console.log('🎥 Loading video for lesson:', lessonId);
 
-        const response = await fetch(`/api/video/secure-url/${lessonId}`);
+        const response = await fetch(`/api/video/secure-url/${lessonId}?language=${languageCode}`);
         const result = await response.json();
         
         console.log('🔍 Video API response:', result);
@@ -59,7 +60,7 @@ export function StorageVideoPlayer({ lessonId, onProgress, onCompletion }: Stora
     if (lessonId) {
       loadVideoUrl();
     }
-  }, [lessonId]);
+  }, [lessonId, languageCode]);
 
   if (loading) {
     return (

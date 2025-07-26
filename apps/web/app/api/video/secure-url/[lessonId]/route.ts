@@ -8,13 +8,17 @@ export async function GET(
   try {
     const { lessonId } = await params;
     const client = getSupabaseServerClient();
+    
+    // Get language from query parameter, default to 'en'
+    const searchParams = request.nextUrl.searchParams;
+    const languageCode = searchParams.get('language') || 'en';
 
     // First check if there's video metadata for this lesson
     const { data: metadata, error: metadataError } = await client
       .from('video_metadata')
       .select('storage_path, processing_status')
       .eq('lesson_id', lessonId)
-      .eq('language_code', 'en')
+      .eq('language_code', languageCode)
       .maybeSingle();
 
     if (metadataError) {

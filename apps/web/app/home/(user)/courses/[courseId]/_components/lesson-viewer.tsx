@@ -10,6 +10,7 @@ import { Trans } from '@kit/ui/trans';
 import { CheckCircle, Lock, Play, Download, FileText } from 'lucide-react';
 
 import type { CourseLesson } from '../_lib/server/learner-course-details.loader';
+import { StorageVideoPlayer } from './storage-video-player';
 
 interface LessonViewerProps {
   lesson: CourseLesson;
@@ -187,7 +188,7 @@ function LessonContentViewer({
     case 'video':
       return (
         <VideoLessonViewer
-          videoUrl={lesson.video_url}
+          lesson={lesson}
           progress={progress}
           onProgressUpdate={onProgressUpdate}
           isPlaying={isPlaying}
@@ -225,43 +226,29 @@ function LessonContentViewer({
 }
 
 function VideoLessonViewer({ 
-  videoUrl, 
+  lesson,
   progress, 
   onProgressUpdate, 
   isPlaying, 
   onPlayingChange 
 }: {
-  videoUrl: string | null;
+  lesson: CourseLesson;
   progress: number;
   onProgressUpdate: (progress: number) => void;
   isPlaying: boolean;
   onPlayingChange: (playing: boolean) => void;
 }) {
-  if (!videoUrl) {
-    return (
-      <div className="p-8 text-center border-2 border-dashed border-red-200 rounded-lg">
-        <p className="text-red-600">No video URL provided</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="aspect-video bg-black rounded-lg overflow-hidden">
-        <video
-          src={videoUrl}
-          controls
-          className="w-full h-full"
-          onTimeUpdate={(e) => {
-            const video = e.currentTarget;
-            const progressPercent = (video.currentTime / video.duration) * 100;
-            onProgressUpdate(Math.min(progressPercent, 100));
-          }}
-          onPlay={() => onPlayingChange(true)}
-          onPause={() => onPlayingChange(false)}
-          onEnded={() => {
-            onProgressUpdate(100);
-            onPlayingChange(false);
+        <StorageVideoPlayer
+          lessonId={lesson.id}
+          onProgress={onProgressUpdate}
+          onCompletion={(completed) => {
+            if (completed) {
+              onProgressUpdate(100);
+              onPlayingChange(false);
+            }
           }}
         />
       </div>
