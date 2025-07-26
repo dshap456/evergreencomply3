@@ -96,6 +96,8 @@
     "continue": "Resume Course",
     "review": "Completed",
     "certificate": "Certificate",
+    "purchase": "Purchase",
+    "browseAndPurchase": "Browse available courses and start your learning journey",
     "courseViewDescription": "View your course content and track your progress",
     "courseNotFound": "Course Not Found",
     "progress": "Progress",

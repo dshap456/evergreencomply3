@@ -6,6 +6,7 @@ export interface LearnerCourse {
   id: string;
   title: string;
   description: string;
+  price?: number;
   thumbnail_url: string | null;
   duration_minutes: number | null;
   language: string;
@@ -74,6 +75,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       id,
       title,
       description,
+      price,
       is_published
     `)
     .eq('is_published', true);
@@ -172,6 +174,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       id: course.id,
       title: course.title,
       description: course.description || '',
+      price: Number(course.price) || 0,
       thumbnail_url: null,
       duration_minutes: null,
       language: 'en',
