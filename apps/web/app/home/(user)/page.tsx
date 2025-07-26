@@ -39,8 +39,14 @@ function UserHomePage() {
 }
 
 async function AvailableCoursesContent() {
-  const courses = await loadAvailableCourses();
-  return <HomeAvailableCourses courses={courses} />;
+  try {
+    const courses = await loadAvailableCourses();
+    return <HomeAvailableCourses courses={courses} />;
+  } catch (error) {
+    console.error('Error loading available courses:', error);
+    // Return empty array on error to prevent page crash
+    return <HomeAvailableCourses courses={[]} />;
+  }
 }
 
 function LoadingSpinner() {

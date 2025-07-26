@@ -16,14 +16,16 @@ export interface AvailableCourse {
 }
 
 export async function loadAvailableCourses(): Promise<AvailableCourse[]> {
-  const client = getSupabaseServerClient();
-  
-  // Get current user from Supabase auth
-  const { data: { user }, error: userError } = await client.auth.getUser();
+  try {
+    const client = getSupabaseServerClient();
+    
+    // Get current user from Supabase auth
+    const { data: { user }, error: userError } = await client.auth.getUser();
 
-  if (!user || userError) {
-    throw new Error('User not authenticated');
-  }
+    if (!user || userError) {
+      console.error('User auth error:', userError);
+      return [];
+    }
 
   // Get enrolled course IDs to exclude
   const { data: enrollments, error: enrollmentError } = await client
@@ -44,11 +46,7 @@ export async function loadAvailableCourses(): Promise<AvailableCourse[]> {
       id,
       title,
       description,
-      price,
-      thumbnail_url,
-      duration_minutes,
-      language,
-      level
+      price
     `)
     .eq('is_published', true);
 
@@ -72,12 +70,13 @@ export async function loadAvailableCourses(): Promise<AvailableCourse[]> {
       .from('course_modules')
       .select(`
         course_id,
-        lessons!inner (id)
+        lessons (id)
       `)
       .in('course_id', courseIds);
     
     if (statsError) {
-      throw statsError;
+      console.error('Error fetching course stats:', statsError);
+      // Don't throw, just continue without stats
     }
     
     courseStats = stats;
@@ -102,14 +101,18 @@ export async function loadAvailableCourses(): Promise<AvailableCourse[]> {
       title: course.title,
       description: course.description || '',
       price: Number(course.price) || 0,
-      thumbnail_url: course.thumbnail_url,
-      duration_minutes: course.duration_minutes,
-      language: course.language || 'en',
-      level: course.level || 'beginner',
+      thumbnail_url: null,
+      duration_minutes: null,
+      language: 'en',
+      level: 'beginner',
       total_modules: stats.totalModules,
       total_lessons: stats.totalLessons,
     };
   }) || [];
 
   return availableCourses;
+  } catch (error) {
+    console.error('Error in loadAvailableCourses:', error);
+    return [];
+  }
 }
