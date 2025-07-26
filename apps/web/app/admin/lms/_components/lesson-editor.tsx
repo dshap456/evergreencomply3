@@ -25,8 +25,8 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  language: 'en' | 'es';
   video_url?: string;
-  video_metadata_id?: string;
 }
 
 interface Module {
@@ -34,6 +34,7 @@ interface Module {
   title: string;
   description: string;
   order_index: number;
+  language: 'en' | 'es';
   lessons: Lesson[];
 }
 
@@ -111,8 +112,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           id: lessonData.id,
           title: lessonData.title,
           content_type: lessonData.content_type,
-          video_url: lessonData.video_url ? 'present' : 'missing',
-          video_metadata_id: lessonData.video_metadata_id ? 'present' : 'missing'
+          video_url: lessonData.video_url ? 'present' : 'missing'
         });
 
         // First, update the basic lesson data
@@ -123,8 +123,8 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           content_type: lessonData.content_type,
           order_index: lessonData.order_index,
           is_final_quiz: lessonData.is_final_quiz,
+          language: lessonData.language,
           video_url: lessonData.video_url || undefined,
-          video_metadata_id: lessonData.video_metadata_id || undefined,
         };
         
         console.log('🔍 LessonEditor: Update data being sent:', updateData);
@@ -334,23 +334,19 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                 <VideoContentDisplay lessonId={lessonData.id} languageCode="en" />
                 <VideoUpload
                   lessonId={lessonData.id}
-                  courseId="f47ac10b-58cc-4372-a567-0e02b2c3d485" // Mock course UUID
-                  accountId="c01c1f21-619e-4df0-9c0b-c8a3f296a2b7" // Your actual account UUID
-                  languageCode="en" // English content tab
-                  onUploadComplete={(videoMetadata) => {
-                    console.log('Video uploaded:', videoMetadata);
+                  courseId="f47ac10b-58cc-4372-a567-0e02b2c3d485" // TODO: Get actual course ID from context
+                  accountId="c01c1f21-619e-4df0-9c0b-c8a3f296a2b7" // TODO: Get actual account ID from context
+                  languageCode={lessonData.language}
+                  onUploadComplete={(videoMetadataId) => {
+                    console.log('Video uploaded, metadata ID:', videoMetadataId);
                     // Mark the lesson as dirty so the save button is enabled
                     setIsDirty(true);
-                    // Update lesson data with video metadata if needed
-                    setLessonData(prev => ({
-                      ...prev,
-                      video_metadata_id: videoMetadata?.id || videoMetadata,
-                      video_url: videoMetadata?.storage_path
-                    }));
+                    // Note: The VideoUpload component already updates the lesson's video_url
+                    // We don't need to update it here
                   }}
                   onUploadError={(error) => {
                     console.error('Video upload failed:', error);
-                    // Handle upload error
+                    toast.error(`Video upload failed: ${error}`);
                   }}
                 />
               </CardContent>

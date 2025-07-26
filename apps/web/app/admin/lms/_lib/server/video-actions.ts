@@ -30,8 +30,7 @@ export const loadVideoDataAction = enhanceAction(
     console.log('📊 LoadVideoDataAction: Lesson data loaded:', {
       id: lessonData.id,
       title: lessonData.title,
-      video_url: lessonData.video_url ? 'present' : 'missing',
-      video_metadata_id: lessonData.video_metadata_id ? 'present' : 'missing'
+      video_url: lessonData.video_url ? 'present' : 'missing'
     });
 
     // TEMPORARILY DISABLED: Load video metadata using admin client

@@ -31,6 +31,7 @@ import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
 import { createModuleAction } from '../_lib/server/module-actions';
+import { CourseStatus } from '../_lib/types/data-contracts';
 
 interface Course {
   id: string;
@@ -127,7 +128,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
-          is_published: courseData.is_published,
+          status: courseData.is_published ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
         });
         
         toast.success('Course saved successfully');
@@ -146,7 +147,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
-          is_published: true,
+          status: CourseStatus.PUBLISHED,
         });
         
         setCourseData(prev => ({ ...prev, is_published: true }));

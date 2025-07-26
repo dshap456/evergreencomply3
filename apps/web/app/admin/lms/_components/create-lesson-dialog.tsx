@@ -56,7 +56,6 @@ interface Lesson {
   is_final_quiz: boolean;
   language: 'en' | 'es';
   video_url?: string;
-  video_metadata_id?: string;
 }
 
 interface CreateLessonDialogProps {

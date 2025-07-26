@@ -12,7 +12,6 @@ const UpdateLessonSchema = z.object({
   order_index: z.number().min(1),
   is_final_quiz: z.boolean().optional(),
   video_url: z.string().optional().nullable(),
-  video_metadata_id: z.string().optional().nullable(),
   language: z.enum(['en', 'es']).optional(),
 });
 
@@ -26,7 +25,7 @@ export const updateLessonAction = enhanceAction(
       order_index: data.order_index,
       is_final_quiz: data.is_final_quiz,
       video_url: data.video_url,
-      video_metadata_id: data.video_metadata_id
+      language: data.language
     });
     
     const client = getSupabaseServerAdminClient();
@@ -42,12 +41,14 @@ export const updateLessonAction = enhanceAction(
       updated_at: new Date().toISOString(),
     };
 
+    // Include language if provided
+    if (data.language !== undefined) {
+      updateData.language = data.language;
+    }
+
     // Only include video fields if they're provided (preserves existing data)
     if (data.video_url !== undefined) {
       updateData.video_url = data.video_url;
-    }
-    if (data.video_metadata_id !== undefined) {
-      updateData.video_metadata_id = data.video_metadata_id;
     }
 
     const { error } = await client
