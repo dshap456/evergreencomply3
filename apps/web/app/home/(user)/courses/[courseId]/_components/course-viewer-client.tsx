@@ -51,19 +51,21 @@ interface CourseData {
   completed_at: string | null;
   final_score: number | null;
   modules: CourseModule[];
+  current_language: 'en' | 'es';
 }
 
 export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>('en');
 
-  const loadCourseData = async () => {
+  const loadCourseData = async (language: 'en' | 'es' = selectedLanguage) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/debug-course?courseId=${courseId}`);
+      const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`);
       const result = await response.json();
       
       if (result.success) {
@@ -120,6 +122,21 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   useEffect(() => {
     loadCourseData();
   }, [courseId]);
+
+  const handleLanguageSwitch = async (newLanguage: 'en' | 'es') => {
+    if (newLanguage === selectedLanguage) return;
+    
+    // Show warning about progress not being lost
+    const message = newLanguage === 'es' 
+      ? "Switching to Spanish content. Your progress in English will be saved.\n\nCambiando al contenido en español. Tu progreso en inglés se guardará."
+      : "Switching to English content. Your progress in Spanish will be saved.\n\nCambiando al contenido en inglés. Tu progreso en español se guardará.";
+      
+    if (confirm(message)) {
+      setSelectedLanguage(newLanguage);
+      setCurrentLessonId(null); // Reset current lesson
+      await loadCourseData(newLanguage);
+    }
+  };
 
 
   const getContentTypeColor = (contentType: string) => {
@@ -236,7 +253,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         body: JSON.stringify({ 
           time_spent: timeSpent,
           quiz_score: quizScore,
-          is_quiz: quizScore !== undefined
+          is_quiz: quizScore !== undefined,
+          language: selectedLanguage
         })
       });
 
@@ -244,7 +262,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         console.log('✅ Lesson completion saved to database');
         
         // Get fresh course data from server to ensure consistency
-        const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}`);
+        const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}&language=${selectedLanguage}`);
         const courseResult = await courseResponse.json();
         
         if (courseResult.success) {
@@ -332,10 +350,33 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between p-4">
             {!sidebarMinimized ? (
-              <div>
+              <div className="flex-1">
                 <Link href="/home/courses" className="font-semibold text-lg truncate hover:text-blue-600 transition-colors cursor-pointer">
                   {course.title}
                 </Link>
+                {/* Language Switcher */}
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => handleLanguageSwitch('en')}
+                    className={`px-2 py-1 text-xs font-medium rounded ${
+                      selectedLanguage === 'en' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
+                  >
+                    EN
+                  </button>
+                  <button
+                    onClick={() => handleLanguageSwitch('es')}
+                    className={`px-2 py-1 text-xs font-medium rounded ${
+                      selectedLanguage === 'es' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
+                  >
+                    ES
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="w-full flex justify-center">

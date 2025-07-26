@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
+    const language = searchParams.get('language') || 'en'; // Default to English
     
     if (!courseId) {
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
@@ -53,9 +54,11 @@ export async function GET(request: Request) {
         id,
         title,
         description,
-        order_index
+        order_index,
+        language
       `)
       .eq('course_id', courseId)
+      .eq('language', language)
       .order('order_index');
 
     if (modulesError) {
@@ -83,9 +86,11 @@ export async function GET(request: Request) {
           video_url,
           content,
           asset_url,
-          is_final_quiz
+          is_final_quiz,
+          language
         `)
         .in('module_id', modules.map(m => m.id))
+        .eq('language', language)
         .order('order_index');
 
       lessons = lessonsData;
@@ -105,8 +110,9 @@ export async function GET(request: Request) {
     // Test lesson progress query
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
-      .select('lesson_id, status, time_spent')
-      .eq('user_id', user.id);
+      .select('lesson_id, status, time_spent, language')
+      .eq('user_id', user.id)
+      .eq('language', language);
 
     if (progressError) {
       return NextResponse.json({ 
@@ -175,7 +181,8 @@ export async function GET(request: Request) {
         enrolled_at: enrollment.enrolled_at,
         completed_at: enrollment.completed_at,
         final_score: enrollment.final_score,
-        modules: formattedModules
+        modules: formattedModules,
+        current_language: language
       };
 
       return NextResponse.json({ 

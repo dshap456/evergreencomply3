@@ -17,11 +17,20 @@ import {
 } from '@kit/ui/select';
 import { toast } from '@kit/ui/sonner';
 import { Spinner } from '@kit/ui/spinner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@kit/ui/dialog';
 
 import { ModuleEditor } from './module-editor';
 import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
+import { createModuleAction } from '../_lib/server/module-actions';
 
 interface Course {
   id: string;
@@ -37,6 +46,7 @@ interface Module {
   title: string;
   description: string;
   order_index: number;
+  language: 'en' | 'es';
   lessons: Lesson[];
 }
 
@@ -47,6 +57,7 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  language: 'en' | 'es';
 }
 
 interface CourseEditorClientProps {
@@ -63,6 +74,9 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
   const [courseData, setCourseData] = useState(initialCourse);
   const [isDirty, setIsDirty] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>('en');
+  const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
+  const [newModule, setNewModule] = useState({ title: '', description: '', language: 'en' as 'en' | 'es' });
 
   // If editing a specific lesson
   if (selectedLesson && selectedModule) {
@@ -145,7 +159,37 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
     });
   };
 
+  const handleAddModule = () => {
+    startTransition(async () => {
+      try {
+        const orderIndex = modules.filter(m => m.language === newModule.language).length + 1;
+        
+        const result = await createModuleAction({
+          course_id: courseData.id,
+          title: newModule.title,
+          description: newModule.description,
+          order_index: orderIndex,
+          language: newModule.language,
+        });
+        
+        if (result.module) {
+          setModules([...modules, { ...result.module, lessons: [] }]);
+          setIsAddModuleOpen(false);
+          setNewModule({ title: '', description: '', language: 'en' });
+          toast.success('Module created successfully');
+        }
+      } catch (error) {
+        console.error('Failed to create module:', error);
+        toast.error('Failed to create module');
+      }
+    });
+  };
+
   const lessonCount = modules.reduce((acc, module) => acc + module.lessons.length, 0);
+  
+  // Filter modules by selected language
+  const englishModules = modules.filter(m => m.language === 'en');
+  const spanishModules = modules.filter(m => m.language === 'es');
 
   return (
     <div className="space-y-6">
@@ -293,12 +337,22 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
         <TabsContent value="english-content" className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">English Course Content</h3>
-            <Button>+ Add Module</Button>
+            <Button onClick={() => {
+              setNewModule(prev => ({ ...prev, language: 'en' }));
+              setIsAddModuleOpen(true);
+            }}>+ Add Module</Button>
           </div>
 
-          {/* Modules List */}
+          {/* English Modules List */}
           <div className="space-y-4">
-            {modules.map((module) => (
+            {englishModules.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  No English content yet. Click "Add Module" to get started.
+                </CardContent>
+              </Card>
+            ) : (
+              englishModules.map((module) => (
               <Card key={module.id}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -353,7 +407,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            )))}
           </div>
         </TabsContent>
 
@@ -370,15 +424,126 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
         <TabsContent value="spanish-content" className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium">Spanish Course Content</h3>
-            <Button>+ Add Module</Button>
+            <Button onClick={() => {
+              setNewModule(prev => ({ ...prev, language: 'es' }));
+              setIsAddModuleOpen(true);
+            }}>+ Add Module</Button>
           </div>
 
-          {/* Spanish content - similar to English but for Spanish versions */}
-          <div className="text-center py-8 text-muted-foreground">
-            Spanish content management coming soon...
+          {/* Spanish Modules List */}
+          <div className="space-y-4">
+            {spanishModules.length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center text-muted-foreground">
+                  No Spanish content yet. Click "Add Module" to get started.
+                </CardContent>
+              </Card>
+            ) : (
+              spanishModules.map((module) => (
+              <Card key={module.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{module.title}</CardTitle>
+                      <p className="text-sm text-muted-foreground">{module.description}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setSelectedModule(module)}
+                      >
+                        Edit
+                      </Button>
+                      <Button variant="ghost" size="sm">⋮</Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {module.lessons.map((lesson) => (
+                      <div key={lesson.id} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm">
+                            {lesson.content_type === 'video' && '📹'}
+                            {lesson.content_type === 'text' && '📄'}
+                            {lesson.content_type === 'quiz' && '📝'}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium">{lesson.title}</p>
+                            <p className="text-xs text-muted-foreground">{lesson.description}</p>
+                          </div>
+                          {lesson.is_final_quiz && (
+                            <Badge variant="secondary" className="text-xs">Final</Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedModule(module);
+                              setSelectedLesson(lesson);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )))}
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Add Module Dialog */}
+      <Dialog open={isAddModuleOpen} onOpenChange={setIsAddModuleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Module ({newModule.language === 'en' ? 'English' : 'Spanish'})</DialogTitle>
+            <DialogDescription>
+              Create a new module for the {newModule.language === 'en' ? 'English' : 'Spanish'} version of the course.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Module Title</label>
+              <Input
+                value={newModule.title}
+                onChange={(e) => setNewModule(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="e.g., Introduction to Course"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description (optional)</label>
+              <Textarea
+                value={newModule.description}
+                onChange={(e) => setNewModule(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Brief description of the module content"
+                className="min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddModuleOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddModule} disabled={!newModule.title || isPending}>
+              {isPending ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4" />
+                  Creating...
+                </>
+              ) : (
+                'Create Module'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

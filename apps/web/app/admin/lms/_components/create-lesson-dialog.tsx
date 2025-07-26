@@ -54,6 +54,7 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  language: 'en' | 'es';
   video_url?: string;
   video_metadata_id?: string;
 }
@@ -64,6 +65,7 @@ interface CreateLessonDialogProps {
   onLessonCreated: (lesson: Lesson) => void;
   nextOrderIndex: number;
   moduleId: string;
+  language: 'en' | 'es';
 }
 
 const contentTypes = [
@@ -90,6 +92,7 @@ export function CreateLessonDialog({
   onLessonCreated,
   nextOrderIndex,
   moduleId,
+  language,
 }: CreateLessonDialogProps) {
   const [isPending, startTransition] = useTransition();
   
@@ -122,6 +125,7 @@ export function CreateLessonDialog({
           content_type: data.content_type,
           order_index: nextOrderIndex,
           is_final_quiz: data.is_final_quiz,
+          language: language,
         });
 
         console.log('✅ CreateLessonDialog: Lesson created successfully:', result.lesson);
@@ -134,6 +138,7 @@ export function CreateLessonDialog({
           content_type: result.lesson.content_type,
           order_index: result.lesson.order_index,
           is_final_quiz: result.lesson.is_final_quiz || false,
+          language: result.lesson.language || language,
           video_url: result.lesson.video_url,
           video_metadata_id: result.lesson.video_metadata_id,
         };
@@ -153,7 +158,7 @@ export function CreateLessonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Create New Lesson</DialogTitle>
+          <DialogTitle>Create New Lesson ({language === 'en' ? 'English' : 'Spanish'})</DialogTitle>
           <DialogDescription>
             Add a new lesson to this module. Choose the content type that best fits your learning objectives.
           </DialogDescription>

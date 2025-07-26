@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Spinner } from '@kit/ui/spinner';
-import { FullCourseEditor } from './full-course-editor';
+import { CourseEditorClient } from './course-editor-client';
 
 interface CourseEditorLoaderProps {
   courseId: string;
@@ -124,13 +124,10 @@ export function CourseEditorLoader({ courseId, onBack }: CourseEditorLoaderProps
   }
 
   return (
-    <FullCourseEditor 
+    <CourseEditorClient 
       course={courseData.course} 
-      onBack={onBack} 
-      onSave={(updatedCourse) => {
-        console.log('Course saved from loader:', updatedCourse);
-        // Could add additional logic here if needed
-      }}
+      modules={courseData.modules || []}
+      onBack={onBack}
     />
   );
 }

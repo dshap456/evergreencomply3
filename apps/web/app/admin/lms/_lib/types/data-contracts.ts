@@ -43,6 +43,11 @@ export const QuizQuestionType = {
   SHORT_ANSWER: 'short_answer'
 } as const;
 
+export const LanguageCode = {
+  EN: 'en',
+  ES: 'es'
+} as const;
+
 // ============================================================================
 // DATABASE TYPES (Raw from database)
 // ============================================================================
@@ -63,6 +68,17 @@ export interface DatabaseCourse {
   updated_by: string | null;
 }
 
+export interface DatabaseModule {
+  id: string;
+  course_id: string;
+  title: string;
+  description: string | null;
+  order_index: number;
+  language: keyof typeof LanguageCode;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DatabaseLesson {
   id: string;
   course_id: string;
@@ -75,6 +91,7 @@ export interface DatabaseLesson {
   video_url: string | null;
   text_content: string | null;
   quiz_data: any; // JSON - needs transformation
+  language: keyof typeof LanguageCode;
   created_at: string;
   updated_at: string;
 }
@@ -101,6 +118,7 @@ export interface DatabaseQuizQuestion {
   correct_answer: string;
   explanation: string | null;
   order_index: number;
+  language: keyof typeof LanguageCode;
 }
 
 export interface DatabaseEnrollment {

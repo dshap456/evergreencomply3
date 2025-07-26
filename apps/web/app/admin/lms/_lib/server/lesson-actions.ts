@@ -13,6 +13,7 @@ const UpdateLessonSchema = z.object({
   is_final_quiz: z.boolean().optional(),
   video_url: z.string().optional().nullable(),
   video_metadata_id: z.string().optional().nullable(),
+  language: z.enum(['en', 'es']).optional(),
 });
 
 export const updateLessonAction = enhanceAction(
@@ -75,6 +76,7 @@ const CreateLessonSchema = z.object({
   content_type: z.enum(['video', 'text', 'quiz']),
   order_index: z.number().min(1),
   is_final_quiz: z.boolean().optional(),
+  language: z.enum(['en', 'es']),
 });
 
 export const createLessonAction = enhanceAction(
@@ -97,6 +99,7 @@ export const createLessonAction = enhanceAction(
         content_type: data.content_type,
         order_index: data.order_index,
         is_final_quiz: data.is_final_quiz || false,
+        language: data.language,
       })
       .select()
       .single();

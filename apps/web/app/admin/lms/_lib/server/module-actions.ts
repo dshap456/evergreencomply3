@@ -9,6 +9,7 @@ const UpdateModuleSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   order_index: z.number().min(1),
+  language: z.enum(['en', 'es']).optional(),
 });
 
 export const updateModuleAction = enhanceAction(
@@ -42,6 +43,7 @@ const CreateModuleSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   order_index: z.number().min(1),
+  language: z.enum(['en', 'es']),
 });
 
 export const createModuleAction = enhanceAction(
@@ -55,6 +57,7 @@ export const createModuleAction = enhanceAction(
         title: data.title,
         description: data.description,
         order_index: data.order_index,
+        language: data.language,
       })
       .select()
       .single();

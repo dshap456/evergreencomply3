@@ -25,6 +25,7 @@ interface Module {
   title: string;
   description: string;
   order_index: number;
+  language: 'en' | 'es';
   lessons: Lesson[];
 }
 
@@ -35,6 +36,7 @@ interface Lesson {
   content_type: 'video' | 'text' | 'quiz';
   order_index: number;
   is_final_quiz: boolean;
+  language: 'en' | 'es';
   video_url?: string;
   video_metadata_id?: string;
 }
@@ -314,6 +316,7 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         onLessonCreated={handleLessonCreated}
         nextOrderIndex={moduleData.lessons.length + 1}
         moduleId={moduleData.id}
+        language={moduleData.language}
       />
     </div>
   );
