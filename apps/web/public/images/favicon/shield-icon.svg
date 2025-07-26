@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield shape with green background -->
+  <path d="M256 32C256 32 128 96 128 96C128 96 128 224 128 288C128 416 256 480 256 480C256 480 384 416 384 288C384 224 384 96 384 96C384 96 256 32 256 32Z" 
+        fill="#2D5A2B" 
+        stroke="#2D5A2B" 
+        stroke-width="2"/>
+  
+  <!-- Checkmark in light green -->
+  <path d="M352 176L224 304L160 240" 
+        fill="none" 
+        stroke="#8BC34A" 
+        stroke-width="48" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+</svg>

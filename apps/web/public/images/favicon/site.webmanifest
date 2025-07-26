@@ -1,8 +1,8 @@
 {
   "name": "Evergreen Comply",
   "short_name": "Evergreen Comply",
-  "theme_color": "#fff",
-  "background_color": "#fff",
+  "theme_color": "#2D5A2B",
+  "background_color": "#2D5A2B",
   "display": "fullscreen",
   "orientation": "portrait",
   "scope": "/",
