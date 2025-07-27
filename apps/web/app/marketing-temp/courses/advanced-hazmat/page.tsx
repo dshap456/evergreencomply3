@@ -75,12 +75,14 @@ function DOTHazmatAdvancedPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
-            </Button>
+            <Link href="/marketing-temp/cart">
+              <Button variant="ghost" size="sm" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  0
+                </span>
+              </Button>
+            </Link>
             <Link href={pathsConfig.auth.signIn}>
               <Button variant="outline">Log In</Button>
             </Link>
@@ -137,12 +139,14 @@ function DOTHazmatAdvancedPage() {
                   </div>
                 </div>
                 <div className="pt-4">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
-                  >
-                    Enroll Now for $179
-                  </Button>
+                  <Link href="/marketing-temp/cart">
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
+                    >
+                      Buy Seats - $179 per seat
+                    </Button>
+                  </Link>
                 </div>
               </div>
               <div className="relative h-64 md:h-full w-full overflow-hidden rounded-lg shadow-lg">
@@ -261,9 +265,11 @@ function DOTHazmatAdvancedPage() {
                         <span className="font-medium">Official Certificate</span>
                       </div>
                     </div>
-                    <Button size="lg" className="w-full mt-2 bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]">
-                      Enroll Now
-                    </Button>
+                    <Link href="/marketing-temp/cart" className="block w-full mt-2">
+                      <Button size="lg" className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]">
+                        Buy Seats
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
 
