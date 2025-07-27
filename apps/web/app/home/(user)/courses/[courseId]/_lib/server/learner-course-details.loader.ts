@@ -62,7 +62,7 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
         id,
         title,
         description,
-        status
+        is_published
       )
     `)
     .eq('user_id', user.id)
@@ -166,7 +166,7 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
   }));
 
   // Check if course is published
-  if (enrollment.courses.status !== 'published') {
+  if (!enrollment.courses.is_published) {
     throw new Error('Course is not published');
   }
 
