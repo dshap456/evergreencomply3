@@ -61,19 +61,16 @@ async function formatCourses(courses: any[], client: any) {
     console.log('🔍 formatCourses: Processing course:', {
       id: course.id,
       title: course.title,
-      is_published: course.is_published,
+      status: course.status,
       hasDescription: !!course.description,
       descriptionLength: course.description?.length || 0
     });
-    
-    // Map is_published to status
-    const status = course.is_published ? 'published' : 'draft';
     
     return {
       id: course.id,
       title: course.title,
       description: course.description || '',
-      status: status as 'draft' | 'published' | 'archived',
+      status: course.status as 'draft' | 'published' | 'archived',
       lessons_count: lessonCounts[course.id] || 0,
       enrollments_count: enrollmentCounts[course.id] || 0,
       created_at: course.created_at,
@@ -141,7 +138,7 @@ export const loadCoursesAction = enhanceAction(
     
     const { data: courses, error: coursesError } = await client
       .from('courses')
-      .select('id, title, description, is_published, created_at, updated_at, account_id')
+      .select('id, title, description, status, created_at, updated_at, account_id')
       .order('created_at', { ascending: false });
 
     if (coursesError) {

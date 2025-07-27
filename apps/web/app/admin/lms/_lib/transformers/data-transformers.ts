@@ -27,17 +27,8 @@ export const CourseTransformer = {
    */
   toUI: (dbCourse: DatabaseCourse, stats?: { lessonsCount?: number; enrollmentsCount?: number; completionRate?: number }): UICourse => {
     try {
-      // Map database status to UI status
-      let uiStatus: CourseStatus;
-      if ('status' in dbCourse && dbCourse.status) {
-        // New schema with status enum
-        uiStatus = dbCourse.status as CourseStatus;
-      } else if ('is_published' in dbCourse) {
-        // Legacy schema with is_published boolean
-        uiStatus = dbCourse.is_published ? CourseStatus.PUBLISHED : CourseStatus.DRAFT;
-      } else {
-        uiStatus = CourseStatus.DRAFT;
-      }
+      // Database now has status field
+      const uiStatus = dbCourse.status as CourseStatus;
 
       return {
         id: dbCourse.id,
@@ -80,13 +71,12 @@ export const CourseTransformer = {
       // Always update the timestamp
       result.updated_at = new Date().toISOString();
 
-      // Handle status mapping to is_published
+      // Handle status mapping
       if (uiCourse.status) {
         if (!isValidCourseStatus(uiCourse.status)) {
           throw new Error(`Invalid course status: ${uiCourse.status}`);
         }
-        // Map status to is_published for database
-        result.is_published = uiCourse.status === CourseStatus.PUBLISHED;
+        result.status = uiCourse.status;
       }
 
       return result;

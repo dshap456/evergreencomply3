@@ -23,7 +23,7 @@ export interface Database {
           updated_at: string | null
           created_by: string | null
           updated_by: string | null
-          is_published: boolean
+          status: Database["public"]["Enums"]["course_status"]
         }
         Insert: {
           id?: string
@@ -38,7 +38,7 @@ export interface Database {
           updated_at?: string | null
           created_by?: string | null
           updated_by?: string | null
-          is_published?: boolean
+          status?: Database["public"]["Enums"]["course_status"]
         }
         Update: {
           id?: string
@@ -53,7 +53,7 @@ export interface Database {
           updated_at?: string | null
           created_by?: string | null
           updated_by?: string | null
-          is_published?: boolean
+          status?: Database["public"]["Enums"]["course_status"]
         }
       }
       // Add other tables as needed

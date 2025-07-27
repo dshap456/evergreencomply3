@@ -113,10 +113,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updated_at: new Date().toISOString()
     };
 
-    // Handle status/publish state
+    // Handle status
     if (body.status !== undefined) {
-      updateData.is_published = body.status === 'published';
-      console.log('📝 Setting publication status:', updateData.is_published);
+      updateData.status = body.status;
+      console.log('📝 Setting status:', updateData.status);
     }
 
     const { data, error } = await client
