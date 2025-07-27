@@ -164,7 +164,6 @@ function CartPage() {
                             {/* Course Info */}
                             <div className="flex-1">
                               <h3 className="font-medium text-sm md:text-base">{course.name}</h3>
-                              <p className="text-sm text-muted-foreground">${course.price}/seat</p>
                             </div>
 
                             {/* Mobile: Quantity and Total */}
