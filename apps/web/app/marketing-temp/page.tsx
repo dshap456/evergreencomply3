@@ -14,6 +14,42 @@ import { CustomShieldIcon, CustomSmartphoneIcon, CustomGlobeIcon, CustomAwardIco
 function Home() {
   return (
     <div className={'flex flex-col'}>
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b bg-background">
+        <div className="container flex h-16 items-center justify-between py-4">
+          <div className="flex items-center gap-2">
+            <Link href="/marketing-temp" className="flex items-center gap-2">
+              <CustomShieldIcon className="h-6 w-6" />
+              <span className="text-xl font-bold">Evergreen Comply</span>
+            </Link>
+          </div>
+          <nav className="hidden md:flex gap-6">
+            <Link href="/marketing-temp#features" className="text-sm font-medium hover:text-primary">
+              Features
+            </Link>
+            <Link href="/marketing-temp#courses" className="text-sm font-medium hover:text-primary">
+              Courses
+            </Link>
+            <Link href="/marketing-temp#contact" className="text-sm font-medium hover:text-primary">
+              Contact
+            </Link>
+          </nav>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" className="relative">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                0
+              </span>
+            </Button>
+            <Link href={pathsConfig.auth.signIn}>
+              <Button variant="outline">Log In</Button>
+            </Link>
+            <Link href={pathsConfig.auth.signUp}>
+              <Button className="bg-[rgba(58,92,81,1)]">Get Started</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
       {/* Hero Section */}
       <section className="w-full relative h-[600px] md:h-[700px] lg:h-[800px] overflow-hidden">
         <Image
