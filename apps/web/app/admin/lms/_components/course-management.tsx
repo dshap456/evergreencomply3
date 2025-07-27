@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -14,10 +14,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@kit/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@kit/ui/alert-dialog';
+import { toast } from '@kit/ui/sonner';
 
 import { CreateCourseDialog } from './create-course-dialog';
 import { CourseEditorLoader } from './course-editor-loader';
 import { loadCoursesAction } from '../_lib/server/load-courses-action';
+import { deleteCourseAction } from '../_lib/server/delete-course-action';
 
 interface Course {
   id: string;
@@ -39,6 +51,8 @@ export function CourseManagement() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const loadCourses = async () => {
     try {
@@ -68,6 +82,32 @@ export function CourseManagement() {
     setSelectedCourse(null);
     // Refresh the course list when returning from editor
     loadCourses();
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return;
+
+    startTransition(async () => {
+      try {
+        await toast.promise(
+          deleteCourseAction({ courseId: courseToDelete.id }),
+          {
+            loading: 'Deleting course...',
+            success: 'Course deleted successfully',
+            error: (error) => {
+              console.error('Delete course error:', error);
+              return error instanceof Error ? error.message : 'Failed to delete course';
+            },
+          }
+        );
+        
+        // Close dialog and refresh courses
+        setCourseToDelete(null);
+        await loadCourses();
+      } catch (error) {
+        console.error('Error deleting course:', error);
+      }
+    });
   };
 
   const filteredCourses = courses.filter(course => {
@@ -201,10 +241,19 @@ export function CourseManagement() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full"
+                  className="flex-1"
                   onClick={() => setSelectedCourse(course)}
                 >
                   Edit
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => setCourseToDelete(course)}
+                  disabled={isPending || course.enrollments_count > 0}
+                >
+                  Delete
                 </Button>
               </div>
             </CardContent>
@@ -243,6 +292,37 @@ export function CourseManagement() {
           loadCourses();
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!courseToDelete} onOpenChange={(open) => !open && setCourseToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{courseToDelete?.title}"? 
+              {courseToDelete?.enrollments_count ? (
+                <span className="block mt-2 text-red-600">
+                  This course has {courseToDelete.enrollments_count} active enrollments and cannot be deleted.
+                </span>
+              ) : (
+                <span className="block mt-2 text-red-600">
+                  This action cannot be undone. All modules, lessons, quizzes, and videos associated with this course will be permanently deleted.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteCourse}
+              disabled={isPending || (courseToDelete?.enrollments_count ?? 0) > 0}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPending ? 'Deleting...' : 'Delete Course'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
