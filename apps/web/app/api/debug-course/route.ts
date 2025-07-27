@@ -32,7 +32,7 @@ export async function GET(request: Request) {
           id,
           title,
           description,
-          is_published
+          status
         )
       `)
       .eq('user_id', user.id)
@@ -168,7 +168,7 @@ export async function GET(request: Request) {
       }));
 
       // Check if course is published
-      if (!enrollment.courses.is_published) {
+      if (enrollment.courses.status !== 'published') {
         throw new Error('Course is not published');
       }
 
