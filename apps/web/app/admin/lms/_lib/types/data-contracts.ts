@@ -57,7 +57,8 @@ export interface DatabaseCourse {
   account_id: string;
   title: string;
   description: string | null;
-  is_published: boolean; // ⚠️ Boolean in database
+  is_published?: boolean; // ⚠️ LEGACY: Boolean in old schema
+  status?: keyof typeof CourseStatus; // NEW: Enum in updated schema
   sku: string | null;
   price: number | null;
   sequential_completion: boolean;

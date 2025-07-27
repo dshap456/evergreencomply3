@@ -23,16 +23,28 @@ import {
 export const CourseTransformer = {
   /**
    * Transform database course to UI format
-   * Handles: is_published boolean → status enum + computed fields
+   * Handles: status enum mapping + computed fields
    */
   toUI: (dbCourse: DatabaseCourse, stats?: { lessonsCount?: number; enrollmentsCount?: number; completionRate?: number }): UICourse => {
     try {
+      // Map database status to UI status
+      let uiStatus: CourseStatus;
+      if ('status' in dbCourse && dbCourse.status) {
+        // New schema with status enum
+        uiStatus = dbCourse.status as CourseStatus;
+      } else if ('is_published' in dbCourse) {
+        // Legacy schema with is_published boolean
+        uiStatus = dbCourse.is_published ? CourseStatus.PUBLISHED : CourseStatus.DRAFT;
+      } else {
+        uiStatus = CourseStatus.DRAFT;
+      }
+
       return {
         id: dbCourse.id,
         account_id: dbCourse.account_id,
         title: dbCourse.title,
         description: dbCourse.description || '',
-        status: dbCourse.is_published ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
+        status: uiStatus,
         sku: dbCourse.sku || undefined,
         price: dbCourse.price || undefined,
         sequential_completion: dbCourse.sequential_completion,
@@ -51,7 +63,7 @@ export const CourseTransformer = {
 
   /**
    * Transform UI course to database format
-   * Handles: status enum → is_published boolean
+   * Handles: status enum mapping
    */
   toDatabase: (uiCourse: Partial<UICourse>): Partial<DatabaseCourse> => {
     try {
@@ -65,12 +77,12 @@ export const CourseTransformer = {
         updated_at: new Date().toISOString(),
       };
 
-      // Handle status → is_published conversion
+      // Handle status mapping
       if (uiCourse.status) {
         if (!isValidCourseStatus(uiCourse.status)) {
           throw new Error(`Invalid course status: ${uiCourse.status}`);
         }
-        result.is_published = uiCourse.status === CourseStatus.PUBLISHED;
+        result.status = uiCourse.status;
       }
 
       return result;

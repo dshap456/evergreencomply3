@@ -217,6 +217,14 @@ export function CourseManagement() {
                 {course.description}
               </p>
 
+              {/* Enrollment Warning */}
+              {course.enrollments_count > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2 text-xs">
+                  <span className="text-yellow-800">
+                    ⚠️ {course.enrollments_count} active enrollment{course.enrollments_count > 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 text-sm">
