@@ -27,44 +27,8 @@ import { CustomShieldIcon } from '../../_components/custom-icons';
 
 function DOTHazmatGeneralPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <div className="flex items-center gap-2">
-            <Link href="/marketing-temp" className="flex items-center gap-2">
-              <CustomShieldIcon className="h-6 w-6" />
-              <span className="text-xl font-bold">Evergreen Comply</span>
-            </Link>
-          </div>
-          <nav className="hidden md:flex gap-6">
-            <Link href="/marketing-temp#features" className="text-sm font-medium hover:text-primary">
-              Features
-            </Link>
-            <Link href="/marketing-temp#courses" className="text-sm font-medium hover:text-primary">
-              Courses
-            </Link>
-            <Link href="/marketing-temp#contact" className="text-sm font-medium hover:text-primary">
-              Contact
-            </Link>
-          </nav>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
-            </Button>
-            <Link href={pathsConfig.auth.signIn}>
-              <Button variant="outline">Log In</Button>
-            </Link>
-            <Link href={pathsConfig.auth.signUp}>
-              <Button className="bg-[rgba(58,92,81,1)]">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1">
+    <div className="flex flex-col">
+      <main>
         {/* Breadcrumb */}
         <div className="border-b bg-muted/40">
           <div className="container py-3">
@@ -391,75 +355,6 @@ function DOTHazmatGeneralPage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t bg-muted">
-        <div className="container flex flex-col gap-6 py-8 md:py-10">
-          <div className="flex flex-col gap-6 md:flex-row md:gap-8">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <CustomShieldIcon className="h-6 w-6" />
-                <span className="text-xl font-bold">Evergreen Comply</span>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Modern, engaging, and legally compliant training for blue-collar professionals.
-              </p>
-            </div>
-            <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3">
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium">Platform</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="/marketing-temp#features" className="text-sm text-muted-foreground hover:text-foreground">
-                      Features
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/marketing-temp#courses" className="text-sm text-muted-foreground hover:text-foreground">
-                      Courses
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium">Company</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                      About
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium">Legal</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                      Terms
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
-                      Privacy
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <p className="text-xs text-muted-foreground">
-              &copy; {new Date().getFullYear()} Evergreen Comply, LLC. All rights reserved.
-            </p>
-            <Link href="/marketing-temp">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
