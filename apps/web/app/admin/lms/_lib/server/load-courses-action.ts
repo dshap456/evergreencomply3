@@ -60,7 +60,7 @@ async function formatCourses(courses: any[], client: any) {
     id: course.id,
     title: course.title,
     description: course.description || '',
-    status: (course.is_published ? 'published' : 'draft') as 'draft' | 'published' | 'archived',
+    status: course.status as 'draft' | 'published' | 'archived',
     lessons_count: lessonCounts[course.id] || 0,
     enrollments_count: enrollmentCounts[course.id] || 0,
     created_at: course.created_at,
@@ -127,7 +127,7 @@ export const loadCoursesAction = enhanceAction(
     
     const { data: courses, error: coursesError } = await client
       .from('courses')
-      .select('id, title, description, is_published, created_at, updated_at, account_id')
+      .select('id, title, description, status, created_at, updated_at, account_id')
       .order('created_at', { ascending: false });
 
     if (coursesError) {
