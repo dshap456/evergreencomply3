@@ -65,7 +65,7 @@ export const loadUsersAction = enhanceAction(
           enrolled_at,
           final_score,
           course_id,
-          courses!inner(
+          courses(
             title
           )
         `);
@@ -137,7 +137,7 @@ export const loadUsersAction = enhanceAction(
             // If there's a final score, add it to the quiz scores
             if (enrollment.final_score !== null && enrollment.final_score !== undefined) {
               userEnrollmentStats[enrollment.user_id].finalQuizScores.push({
-                courseName: enrollment.courses.title,
+                courseName: enrollment.courses?.title || 'Unknown Course',
                 score: Number(enrollment.final_score),
                 passed: Number(enrollment.final_score) >= 80,
                 completedAt: enrollment.enrolled_at
