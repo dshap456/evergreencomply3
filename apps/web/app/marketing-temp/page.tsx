@@ -72,9 +72,6 @@ function Home() {
             <Link href={pathsConfig.auth.signIn}>
               <Button variant="outline">Log In</Button>
             </Link>
-            <Link href={pathsConfig.auth.signUp}>
-              <Button className="bg-[rgba(58,92,81,1)]">Get Started</Button>
-            </Link>
           </div>
         </div>
       </header>
