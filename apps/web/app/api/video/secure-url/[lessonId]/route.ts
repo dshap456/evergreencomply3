@@ -13,6 +13,8 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
     const languageCode = searchParams.get('language') || 'en';
 
+    console.log('🎥 Secure video URL requested:', { lessonId, languageCode });
+
     // First check if there's video metadata for this lesson
     const { data: metadata, error: metadataError } = await client
       .from('video_metadata')
@@ -20,6 +22,8 @@ export async function GET(
       .eq('lesson_id', lessonId)
       .eq('language_code', languageCode)
       .maybeSingle();
+
+    console.log('📊 Video metadata query result:', { metadata, error: metadataError });
 
     if (metadataError) {
       console.error('Error fetching video metadata:', metadataError);
@@ -40,9 +44,17 @@ export async function GET(
     }
 
     // Generate signed URL for the video
+    console.log('🔗 Creating signed URL for storage path:', metadata.storage_path);
+    
     const { data: signedUrlData, error: urlError } = await client.storage
       .from('course-videos')
       .createSignedUrl(metadata.storage_path, 3600); // 1 hour expiry
+
+    console.log('📤 Signed URL result:', { 
+      success: !!signedUrlData?.signedUrl, 
+      error: urlError,
+      urlLength: signedUrlData?.signedUrl?.length 
+    });
 
     if (urlError) {
       console.error('Error creating signed URL:', urlError);
