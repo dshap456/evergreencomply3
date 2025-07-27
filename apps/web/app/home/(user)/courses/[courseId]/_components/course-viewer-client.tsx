@@ -509,6 +509,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
               hasNextLesson={!!getNextLessonInSequence()}
               isLastLesson={isLastLesson()}
               onLessonComplete={handleLessonCompletion}
+              selectedLanguage={selectedLanguage}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -544,7 +545,8 @@ function LessonPlayer({
   onNext,
   hasNextLesson,
   isLastLesson,
-  onLessonComplete
+  onLessonComplete,
+  selectedLanguage
 }: { 
   lesson: CourseLesson; 
   module: CourseModule;
@@ -552,6 +554,7 @@ function LessonPlayer({
   hasNextLesson: boolean;
   isLastLesson: boolean;
   onLessonComplete: (lessonId: string, timeSpent?: number) => void;
+  selectedLanguage: 'en' | 'es';
 }) {
   const [currentLessonCompleted, setCurrentLessonCompleted] = useState(lesson.completed);
   
@@ -569,6 +572,7 @@ function LessonPlayer({
             <div className="w-full h-full relative flex items-center justify-center">
               <StorageVideoPlayer 
                 lessonId={lesson.id}
+                languageCode={selectedLanguage}
                 onProgress={(progress) => {
                   // TODO: Track video progress for completion requirements
                   console.log('Video progress:', progress);
