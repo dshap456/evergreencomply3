@@ -485,12 +485,6 @@ function DOTHazmatAdvancedPage() {
             <p className="text-xs text-muted-foreground">
               &copy; {new Date().getFullYear()} Evergreen Comply, LLC. All rights reserved.
             </p>
-            <Link href="/marketing-temp">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
           </div>
         </div>
       </footer>
