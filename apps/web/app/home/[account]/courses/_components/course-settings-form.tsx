@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from '@kit/ui/form';
 import { Input } from '@kit/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@kit/ui/select';
 import { Spinner } from '@kit/ui/spinner';
 import { Textarea } from '@kit/ui/textarea';
 import { Trans } from '@kit/ui/trans';
@@ -31,7 +32,7 @@ const CourseSettingsSchema = z.object({
   description: z.string().optional(),
   sku: z.string().optional(),
   price: z.coerce.number().min(0),
-  is_published: z.boolean(),
+  status: z.enum(['draft', 'published', 'archived']),
   sequential_completion: z.boolean(),
   passing_score: z.coerce.number().min(0).max(100),
 });
@@ -44,7 +45,7 @@ interface Course {
   description: string | null;
   sku: string | null;
   price: number;
-  is_published: boolean;
+  status: 'draft' | 'published' | 'archived';
   sequential_completion: boolean;
   passing_score: number;
 }
@@ -64,7 +65,7 @@ export function CourseSettingsForm({ course, account }: CourseSettingsFormProps)
       description: course.description || '',
       sku: course.sku || '',
       price: course.price,
-      is_published: course.is_published,
+      status: course.status,
       sequential_completion: course.sequential_completion,
       passing_score: course.passing_score,
     },
@@ -181,24 +182,32 @@ export function CourseSettingsForm({ course, account }: CourseSettingsFormProps)
               <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="is_published"
+                  name="status"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={isPending}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          <Trans i18nKey="courses:settings.fields.is_published" />
-                        </FormLabel>
-                        <FormDescription>
-                          <Trans i18nKey="courses:settings.fields.is_publishedDescription" />
-                        </FormDescription>
-                      </div>
+                    <FormItem>
+                      <FormLabel>
+                        <Trans i18nKey="courses:settings.fields.status" />
+                      </FormLabel>
+                      <Select
+                        disabled={isPending}
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="published">Published</SelectItem>
+                          <SelectItem value="archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        <Trans i18nKey="courses:settings.fields.statusDescription" />
+                      </FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

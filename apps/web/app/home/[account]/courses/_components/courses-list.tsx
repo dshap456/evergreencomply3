@@ -13,7 +13,7 @@ interface Course {
   description: string | null;
   sku: string | null;
   price: number;
-  is_published: boolean;
+  status: 'draft' | 'published' | 'archived';
   created_at: string;
   modules?: Array<{
     id: string;
@@ -77,11 +77,13 @@ export function CoursesList({ courses, account }: CoursesListProps) {
                   <div className="flex items-center space-x-2">
                     <BookOpenIcon className="h-4 w-4" />
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      course.is_published 
+                      course.status === 'published' 
                         ? 'bg-green-100 text-green-800' 
+                        : course.status === 'archived'
+                        ? 'bg-gray-100 text-gray-800'
                         : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {course.is_published ? 'Published' : 'Draft'}
+                      {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
                     </span>
                   </div>
                   {course.price > 0 && (

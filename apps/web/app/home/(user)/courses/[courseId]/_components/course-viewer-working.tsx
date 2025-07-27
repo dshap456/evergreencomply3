@@ -29,7 +29,7 @@ export async function CourseViewerWorking({ courseId }: CourseViewerWorkingProps
           id,
           title,
           description,
-          is_published
+          status
         )
       `)
       .eq('user_id', user.id)
@@ -52,7 +52,7 @@ export async function CourseViewerWorking({ courseId }: CourseViewerWorkingProps
             <p><strong>Description:</strong> {enrollment.courses.description}</p>
             <p><strong>Progress:</strong> {enrollment.progress_percentage}%</p>
             <p><strong>Enrolled:</strong> {new Date(enrollment.enrolled_at).toLocaleDateString()}</p>
-            <p><strong>Published:</strong> {enrollment.courses.is_published ? 'Yes' : 'No'}</p>
+            <p><strong>Status:</strong> {enrollment.courses.status}</p>
           </div>
         </CardContent>
       </Card>

@@ -19,7 +19,7 @@ interface Course {
   description: string | null;
   sku: string | null;
   price: number;
-  is_published: boolean;
+  status: 'draft' | 'published' | 'archived';
   sequential_completion: boolean;
   passing_score: number;
   modules?: Array<{
@@ -69,11 +69,13 @@ export function CourseBuilder({ course, account }: CourseBuilderProps) {
                 <BookOpenIcon className="h-5 w-5" />
                 <span>{course.title}</span>
                 <span className={`text-xs px-2 py-1 rounded-full ${
-                  course.is_published 
+                  course.status === 'published' 
                     ? 'bg-green-100 text-green-800' 
+                    : course.status === 'archived'
+                    ? 'bg-gray-100 text-gray-800'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {course.is_published ? 'Published' : 'Draft'}
+                  {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
                 </span>
               </CardTitle>
               {course.description && (

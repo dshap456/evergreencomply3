@@ -22,7 +22,7 @@ const UpdateCourseSchema = z.object({
   description: z.string().optional(),
   sku: z.string().optional(),
   price: z.coerce.number().min(0),
-  is_published: z.boolean().optional(),
+  status: z.enum(['draft', 'published', 'archived']).optional(),
   sequential_completion: z.boolean().optional(),
   passing_score: z.number().min(0).max(100).optional(),
 });
@@ -160,7 +160,7 @@ export const updateCourseAction = enhanceAction(
         description: data.description || null,
         sku: data.sku || null,
         price: data.price,
-        is_published: data.is_published,
+        status: data.status,
         sequential_completion: data.sequential_completion,
         passing_score: data.passing_score,
         updated_by: user.id,

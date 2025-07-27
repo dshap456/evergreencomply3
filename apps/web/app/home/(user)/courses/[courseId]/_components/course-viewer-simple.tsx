@@ -38,7 +38,7 @@ async function CourseViewerContent({ courseId }: { courseId: string }) {
     // Test 2: Can we query courses table?
     const { data: course, error: courseError } = await client
       .from('courses')
-      .select('id, title, description, is_published')
+      .select('id, title, description, status')
       .eq('id', courseId)
       .single();
 
@@ -93,7 +93,7 @@ async function CourseViewerContent({ courseId }: { courseId: string }) {
             <h3 className="font-medium">Course:</h3>
             <p className="text-sm">ID: {course?.id}</p>
             <p className="text-sm">Title: {course?.title}</p>
-            <p className="text-sm">Published: {course?.is_published ? 'Yes' : 'No'}</p>
+            <p className="text-sm">Status: {course?.status}</p>
           </div>
 
           <div>
