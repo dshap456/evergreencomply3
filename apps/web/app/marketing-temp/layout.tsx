@@ -1,4 +1,3 @@
-import { SiteFooter } from '~/marketing-temp/_components/site-footer';
 import { SiteHeader } from '~/marketing-temp/_components/site-header';
 import { withI18n } from '~/lib/i18n/with-i18n';
 
@@ -8,8 +7,6 @@ function SiteLayout(props: React.PropsWithChildren) {
       <SiteHeader />
 
       {props.children}
-
-      <SiteFooter />
     </div>
   );
 }
