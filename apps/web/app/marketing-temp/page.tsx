@@ -266,22 +266,20 @@ function Home() {
           </div>
         </section>
 
-        <section className="w-full py-8 md:py-12 lg:py-16 text-primary-foreground bg-[rgba(58,92,81,1)]">
+        <section className="w-full py-12 md:py-16 text-primary-foreground bg-[rgba(58,92,81,1)]">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 md:grid-cols-2 items-center">
-              <div className="space-y-3">
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
-                  Ready to transform your training program?
-                </h2>
-              </div>
-              <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center md:justify-end">
-                <Link href="/#courses">
-                  <Button size="lg" variant="secondary" className="px-8">
+            <div className="text-center max-w-2xl mx-auto">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-6 md:mb-8">
+                Ready to transform your training program?
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/#courses" className="w-full sm:w-auto">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto px-8">
                     Browse Courses
                   </Button>
                 </Link>
-                <Link href="/marketing-temp/contact">
-                  <Button size="lg" variant="outline" className="border-primary-foreground px-8 bg-transparent">
+                <Link href="/marketing-temp/contact" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground px-8 bg-transparent hover:bg-white/10">
                     Contact Sales
                   </Button>
                 </Link>
