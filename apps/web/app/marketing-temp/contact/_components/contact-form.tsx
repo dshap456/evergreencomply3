@@ -19,8 +19,8 @@ import { Input } from '@kit/ui/input';
 import { Textarea } from '@kit/ui/textarea';
 import { Trans } from '@kit/ui/trans';
 
-import { ContactEmailSchema } from '~/marketing-temp/contact/_lib/contact-email.schema';
-import { sendContactEmail } from '~/marketing-temp/contact/_lib/server/server-actions';
+import { ContactEmailSchema } from '../_lib/contact-email.schema';
+import { sendContactEmail } from '../_lib/server/server-actions';
 
 export function ContactForm() {
   const [pending, startTransition] = useTransition();
