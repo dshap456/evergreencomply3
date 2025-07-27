@@ -43,7 +43,7 @@ function EPARCRAPage() {
             <Link href="/marketing-temp#courses" className="text-sm font-medium hover:text-primary">
               Courses
             </Link>
-            <Link href="/marketing-temp#contact" className="text-sm font-medium hover:text-primary">
+            <Link href="/marketing-temp/contact" className="text-sm font-medium hover:text-primary">
               Contact
             </Link>
           </nav>
