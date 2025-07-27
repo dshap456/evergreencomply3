@@ -55,18 +55,32 @@ async function formatCourses(courses: any[], client: any) {
     console.warn('⚠️ formatCourses: Error loading enrollment counts, continuing without them:', error);
   }
 
-  // Format the courses data
-  const formattedCourses = courses?.map(course => ({
-    id: course.id,
-    title: course.title,
-    description: course.description || '',
-    status: course.status as 'draft' | 'published' | 'archived',
-    lessons_count: lessonCounts[course.id] || 0,
-    enrollments_count: enrollmentCounts[course.id] || 0,
-    created_at: course.created_at,
-    updated_at: course.updated_at,
-    version: '1.0' // Default version since column doesn't exist yet
-  })) || [];
+  // Format the courses data with better type safety and logging
+  const formattedCourses = courses?.map(course => {
+    // Log each course to debug potential issues
+    console.log('🔍 formatCourses: Processing course:', {
+      id: course.id,
+      title: course.title,
+      is_published: course.is_published,
+      hasDescription: !!course.description,
+      descriptionLength: course.description?.length || 0
+    });
+    
+    // Map is_published to status
+    const status = course.is_published ? 'published' : 'draft';
+    
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description || '',
+      status: status as 'draft' | 'published' | 'archived',
+      lessons_count: lessonCounts[course.id] || 0,
+      enrollments_count: enrollmentCounts[course.id] || 0,
+      created_at: course.created_at,
+      updated_at: course.updated_at,
+      version: '1.0' // Default version since column doesn't exist yet
+    };
+  }) || [];
 
   console.log('✅ formatCourses: Returning formatted courses:', {
     count: formattedCourses.length,
@@ -127,7 +141,7 @@ export const loadCoursesAction = enhanceAction(
     
     const { data: courses, error: coursesError } = await client
       .from('courses')
-      .select('id, title, description, status, created_at, updated_at, account_id')
+      .select('id, title, description, is_published, created_at, updated_at, account_id')
       .order('created_at', { ascending: false });
 
     if (coursesError) {
@@ -141,10 +155,25 @@ export const loadCoursesAction = enhanceAction(
 
     console.log('📊 LoadCoursesAction: Raw courses from database:', {
       count: courses?.length || 0,
-      courses: courses?.map(c => ({ id: c.id, title: c.title, account_id: c.account_id })) || []
+      courses: courses?.map(c => ({ id: c.id, title: c.title, account_id: c.account_id })) || [],
+      rawData: courses // Log the entire raw data for debugging
     });
 
-    return formatCourses(courses, client);
+    // Check if courses is null vs empty array
+    if (courses === null) {
+      console.warn('⚠️ LoadCoursesAction: Received null from database query');
+      return [];
+    }
+
+    const formatted = await formatCourses(courses, client);
+    console.log('🎯 LoadCoursesAction: Final formatted result:', {
+      type: typeof formatted,
+      isArray: Array.isArray(formatted),
+      length: Array.isArray(formatted) ? formatted.length : 'N/A',
+      sample: formatted?.[0] || null
+    });
+    
+    return formatted;
   },
   {
     auth: true,

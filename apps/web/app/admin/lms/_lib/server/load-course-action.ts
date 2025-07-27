@@ -48,7 +48,7 @@ export const loadCourseAction = enhanceAction(
     // Transform course data to match the expected interface
     const transformedCourse = {
       ...course,
-      status: course.status as 'draft' | 'published' | 'archived',
+      status: course.is_published ? 'published' : 'draft' as 'draft' | 'published' | 'archived',
       version: '1.0', // Default version
       lessons_count: formattedModules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0),
       enrollments_count: 0, // Would need a separate query for accurate count

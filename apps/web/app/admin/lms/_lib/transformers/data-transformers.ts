@@ -67,22 +67,26 @@ export const CourseTransformer = {
    */
   toDatabase: (uiCourse: Partial<UICourse>): Partial<DatabaseCourse> => {
     try {
-      const result: Partial<DatabaseCourse> = {
-        title: uiCourse.title,
-        description: uiCourse.description || null,
-        sku: uiCourse.sku || null,
-        price: uiCourse.price || null,
-        sequential_completion: uiCourse.sequential_completion,
-        passing_score: uiCourse.passing_score,
-        updated_at: new Date().toISOString(),
-      };
+      const result: Partial<DatabaseCourse> = {};
+      
+      // Only include fields that are actually present in the input
+      if (uiCourse.title !== undefined) result.title = uiCourse.title;
+      if (uiCourse.description !== undefined) result.description = uiCourse.description || null;
+      if (uiCourse.sku !== undefined) result.sku = uiCourse.sku || null;
+      if (uiCourse.price !== undefined) result.price = uiCourse.price || null;
+      if (uiCourse.sequential_completion !== undefined) result.sequential_completion = uiCourse.sequential_completion;
+      if (uiCourse.passing_score !== undefined) result.passing_score = uiCourse.passing_score;
+      
+      // Always update the timestamp
+      result.updated_at = new Date().toISOString();
 
-      // Handle status mapping
+      // Handle status mapping to is_published
       if (uiCourse.status) {
         if (!isValidCourseStatus(uiCourse.status)) {
           throw new Error(`Invalid course status: ${uiCourse.status}`);
         }
-        result.status = uiCourse.status;
+        // Map status to is_published for database
+        result.is_published = uiCourse.status === CourseStatus.PUBLISHED;
       }
 
       return result;
