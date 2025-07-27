@@ -175,7 +175,7 @@ function EPARCRAPage() {
 
                 <div>
                   <h3 className="text-2xl font-bold mb-6 text-primary">Course Modules</h3>
-                  <Accordion type="single" collapsible className="w-full rounded-lg border">
+                  <Accordion type="single" collapsible defaultValue="modules" className="w-full rounded-lg border">
                     <AccordionItem value="modules">
                       <AccordionTrigger className="px-6 py-4 text-base font-medium hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-4">
