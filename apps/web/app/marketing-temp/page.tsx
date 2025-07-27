@@ -13,7 +13,7 @@ import { CustomShieldIcon, CustomSmartphoneIcon, CustomGlobeIcon, CustomAwardIco
 
 function Home() {
   return (
-    <div className={'mt-4 flex flex-col space-y-24 py-14'}>
+    <div className={'flex flex-col'}>
       {/* Hero Section */}
       <section className="w-full py-20 md:py-24 lg:py-32 relative text-white">
         <Image
@@ -47,38 +47,6 @@ function Home() {
           </div>
         </div>
       </section>
-        <section className="w-full py-20 md:py-24 lg:py-32 relative text-white">
-          <Image
-            src="/images/hero-warehouse-safety-worker.png"
-            alt="Professional warehouse worker in safety gear using tablet for training"
-            fill
-            className="object-cover -z-10"
-          />
-          <div className="absolute inset-0 bg-black/50 -z-10" />
-          <div className="container px-4 md:px-6">
-            <div className="max-w-3xl mx-auto text-center">
-              <div className="space-y-6">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                  Training for Movers and Doers
-                </h1>
-                <p className="text-xl md:text-2xl text-gray-200 leading-relaxed">
-                  Modern, mobile, and 100% online training for shipping, HAZMAT, and more. Fully compliant and designed
-                  for the way you work.
-                </p>
-                <div className="pt-4">
-                  <Link href="#courses">
-                    <Button
-                      size="lg"
-                      className="px-12 py-4 text-lg bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold"
-                    >
-                      Browse Courses
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         <section id="features" className="w-full py-12 md:py-16 lg:py-20">
           <div className="container px-4 md:px-6">
