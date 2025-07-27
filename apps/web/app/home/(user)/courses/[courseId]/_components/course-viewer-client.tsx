@@ -58,7 +58,15 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>('en');
+  
+  // Initialize language from localStorage with courseId-specific key
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedLanguage = localStorage.getItem(`course-${courseId}-language`);
+      return (savedLanguage === 'es' || savedLanguage === 'en') ? savedLanguage : 'en';
+    }
+    return 'en';
+  });
 
   const loadCourseData = async (language: 'en' | 'es' = selectedLanguage) => {
     try {
@@ -120,7 +128,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   useEffect(() => {
-    loadCourseData();
+    // Load course data with the selected language (from localStorage or default)
+    loadCourseData(selectedLanguage);
   }, [courseId]);
 
   const handleLanguageSwitch = async (newLanguage: 'en' | 'es') => {
@@ -133,6 +142,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       
     if (confirm(message)) {
       setSelectedLanguage(newLanguage);
+      // Save language preference to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`course-${courseId}-language`, newLanguage);
+      }
       setCurrentLessonId(null); // Reset current lesson
       await loadCourseData(newLanguage);
     }
