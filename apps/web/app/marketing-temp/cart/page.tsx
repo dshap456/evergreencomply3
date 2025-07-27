@@ -6,7 +6,6 @@ import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
-import { withI18n } from '~/lib/i18n/with-i18n';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../_components/custom-icons';
 
@@ -314,4 +313,4 @@ function CartPage() {
   );
 }
 
-export default withI18n(CartPage);
+export default CartPage;
