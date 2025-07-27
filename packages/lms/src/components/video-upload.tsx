@@ -146,24 +146,25 @@ export function VideoUpload({
       }
 
       // Update video metadata to ready status (since we're not actually processing)
-      if (metadataData && metadataData.id) {
-        console.log('Updating video status to ready for metadata ID:', metadataData.id);
-        
-        const { error: statusUpdateError } = await supabase.rpc(
-          'update_video_processing_status',
-          {
-            p_video_metadata_id: metadataData.id,
-            p_status: 'ready'
-          }
-        );
+      // We need to update it directly since the RPC might not return the ID
+      console.log('Updating video status to ready for lesson:', lessonId, 'language:', languageCode);
+      
+      const { data: updatedMetadata, error: statusUpdateError } = await supabase
+        .from('video_metadata')
+        .update({ 
+          processing_status: 'ready',
+          updated_at: new Date().toISOString()
+        })
+        .eq('lesson_id', lessonId)
+        .eq('language_code', languageCode)
+        .eq('storage_path', storagePath)
+        .select()
+        .single();
 
-        if (statusUpdateError) {
-          console.error('Failed to update video status to ready:', statusUpdateError);
-        } else {
-          console.log('Video status updated to ready successfully');
-        }
+      if (statusUpdateError) {
+        console.error('Failed to update video status to ready:', statusUpdateError);
       } else {
-        console.warn('No metadata ID returned from create_video_metadata, cannot update status');
+        console.log('Video status updated to ready successfully:', updatedMetadata);
       }
 
       setProgress({
