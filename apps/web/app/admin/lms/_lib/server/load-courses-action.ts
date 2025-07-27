@@ -128,7 +128,7 @@ export const loadCoursesAction = enhanceAction(
     const { data: courses, error: coursesError } = await client
       .from('courses')
       .select('id, title, description, status, created_at, updated_at, account_id')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }) as any;
 
     if (coursesError) {
       console.error('❌ LoadCoursesAction: Error loading courses:', coursesError);

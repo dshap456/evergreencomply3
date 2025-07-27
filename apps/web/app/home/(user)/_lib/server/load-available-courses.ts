@@ -48,7 +48,7 @@ export async function loadAvailableCourses(): Promise<AvailableCourse[]> {
       description,
       price
     `)
-    .eq('status', 'published');
+    .eq('status', 'published') as any;
 
   // Only add the NOT IN clause if there are enrolled courses
   if (enrolledCourseIds.length > 0) {

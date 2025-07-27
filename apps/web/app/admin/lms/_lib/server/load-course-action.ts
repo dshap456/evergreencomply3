@@ -17,7 +17,7 @@ export const loadCourseAction = enhanceAction(
       .from('courses')
       .select('*')
       .eq('id', data.courseId)
-      .single();
+      .single() as any;
 
     if (courseError) {
       throw new Error(`Failed to load course: ${courseError.message}`);
