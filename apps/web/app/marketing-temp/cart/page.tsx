@@ -134,85 +134,84 @@ function CartPage() {
         </div>
       </header>
 
-      <main className="flex-1 py-8 md:py-12">
-        <div className="container">
-          <div className="mb-8">
-            <Link href="/marketing-temp#courses" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Courses
+      <main className="flex-1 py-4 md:py-8">
+        <div className="container px-4 md:px-6">
+          <div className="mb-4 md:mb-6">
+            <Link href="/marketing-temp#courses" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-2">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back
             </Link>
-            <h1 className="text-3xl font-bold mb-2">Training Cart</h1>
-            <p className="text-muted-foreground">Select the number of seats you need for each course</p>
+            <h1 className="text-2xl md:text-3xl font-bold">Training Cart</h1>
+            <p className="text-sm text-muted-foreground">Select seats for each course</p>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-4 lg:gap-6 lg:grid-cols-3">
             {/* Cart Items */}
             <div className="lg:col-span-2">
               <Card>
-                <CardHeader>
-                  <CardTitle>Available Courses</CardTitle>
+                <CardHeader className="py-4 md:py-6">
+                  <CardTitle className="text-lg md:text-xl">Available Courses</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
+                <CardContent className="p-3 md:p-6">
+                  <div className="space-y-4">
                     {AVAILABLE_COURSES.map((course) => {
                       const quantity = getItemQuantity(course.id);
                       const lineTotal = course.price * quantity;
                       
                       return (
-                        <div key={course.id} className="border-b pb-6 last:border-0 last:pb-0">
-                          <div className="grid gap-4 md:grid-cols-[1fr,auto,auto,auto] items-start md:items-center">
+                        <div key={course.id} className="border-b pb-4 last:border-0 last:pb-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                             {/* Course Info */}
-                            <div>
-                              <h3 className="font-semibold">{course.name}</h3>
-                              <p className="text-sm font-medium mt-1">${course.price} per seat</p>
+                            <div className="flex-1">
+                              <h3 className="font-medium text-sm md:text-base">{course.name}</h3>
+                              <p className="text-sm text-muted-foreground">${course.price}/seat</p>
                             </div>
 
-                            {/* Quantity Controls */}
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(course.id, quantity - 1)}
-                                disabled={quantity === 0}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <Input
-                                type="number"
-                                value={quantity}
-                                onChange={(e) => updateQuantity(course.id, parseInt(e.target.value) || 0)}
-                                className="w-20 text-center"
-                                min="0"
-                              />
-                              <Button
-                                variant="outline"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(course.id, quantity + 1)}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            {/* Line Total */}
-                            <div className="text-right min-w-[100px]">
-                              {quantity > 0 && (
-                                <p className="font-semibold">${lineTotal.toLocaleString()}</p>
-                              )}
-                            </div>
-
-                            {/* Remove Button */}
-                            <div>
-                              {quantity > 0 && (
+                            {/* Mobile: Quantity and Total */}
+                            <div className="flex items-center gap-3">
+                              {/* Quantity Controls */}
+                              <div className="flex items-center gap-1">
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => removeItem(course.id)}
+                                  className="h-7 w-7"
+                                  onClick={() => updateQuantity(course.id, quantity - 1)}
+                                  disabled={quantity === 0}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Minus className="h-3 w-3" />
                                 </Button>
+                                <Input
+                                  type="number"
+                                  value={quantity}
+                                  onChange={(e) => updateQuantity(course.id, parseInt(e.target.value) || 0)}
+                                  className="w-14 h-7 text-center text-sm"
+                                  min="0"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => updateQuantity(course.id, quantity + 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+
+                              {/* Line Total */}
+                              {quantity > 0 && (
+                                <>
+                                  <div className="text-sm font-semibold min-w-[60px] text-right">
+                                    ${lineTotal}
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                    onClick={() => removeItem(course.id)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </div>
@@ -226,13 +225,13 @@ function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Order Summary</CardTitle>
+              <Card className="sticky top-20">
+                <CardHeader className="py-4 md:py-6">
+                  <CardTitle className="text-lg md:text-xl">Order Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-3 md:p-6 space-y-3">
                   {cartItems.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-4">
+                    <p className="text-sm text-muted-foreground text-center py-3">
                       No courses selected
                     </p>
                   ) : (
@@ -245,40 +244,39 @@ function CartPage() {
                           
                           return (
                             <div key={item.courseId} className="flex justify-between text-sm">
-                              <div>
-                                <p className="font-medium">{course.name}</p>
-                                <p className="text-muted-foreground">{item.quantity} seats</p>
+                              <div className="flex-1 pr-2">
+                                <p className="font-medium line-clamp-1">{course.name}</p>
+                                <p className="text-xs text-muted-foreground">{item.quantity} seats</p>
                               </div>
-                              <p className="font-medium">${(course.price * item.quantity).toLocaleString()}</p>
+                              <p className="font-medium text-sm">${(course.price * item.quantity)}</p>
                             </div>
                           );
                         })}
                       </div>
 
-                      <div className="border-t pt-4">
-                        <div className="flex justify-between items-center mb-2">
+                      <div className="border-t pt-3">
+                        <div className="flex justify-between items-center mb-1">
                           <p className="text-sm text-muted-foreground">Total Seats</p>
-                          <p className="font-medium">{getTotalSeats()}</p>
+                          <p className="text-sm font-medium">{getTotalSeats()}</p>
                         </div>
                         <div className="flex justify-between items-center">
-                          <p className="text-lg font-semibold">Total</p>
-                          <p className="text-2xl font-bold text-primary">${calculateSubtotal().toLocaleString()}</p>
+                          <p className="font-semibold">Total</p>
+                          <p className="text-xl font-bold text-primary">${calculateSubtotal()}</p>
                         </div>
                       </div>
                     </>
                   )}
 
                   <Button 
-                    className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]" 
-                    size="lg"
+                    className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] h-9 md:h-10" 
                     disabled={cartItems.length === 0}
                   >
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Proceed to Checkout
+                    <ShoppingCart className="h-4 w-4 mr-1" />
+                    Checkout
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    You'll be able to assign seats to team members after purchase
+                    Assign seats after purchase
                   </p>
                 </CardContent>
               </Card>
@@ -288,20 +286,13 @@ function CartPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-muted">
-        <div className="container flex flex-col gap-6 py-8 md:py-10">
-          <div className="flex flex-col gap-6 md:flex-row md:gap-8">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-2">
-                <CustomShieldIcon className="h-6 w-6" />
-                <span className="text-xl font-bold">Evergreen Comply</span>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Modern, engaging, and legally compliant training for blue-collar professionals.
-              </p>
+      <footer className="border-t bg-muted mt-8">
+        <div className="container px-4 md:px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <CustomShieldIcon className="h-5 w-5" />
+              <span className="text-sm font-semibold">Evergreen Comply</span>
             </div>
-          </div>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <p className="text-xs text-muted-foreground">
               &copy; {new Date().getFullYear()} Evergreen Comply, LLC. All rights reserved.
             </p>
