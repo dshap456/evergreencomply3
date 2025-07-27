@@ -1,11 +1,17 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRightIcon, CheckCircle, ArrowRight, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { ArrowRightIcon, CheckCircle, ArrowRight, ArrowLeft, ShoppingCart, ChevronDown } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kit/ui/card';
 import { Trans } from '@kit/ui/trans';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@kit/ui/dropdown-menu';
 
 import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
@@ -27,9 +33,29 @@ function Home() {
             <Link href="/marketing-temp#features" className="text-sm font-medium hover:text-primary">
               Features
             </Link>
-            <Link href="/marketing-temp#courses" className="text-sm font-medium hover:text-primary">
-              Courses
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary">
+                Courses
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem asChild>
+                  <Link href="/marketing-temp/courses/dot-hazmat" className="cursor-pointer">
+                    DOT HAZMAT - General
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/marketing-temp/courses/advanced-hazmat" className="cursor-pointer">
+                    DOT HAZMAT - Advanced
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/marketing-temp/courses/epa-rcra" className="cursor-pointer">
+                    EPA RCRA
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link href="/marketing-temp/contact" className="text-sm font-medium hover:text-primary">
               Contact
             </Link>
@@ -237,13 +263,6 @@ function Home() {
                   </div>
                 </Card>
               ))}
-            </div>
-            <div className="flex justify-center mt-6">
-              <Link href="#courses">
-                <Button variant="outline" size="lg">
-                  View All Courses
-                </Button>
-              </Link>
             </div>
           </div>
         </section>
