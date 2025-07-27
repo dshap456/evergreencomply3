@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRightIcon, CheckCircle, ArrowRight, ShoppingCart } from 'lucide-react';
+import { ArrowRightIcon, CheckCircle, ArrowRight, ArrowLeft, ShoppingCart } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kit/ui/card';
