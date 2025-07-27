@@ -1,159 +1,94 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@kit/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
-import { Input } from '@kit/ui/input';
+import { Card } from '@kit/ui/card';
+import { loadCoursesAction } from '../admin/lms/_lib/server/load-courses-action';
 
 export default function DebugCoursesPage() {
-  const [courseId, setCourseId] = useState('');
-  const [enrollmentData, setEnrollmentData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<any>(null);
+  const [result, setResult] = useState<any>(null);
+  const [apiResult, setApiResult] = useState<any>(null);
 
-  const fetchEnrollment = async () => {
-    if (!courseId) {
-      setError('Please enter a course ID');
-      return;
-    }
-
+  const testLoadCourses = async () => {
     setLoading(true);
-    setError('');
+    setError(null);
+    setResult(null);
     
     try {
-      const response = await fetch(`/api/debug-enrollment?courseId=${courseId}`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setEnrollmentData(data.enrollment);
-      } else {
-        setError(data.error || 'Failed to fetch enrollment');
-      }
-    } catch (err) {
-      setError('Network error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProgress = async (progressPercentage: number) => {
-    if (!courseId) {
-      setError('Please enter a course ID');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    
-    try {
-      const response = await fetch('/api/debug-enrollment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          courseId,
-          progressPercentage
-        })
+      console.log('Starting loadCoursesAction...');
+      const courses = await loadCoursesAction();
+      console.log('Success:', courses);
+      setResult(courses);
+    } catch (err: any) {
+      console.error('Error:', err);
+      setError({
+        message: err.message,
+        stack: err.stack,
+        name: err.name,
+        toString: err.toString()
       });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setEnrollmentData(data.enrollment);
-      } else {
-        setError(data.error || 'Failed to update enrollment');
-      }
-    } catch (err) {
-      setError('Network error');
     } finally {
       setLoading(false);
     }
   };
+
+  const testApiEndpoint = async () => {
+    try {
+      const response = await fetch('/api/debug-courses-full');
+      const data = await response.json();
+      setApiResult(data);
+    } catch (err: any) {
+      setApiResult({ error: err.message });
+    }
+  };
+
+  useEffect(() => {
+    // Test API endpoint on mount
+    testApiEndpoint();
+  }, []);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Debug Course Enrollment Status</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Enter Course ID"
-              value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={fetchEnrollment} disabled={loading}>
-              Fetch Status
-            </Button>
+    <div className="container mx-auto p-8 space-y-6">
+      <h1 className="text-2xl font-bold">Debug Courses Loading</h1>
+      
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">Test loadCoursesAction</h2>
+        <Button onClick={testLoadCourses} disabled={loading}>
+          {loading ? 'Loading...' : 'Test Load Courses'}
+        </Button>
+        
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded">
+            <h3 className="font-semibold text-red-800">Error:</h3>
+            <pre className="text-sm overflow-auto">{JSON.stringify(error, null, 2)}</pre>
           </div>
+        )}
+        
+        {result && (
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
+            <h3 className="font-semibold text-green-800">Success:</h3>
+            <p>Loaded {result.length} courses</p>
+            <pre className="text-sm overflow-auto">{JSON.stringify(result, null, 2)}</pre>
+          </div>
+        )}
+      </Card>
 
-          {error && (
-            <div className="p-3 bg-red-100 text-red-800 rounded">
-              Error: {error}
-            </div>
-          )}
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">API Debug Info</h2>
+        {apiResult ? (
+          <pre className="text-sm overflow-auto bg-gray-50 p-4 rounded">
+            {JSON.stringify(apiResult, null, 2)}
+          </pre>
+        ) : (
+          <p>Loading API debug info...</p>
+        )}
+      </Card>
 
-          {enrollmentData && (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-100 rounded">
-                <h3 className="font-semibold mb-2">Current Enrollment Status:</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><strong>Course:</strong> {enrollmentData.title}</div>
-                  <div><strong>Course ID:</strong> {enrollmentData.courseId}</div>
-                  <div><strong>Progress:</strong> {enrollmentData.progress_percentage}%</div>
-                  <div><strong>Completed At:</strong> {enrollmentData.completed_at || 'Not completed'}</div>
-                  <div><strong>Has Started:</strong> {enrollmentData.hasStarted ? 'Yes' : 'No'}</div>
-                  <div><strong>Is Completed:</strong> {enrollmentData.isCompleted ? 'Yes' : 'No'}</div>
-                  <div><strong>Button Text:</strong> {enrollmentData.buttonText}</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-semibold">Update Progress:</h4>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => updateProgress(0)} 
-                    disabled={loading}
-                    variant="outline"
-                  >
-                    Reset (0%)
-                  </Button>
-                  <Button 
-                    onClick={() => updateProgress(25)} 
-                    disabled={loading}
-                    variant="outline"
-                  >
-                    25%
-                  </Button>
-                  <Button 
-                    onClick={() => updateProgress(50)} 
-                    disabled={loading}
-                    variant="outline"
-                  >
-                    50%
-                  </Button>
-                  <Button 
-                    onClick={() => updateProgress(75)} 
-                    disabled={loading}
-                    variant="outline"
-                  >
-                    75%
-                  </Button>
-                  <Button 
-                    onClick={() => updateProgress(100)} 
-                    disabled={loading}
-                    variant="outline"
-                  >
-                    Complete (100%)
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">Browser Console</h2>
+        <p className="text-sm text-gray-600">Open browser console (F12) to see detailed logs</p>
       </Card>
     </div>
   );
