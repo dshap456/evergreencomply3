@@ -206,6 +206,40 @@ function DOTHazmatAdvancedPage() {
 
               {/* Sidebar */}
               <aside className="space-y-8 sticky top-24 self-start">
+                {/* Course Pricing */}
+                <Card className="border-2 border-primary/20 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-center text-2xl">Course Pricing</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-5xl font-bold text-primary">$179</div>
+                      <p className="text-muted-foreground">per employee / 3-year cert</p>
+                    </div>
+                    <div className="space-y-3 text-sm pt-2">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="font-medium">Advanced curriculum</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="font-medium">Function-specific training</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="font-medium">Security awareness included</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="font-medium">Official Certificate</span>
+                      </div>
+                    </div>
+                    <Button size="lg" className="w-full mt-2 bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]">
+                      Enroll Now
+                    </Button>
+                  </CardContent>
+                </Card>
+
                 {/* Course Facts */}
                 <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-green-100">
                   <CardHeader>
@@ -297,39 +331,6 @@ function DOTHazmatAdvancedPage() {
                         </div>
                       </div>
                     </Link>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-2 border-primary/20 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-center text-2xl">Course Pricing</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-center">
-                      <div className="text-5xl font-bold text-primary">$179</div>
-                      <p className="text-muted-foreground">per employee / 3-year cert</p>
-                    </div>
-                    <div className="space-y-3 text-sm pt-2">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">Advanced curriculum</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">Function-specific training</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">Security awareness included</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">Official Certificate</span>
-                      </div>
-                    </div>
-                    <Button size="lg" className="w-full mt-2 bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]">
-                      Enroll Now
-                    </Button>
                   </CardContent>
                 </Card>
 
