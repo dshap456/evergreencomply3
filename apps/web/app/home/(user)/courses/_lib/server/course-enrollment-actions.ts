@@ -19,9 +19,9 @@ export const enrollInCourseAction = enhanceAction(
     // Check if course exists and is published
     const { data: course, error: courseError } = await client
       .from('courses')
-      .select('id, title, is_published')
+      .select('id, title, status')
       .eq('id', data.courseId)
-      .eq('is_published', true)
+      .eq('status', 'published')
       .single();
 
     if (courseError || !course) {

@@ -56,11 +56,11 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
         id,
         title,
         description,
-        is_published
+        status
       )
     `)
     .eq('user_id', user.id)
-    .eq('courses.is_published', true);
+    .eq('courses.status', 'published');
 
   if (enrolledError) {
     throw enrolledError;
@@ -76,9 +76,9 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       title,
       description,
       price,
-      is_published
+      status
     `)
-    .eq('is_published', true);
+    .eq('status', 'published');
 
   // Only add the NOT IN clause if there are enrolled courses
   if (enrolledCourseIds.length > 0) {
