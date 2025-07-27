@@ -164,7 +164,6 @@ function CartPage() {
                             {/* Course Info */}
                             <div>
                               <h3 className="font-semibold">{course.name}</h3>
-                              <p className="text-sm text-muted-foreground">{course.duration}</p>
                               <p className="text-sm font-medium mt-1">${course.price} per seat</p>
                             </div>
 
