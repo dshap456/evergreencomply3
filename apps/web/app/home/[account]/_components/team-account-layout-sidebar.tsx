@@ -9,6 +9,7 @@ import {
 
 import { ProfileAccountDropdownContainer } from '~/components//personal-account-dropdown-container';
 import { getTeamAccountSidebarConfig } from '~/config/team-account-navigation.config';
+import featuresFlagConfig from '~/config/feature-flags.config';
 import { TeamAccountNotifications } from '~/home/[account]/_components/team-account-notifications';
 
 import { TeamAccountAccountsSelector } from '../_components/team-account-accounts-selector';
@@ -59,10 +60,12 @@ function SidebarContainer(props: {
           />
 
           <div className={'group-data-[minimized=true]/sidebar:hidden'}>
-            <TeamAccountNotifications
-              userId={userId}
-              accountId={props.accountId}
-            />
+            {featuresFlagConfig.enableNotifications && (
+              <TeamAccountNotifications
+                userId={userId}
+                accountId={props.accountId}
+              />
+            )}
           </div>
         </div>
       </SidebarHeader>

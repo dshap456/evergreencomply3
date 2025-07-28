@@ -6,6 +6,7 @@ import {
 import { AppLogo } from '~/components/app-logo';
 import { ProfileAccountDropdownContainer } from '~/components/personal-account-dropdown-container';
 import { getTeamAccountSidebarConfig } from '~/config/team-account-navigation.config';
+import featuresFlagConfig from '~/config/feature-flags.config';
 import { TeamAccountAccountsSelector } from '~/home/[account]/_components/team-account-accounts-selector';
 
 // local imports
@@ -49,7 +50,9 @@ export function TeamAccountNavigationMenu(props: {
       </div>
 
       <div className={'flex items-center justify-end space-x-2.5'}>
-        <TeamAccountNotifications accountId={account.id} userId={user.id} />
+        {featuresFlagConfig.enableNotifications && (
+          <TeamAccountNotifications accountId={account.id} userId={user.id} />
+        )}
 
         <TeamAccountAccountsSelector
           userId={user.id}
