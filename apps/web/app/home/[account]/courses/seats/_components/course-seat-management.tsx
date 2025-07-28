@@ -106,38 +106,8 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
     setShowUpdateSeatsDialog(true);
   };
 
-  // Test function
-  const testInvitation = async () => {
-    if (!courseSeatData || courseSeatData.length === 0) return;
-    
-    const testCourse = courseSeatData[0];
-    const response = await fetch('/api/test-invitation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'test@example.com',
-        courseId: testCourse.course_id,
-        accountId: account.id,
-      }),
-    });
-    
-    const result = await response.json();
-    console.log('Test result:', result);
-    
-    if (!response.ok) {
-      alert('Test error: ' + result.error);
-    } else {
-      alert('Test success!');
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Temporary test button */}
-      <Button onClick={testInvitation} variant="outline">
-        Test Invitation API
-      </Button>
-      
       <Card>
         <CardHeader>
           <CardTitle>
