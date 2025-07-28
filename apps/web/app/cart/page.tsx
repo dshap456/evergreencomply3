@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import pathsConfig from '~/config/paths.config';
-import { CustomShieldIcon } from '../marketing-temp/_components/custom-icons';
+import { CustomShieldIcon } from '../_components/custom-icons';
 
 // Hardcoded available courses
 const AVAILABLE_COURSES = [

@@ -30,7 +30,7 @@ import {
 
 import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
-import { CustomShieldIcon } from '../marketing-temp/_components/custom-icons';
+import { CustomShieldIcon } from '../../_components/custom-icons';
 
 function DOTHazmatGeneralPage() {
   return (
