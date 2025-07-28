@@ -27,12 +27,18 @@ export const updateCourseSeatsAction = enhanceAction(
     try {
       logger.info(ctx, 'Updating course seats');
 
-      // Check if user is account owner
-      const { data: isOwner } = await client.rpc('is_account_owner', {
-        account_id: data.accountId,
-      });
+      // Check if user is account owner directly
+      const { data: account, error: accountError } = await client
+        .from('accounts')
+        .select('primary_owner_user_id')
+        .eq('id', data.accountId)
+        .single();
 
-      if (!isOwner) {
+      if (accountError || !account) {
+        throw new Error('Account not found');
+      }
+
+      if (account.primary_owner_user_id !== user.id) {
         throw new Error('Only team owners can update course seats');
       }
 

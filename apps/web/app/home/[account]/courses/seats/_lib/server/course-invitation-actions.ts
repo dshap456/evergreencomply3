@@ -27,22 +27,47 @@ export const inviteToCourseAction = enhanceAction(
     try {
       logger.info(ctx, 'Creating course invitation');
 
-      // Check if user is account owner
-      const { data: isOwner } = await client.rpc('is_account_owner', {
-        account_id: data.accountId,
-      });
+      // Check if user is account owner directly
+      const { data: account, error: accountError } = await client
+        .from('accounts')
+        .select('primary_owner_user_id')
+        .eq('id', data.accountId)
+        .single();
 
-      if (!isOwner) {
+      if (accountError || !account) {
+        throw new Error('Account not found');
+      }
+
+      if (account.primary_owner_user_id !== user.id) {
         throw new Error('Only team owners can invite members to courses');
       }
 
-      // Check available seats
-      const { data: availableSeats } = await client.rpc('get_available_course_seats', {
-        p_account_id: data.accountId,
-        p_course_id: data.courseId,
-      });
+      // Check available seats using direct query
+      const { data: seatInfo, error: seatError } = await client
+        .from('course_seats')
+        .select('total_seats')
+        .eq('account_id', data.accountId)
+        .eq('course_id', data.courseId)
+        .single();
 
-      if (!availableSeats || availableSeats <= 0) {
+      if (seatError || !seatInfo) {
+        throw new Error('Course seats not found');
+      }
+
+      // Count used seats
+      const { count: usedSeats, error: countError } = await client
+        .from('course_enrollments')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_id', data.accountId)
+        .eq('course_id', data.courseId);
+
+      if (countError) {
+        throw new Error('Failed to count enrollments');
+      }
+
+      const availableSeats = seatInfo.total_seats - (usedSeats || 0);
+      
+      if (availableSeats <= 0) {
         throw new Error('No available seats for this course');
       }
 
@@ -113,12 +138,18 @@ export const removeFromCourseAction = enhanceAction(
     try {
       logger.info(ctx, 'Removing user from course');
 
-      // Check if user is account owner
-      const { data: isOwner } = await client.rpc('is_account_owner', {
-        account_id: data.accountId,
-      });
+      // Check if user is account owner directly
+      const { data: account, error: accountError } = await client
+        .from('accounts')
+        .select('primary_owner_user_id')
+        .eq('id', data.accountId)
+        .single();
 
-      if (!isOwner) {
+      if (accountError || !account) {
+        throw new Error('Account not found');
+      }
+
+      if (account.primary_owner_user_id !== user.id) {
         throw new Error('Only team owners can remove members from courses');
       }
 
