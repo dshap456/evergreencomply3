@@ -21,6 +21,17 @@ const getRoutes = (account: string) => [
         label: 'common:routes.courses',
         path: `/home/${account}/courses`,
         Icon: <BookOpen className={iconClasses} />,
+        children: [
+          {
+            label: 'common:routes.courseBuilder',
+            path: `/home/${account}/courses`,
+            end: true,
+          },
+          {
+            label: 'common:routes.courseSeatManagement',
+            path: `/home/${account}/courses/seats`,
+          },
+        ],
       },
     ],
   },
