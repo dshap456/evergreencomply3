@@ -388,7 +388,7 @@ function EPARCRAPage() {
                         <span>One-page summary for your training file</span>
                       </div>
                     </div>
-                    <Button className="w-full bg-secondary hover:bg-secondary/90">Download Free Guide</Button>
+                    <Button className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold">Download Free Guide</Button>
                     <p className="text-xs text-muted-foreground text-center">No spam, just compliance insights</p>
                   </CardContent>
                 </Card>
