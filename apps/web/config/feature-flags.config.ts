@@ -89,7 +89,7 @@ const featuresFlagConfig = FeatureFlagsSchema.parse({
     .NEXT_PUBLIC_LANGUAGE_PRIORITY as LanguagePriority,
   enableNotifications: getBoolean(
     process.env.NEXT_PUBLIC_ENABLE_NOTIFICATIONS,
-    true,
+    false,
   ),
   realtimeNotifications: getBoolean(
     process.env.NEXT_PUBLIC_REALTIME_NOTIFICATIONS,
