@@ -1,11 +1,13 @@
-import { use } from 'react';
+import { use, Suspense } from 'react';
 
 import { PageBody } from '@kit/ui/page';
 import { Trans } from '@kit/ui/trans';
+import { Spinner } from '@kit/ui/spinner';
 
 import { TeamAccountLayoutPageHeader } from '../../_components/team-account-layout-page-header';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { CourseSeatManagement } from './_components/course-seat-management';
+import { ErrorBoundary } from './_components/error-boundary';
 
 interface TeamCourseSeatPageProps {
   params: Promise<{ account: string }>;
@@ -23,7 +25,15 @@ function TeamCourseSeatPage({ params }: TeamCourseSeatPageProps) {
       />
 
       <PageBody>
-        <CourseSeatManagement accountSlug={account} />
+        <ErrorBoundary>
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-8">
+              <Spinner className="h-6 w-6" />
+            </div>
+          }>
+            <CourseSeatManagement accountSlug={account} />
+          </Suspense>
+        </ErrorBoundary>
       </PageBody>
     </>
   );
