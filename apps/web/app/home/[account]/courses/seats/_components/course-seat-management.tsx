@@ -42,23 +42,42 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
   const [showEnrollmentsDialog, setShowEnrollmentsDialog] = useState(false);
   const [showUpdateSeatsDialog, setShowUpdateSeatsDialog] = useState(false);
 
+  // Early return if account is not loaded
+  if (!account?.id) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
+
   const { data: courseSeatData, isLoading, refetch } = useQuery({
     queryKey: ['course-seats', account.id],
     queryFn: async () => {
-      // Get all courses with seat information
-      const { data: seats, error: seatsError } = await supabase
-        .from('course_seats')
-        .select(`
-          id,
-          course_id,
-          total_seats
-        `)
-        .eq('account_id', account.id);
+      try {
+        // Get all courses with seat information
+        const { data: seats, error: seatsError } = await supabase
+          .from('course_seats')
+          .select(`
+            id,
+            course_id,
+            total_seats
+          `)
+          .eq('account_id', account.id);
 
-      if (seatsError) throw seatsError;
+        if (seatsError) {
+          console.error('Error fetching course seats:', seatsError);
+          throw seatsError;
+        }
 
       // Get course details
       const courseIds = seats?.map(s => s.course_id) || [];
+      
+      // If no course seats, return empty array
+      if (courseIds.length === 0) {
+        return [];
+      }
+
       const { data: courses, error: coursesError } = await supabase
         .from('courses')
         .select('id, title, status')
@@ -67,7 +86,6 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
       if (coursesError) throw coursesError;
 
       // Get enrollment counts for each course
-      
       const { data: enrollments, error: enrollError } = await supabase
         .from('course_enrollments')
         .select('course_id')
@@ -88,14 +106,18 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         return acc;
       }, {} as Record<string, typeof courses[0]>) || {};
 
-      // Combine data
-      return seats?.map(seat => ({
-        course_id: seat.course_id,
-        course_title: courseMap[seat.course_id]?.title || 'Unknown Course',
-        total_seats: seat.total_seats,
-        used_seats: usedSeatsMap[seat.course_id] || 0,
-        available_seats: seat.total_seats - (usedSeatsMap[seat.course_id] || 0),
-      })) || [];
+        // Combine data
+        return seats?.map(seat => ({
+          course_id: seat.course_id,
+          course_title: courseMap[seat.course_id]?.title || 'Unknown Course',
+          total_seats: seat.total_seats,
+          used_seats: usedSeatsMap[seat.course_id] || 0,
+          available_seats: seat.total_seats - (usedSeatsMap[seat.course_id] || 0),
+        })) || [];
+      } catch (error) {
+        console.error('Error in course seat query:', error);
+        throw error;
+      }
     },
     enabled: !!account.id,
   });
