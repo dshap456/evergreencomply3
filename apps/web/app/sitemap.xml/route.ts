@@ -35,11 +35,15 @@ export async function GET() {
 function getPaths() {
   const paths = [
     '/',
+    '/contact',
+    '/cart',
+    '/courses/dot-hazmat',
+    '/courses/advanced-hazmat', 
+    '/courses/epa-rcra',
     '/faq',
     '/blog',
     '/docs',
     '/pricing',
-    '/contact',
     '/cookie-policy',
     '/terms-of-service',
     '/privacy-policy',

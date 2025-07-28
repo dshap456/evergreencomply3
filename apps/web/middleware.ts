@@ -5,6 +5,13 @@ import { createServerClient } from '@supabase/ssr';
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   
+  // Redirect old marketing-temp URLs to new URLs
+  if (url.pathname.startsWith('/marketing-temp')) {
+    const newPath = url.pathname.replace('/marketing-temp', '');
+    url.pathname = newPath || '/';
+    return NextResponse.redirect(url, 301);
+  }
+  
   // Allow all auth routes to pass through without modification
   if (url.pathname.startsWith('/auth/') || url.pathname.startsWith('/update-password') || url.pathname.startsWith('/debug-route')) {
     return NextResponse.next();
