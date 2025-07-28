@@ -75,6 +75,7 @@ export function InviteToCourseDialog({
           onSuccess();
         }
       } catch (error) {
+        console.error('Invitation error:', error);
         toast.error(error instanceof Error ? error.message : 'Failed to send invitation');
       }
     });
