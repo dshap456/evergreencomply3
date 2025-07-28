@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { revalidatePath } from 'next/cache';
 
 const InviteToCourseSchema = z.object({
   email: z.string().email(),
@@ -10,11 +11,15 @@ const InviteToCourseSchema = z.object({
 });
 
 export async function inviteToCourseActionSimple(data: z.infer<typeof InviteToCourseSchema>) {
+  console.log('inviteToCourseActionSimple called with:', data);
+  
   try {
     const client = getSupabaseServerClient();
     
     // Get current user
     const { data: { user }, error: userError } = await client.auth.getUser();
+    
+    console.log('Auth check:', { user: user?.id, error: userError });
     
     if (userError || !user) {
       return { success: false, error: 'Not authenticated' };
@@ -48,6 +53,14 @@ export async function inviteToCourseActionSimple(data: z.infer<typeof InviteToCo
     if (insertError) {
       console.error('Insert error:', insertError);
       return { success: false, error: insertError.message };
+    }
+
+    // Try to revalidate the page
+    try {
+      revalidatePath(`/home/test-team-seats/courses/seats`);
+    } catch (revalidateError) {
+      console.error('Revalidate error:', revalidateError);
+      // Continue anyway - the invitation was created successfully
     }
 
     return { success: true };

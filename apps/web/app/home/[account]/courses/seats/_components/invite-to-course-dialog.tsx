@@ -62,11 +62,15 @@ export function InviteToCourseDialog({
   const onSubmit = (data: z.infer<typeof InviteSchema>) => {
     startTransition(async () => {
       try {
+        console.log('Sending invitation for:', data.email);
+        
         const result = await inviteToCourseActionSimple({
           email: data.email,
           courseId: course.course_id,
           accountId: accountId,
         });
+
+        console.log('Invitation result:', result);
 
         if (result.success) {
           toast.success('Invitation sent successfully');
