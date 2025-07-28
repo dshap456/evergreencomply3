@@ -55,9 +55,18 @@ export async function inviteToCourseActionSimple(data: z.infer<typeof InviteToCo
       return { success: false, error: insertError.message };
     }
 
+    // Get account slug for revalidation
+    const { data: accountSlug } = await client
+      .from('accounts')
+      .select('slug')
+      .eq('id', data.accountId)
+      .single();
+
     // Try to revalidate the page
     try {
-      revalidatePath(`/home/test-team-seats/courses/seats`);
+      if (accountSlug?.slug) {
+        revalidatePath(`/home/${accountSlug.slug}/courses/seats`);
+      }
     } catch (revalidateError) {
       console.error('Revalidate error:', revalidateError);
       // Continue anyway - the invitation was created successfully
