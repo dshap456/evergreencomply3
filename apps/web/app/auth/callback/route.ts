@@ -14,5 +14,8 @@ export async function GET(request: NextRequest) {
     redirectPath: pathsConfig.app.home,
   });
 
-  return redirect(nextPath);
+  // For magic links, ensure we're going to the right place
+  const finalPath = nextPath === '/' ? pathsConfig.app.home : nextPath;
+
+  return redirect(finalPath);
 }
