@@ -25,7 +25,7 @@ import { Button } from '@kit/ui/button';
 import { Trans } from '@kit/ui/trans';
 import { toast } from '@kit/ui/sonner';
 
-import { inviteToCourseAction } from '../_lib/server/course-invitation-actions';
+import { inviteToCourseActionSimple } from '../_lib/server/course-invitation-actions-simple';
 
 const InviteSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -62,7 +62,7 @@ export function InviteToCourseDialog({
   const onSubmit = (data: z.infer<typeof InviteSchema>) => {
     startTransition(async () => {
       try {
-        const result = await inviteToCourseAction({
+        const result = await inviteToCourseActionSimple({
           email: data.email,
           courseId: course.course_id,
           accountId: accountId,
@@ -73,6 +73,8 @@ export function InviteToCourseDialog({
           form.reset();
           onOpenChange(false);
           onSuccess();
+        } else {
+          throw new Error(result.error || 'Failed to send invitation');
         }
       } catch (error) {
         console.error('Invitation error:', error);
