@@ -65,10 +65,10 @@ const AppConfigSchema = z
 
 // Build-safe config with defaults to prevent build failures
 const appConfig = AppConfigSchema.parse({
-  name: process.env.NEXT_PUBLIC_PRODUCT_NAME || 'Your LMS',
-  title: process.env.NEXT_PUBLIC_SITE_TITLE || 'Your LMS - Learning Management System',
-  description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'Complete learning management system',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://evergreencomply3-rglh.vercel.app',
+  name: process.env.NEXT_PUBLIC_PRODUCT_NAME || 'Evergreen Comply',
+  title: process.env.NEXT_PUBLIC_SITE_TITLE || 'Evergreen Comply - Safety & Compliance Training',
+  description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION || 'Modern, mobile-ready compliance training for DOT HAZMAT and EPA regulations',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com',
   locale: process.env.NEXT_PUBLIC_DEFAULT_LOCALE || 'en',
   theme: process.env.NEXT_PUBLIC_DEFAULT_THEME_MODE || 'light',
   themeColor: process.env.NEXT_PUBLIC_THEME_COLOR || '#ffffff',
