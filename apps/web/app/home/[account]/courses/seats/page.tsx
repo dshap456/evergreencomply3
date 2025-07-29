@@ -1,12 +1,18 @@
 'use client';
 
+import { Suspense } from 'react';
+
 import { PageBody } from '@kit/ui/page';
 import { Trans } from '@kit/ui/trans';
+import { Spinner } from '@kit/ui/spinner';
 
 import { TeamAccountLayoutPageHeader } from '../../_components/team-account-layout-page-header';
+import { withI18n } from '~/lib/i18n/with-i18n';
+import { CourseSeatManagement } from './_components/course-seat-management';
+import { ErrorBoundary } from './_components/error-boundary';
 import { useParams } from 'next/navigation';
 
-export default function TeamCourseSeatPage() {
+function TeamCourseSeatPage() {
   const params = useParams();
   const account = params.account as string;
 
@@ -19,13 +25,18 @@ export default function TeamCourseSeatPage() {
       />
 
       <PageBody>
-        <div className="text-center py-8">
-          <p>Seat management page is loading...</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Account slug: {account}
-          </p>
-        </div>
+        <ErrorBoundary>
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-8">
+              <Spinner className="h-6 w-6" />
+            </div>
+          }>
+            <CourseSeatManagement accountSlug={account} />
+          </Suspense>
+        </ErrorBoundary>
       </PageBody>
     </>
   );
 }
+
+export default withI18n(TeamCourseSeatPage);
