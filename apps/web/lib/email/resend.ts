@@ -19,6 +19,8 @@ export async function sendEmail({
   from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
 }: SendEmailParams) {
   try {
+    console.log('Sending email with from:', from);
+    
     const { data, error } = await resend.emails.send({
       from,
       to,
@@ -28,10 +30,11 @@ export async function sendEmail({
     });
 
     if (error) {
-      console.error('Failed to send email:', error);
+      console.error('Resend API error:', JSON.stringify(error, null, 2));
       throw error;
     }
 
+    console.log('Email sent successfully:', data);
     return data;
   } catch (error) {
     console.error('Error sending email:', error);
@@ -115,6 +118,6 @@ This invitation will expire in 30 days.`;
     subject,
     html,
     text,
-    from: 'support@evergreencomply.com', // Explicitly set for course invitations
+    from: 'Evergreen Comply <support@evergreencomply.com>', // Format: "Name <email>"
   });
 }
