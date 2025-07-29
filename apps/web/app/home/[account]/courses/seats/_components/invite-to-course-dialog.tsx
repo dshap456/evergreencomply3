@@ -62,8 +62,8 @@ export function InviteToCourseDialog({
   const onSubmit = (data: z.infer<typeof InviteSchema>) => {
     startTransition(async () => {
       try {
-        // Use direct API call instead of server action
-        const response = await fetch('/api/test-invitation', {
+        // Use the new endpoint that sends emails and counts pending invites
+        const response = await fetch('/api/send-course-invitation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -79,7 +79,7 @@ export function InviteToCourseDialog({
           throw new Error(result.error || 'Failed to send invitation');
         }
 
-        toast.success('Invitation sent successfully');
+        toast.success('Invitation sent successfully! An email has been sent to ' + data.email);
         form.reset();
         onOpenChange(false);
         onSuccess();

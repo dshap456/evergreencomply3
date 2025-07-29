@@ -94,11 +94,32 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
 
       if (enrollError) throw enrollError;
 
-      // Calculate used seats per course
-      const usedSeatsMap = enrollments?.reduce((acc, enrollment) => {
+      // Get pending invitations count for each course
+      const { data: invitations, error: inviteError } = await supabase
+        .from('course_invitations')
+        .select('course_id')
+        .eq('account_id', account.id)
+        .in('course_id', courseIds)
+        .is('accepted_at', null);
+
+      if (inviteError) throw inviteError;
+
+      // Calculate used seats per course (enrolled + pending invites)
+      const enrollmentMap = enrollments?.reduce((acc, enrollment) => {
         acc[enrollment.course_id] = (acc[enrollment.course_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>) || {};
+
+      const invitationMap = invitations?.reduce((acc, invitation) => {
+        acc[invitation.course_id] = (acc[invitation.course_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      // Combine enrolled and pending counts
+      const usedSeatsMap = courseIds.reduce((acc, courseId) => {
+        acc[courseId] = (enrollmentMap[courseId] || 0) + (invitationMap[courseId] || 0);
+        return acc;
+      }, {} as Record<string, number>);
 
       // Create a map of course data for easy lookup
       const courseMap = courses?.reduce((acc, course) => {
