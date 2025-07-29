@@ -1,42 +1,104 @@
-import { use, Suspense } from 'react';
+import { use } from 'react';
+import { redirect } from 'next/navigation';
 
 import { PageBody } from '@kit/ui/page';
 import { Trans } from '@kit/ui/trans';
-import { Spinner } from '@kit/ui/spinner';
+import { Alert, AlertDescription } from '@kit/ui/alert';
 
 import { TeamAccountLayoutPageHeader } from '../../_components/team-account-layout-page-header';
 import { withI18n } from '~/lib/i18n/with-i18n';
-import { CourseSeatManagement } from './_components/course-seat-management';
-import { ErrorBoundary } from './_components/error-boundary';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { createTeamAccountsApi } from '@kit/team-accounts/api';
 
 interface TeamCourseSeatPageProps {
   params: Promise<{ account: string }>;
 }
 
-function TeamCourseSeatPage({ params }: TeamCourseSeatPageProps) {
-  const { account } = use(params);
+async function TeamCourseSeatPageSimple({ params }: TeamCourseSeatPageProps) {
+  const { account: accountSlug } = use(params);
+  
+  try {
+    // Get the account data
+    const client = getSupabaseServerClient();
+    const api = createTeamAccountsApi(client);
+    
+    // Get account by slug
+    const account = await api.getTeamAccount(accountSlug);
+    
+    if (!account) {
+      redirect('/404');
+    }
 
-  return (
-    <>
-      <TeamAccountLayoutPageHeader
-        account={account}
-        title={<Trans i18nKey={'courses:seatManagement'} />}
-        description={<Trans i18nKey={'courses:seatManagementDescription'} />}
-      />
+    // Get user to verify they're the owner
+    const { data: { user } } = await client.auth.getUser();
+    
+    if (!user || account.primary_owner_user_id !== user.id) {
+      return (
+        <>
+          <TeamAccountLayoutPageHeader
+            account={accountSlug}
+            title={<Trans i18nKey={'courses:seatManagement'} />}
+            description={<Trans i18nKey={'courses:seatManagementDescription'} />}
+          />
+          <PageBody>
+            <Alert>
+              <AlertDescription>
+                You don't have permission to view this page. Only team owners can manage course seats.
+              </AlertDescription>
+            </Alert>
+          </PageBody>
+        </>
+      );
+    }
 
-      <PageBody>
-        <ErrorBoundary>
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-8">
-              <Spinner className="h-6 w-6" />
-            </div>
-          }>
-            <CourseSeatManagement accountSlug={account} />
-          </Suspense>
-        </ErrorBoundary>
-      </PageBody>
-    </>
-  );
+    // For now, just show a simple message
+    return (
+      <>
+        <TeamAccountLayoutPageHeader
+          account={accountSlug}
+          title={<Trans i18nKey={'courses:seatManagement'} />}
+          description={<Trans i18nKey={'courses:seatManagementDescription'} />}
+        />
+
+        <PageBody>
+          <div className="text-center py-8">
+            <p>Seat management page is loading...</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Account: {account.name} ({account.id})
+            </p>
+            <p className="text-sm text-muted-foreground">
+              User: {user.email}
+            </p>
+          </div>
+        </PageBody>
+      </>
+    );
+  } catch (error) {
+    console.error('Error in seat management page:', error);
+    
+    return (
+      <>
+        <TeamAccountLayoutPageHeader
+          account={accountSlug}
+          title={<Trans i18nKey={'courses:seatManagement'} />}
+          description={<Trans i18nKey={'courses:seatManagementDescription'} />}
+        />
+        <PageBody>
+          <Alert variant="destructive">
+            <AlertDescription>
+              An error occurred loading this page. Please try refreshing.
+              {error instanceof Error && (
+                <details className="mt-2">
+                  <summary className="cursor-pointer text-sm">Error details</summary>
+                  <pre className="mt-2 text-xs">{error.message}</pre>
+                </details>
+              )}
+            </AlertDescription>
+          </Alert>
+        </PageBody>
+      </>
+    );
+  }
 }
 
-export default withI18n(TeamCourseSeatPage);
+export default withI18n(TeamCourseSeatPageSimple);
