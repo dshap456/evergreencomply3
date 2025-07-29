@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { sendCourseInvitationEmail } from '~/lib/email/resend';
 
 export async function POST(request: Request) {
   try {
@@ -92,13 +93,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create invitation' });
     }
 
-    // TODO: Send invitation email when email service is configured
-    // For now, just log the invitation URL
+    // Send invitation email
     const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com'}/courses/invitation?token=${invitation.invite_token}`;
-    console.log('Invitation URL:', inviteUrl);
     
-    // In production, you would send an email here using your email service
-    // Example with Resend, SendGrid, or Supabase Edge Functions
+    try {
+      await sendCourseInvitationEmail({
+        to: email,
+        courseName: course.title,
+        teamName: account.name,
+        inviteUrl,
+      });
+      console.log('Invitation email sent to:', email);
+    } catch (emailError) {
+      console.error('Failed to send invitation email:', emailError);
+      // Don't fail the invitation if email fails - invitation is still created
+    }
 
     return NextResponse.json({ 
       success: true, 
