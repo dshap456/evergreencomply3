@@ -19,7 +19,7 @@ const getRoutes = (account: string) => [
       },
       {
         label: 'courses:learner.myLearning',
-        path: pathsConfig.app.personalAccountCourses,
+        path: `/home/${account}/my-learning`,
         Icon: <GraduationCap className={iconClasses} />,
       },
       {
