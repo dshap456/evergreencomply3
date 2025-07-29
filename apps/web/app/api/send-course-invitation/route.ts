@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
-import { sendEmail } from '@kit/email/server';
 
 export async function POST(request: Request) {
   try {
@@ -93,30 +92,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create invitation' });
     }
 
-    // Send invitation email
-    try {
-      const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/courses/invitation?token=${invitation.invite_token}`;
-      
-      await sendEmail({
-        to: email,
-        subject: `You're invited to join "${course.title}" by ${account.name}`,
-        html: `
-          <h2>Course Invitation</h2>
-          <p>You've been invited by ${account.name} to enroll in the course "${course.title}".</p>
-          <p>Click the link below to accept your invitation:</p>
-          <p><a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a></p>
-          <p>This invitation will expire in 30 days.</p>
-          <p>If you don't have an account yet, you'll be prompted to create one.</p>
-        `,
-        text: `You've been invited by ${account.name} to enroll in the course "${course.title}". 
-               Click here to accept: ${inviteUrl}
-               This invitation will expire in 30 days.`,
-      });
-    } catch (emailError) {
-      console.error('Failed to send email:', emailError);
-      // Don't fail the whole operation if email fails
-      // The invitation is still created and can be resent
-    }
+    // TODO: Send invitation email when email service is configured
+    // For now, just log the invitation URL
+    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com'}/courses/invitation?token=${invitation.invite_token}`;
+    console.log('Invitation URL:', inviteUrl);
+    
+    // In production, you would send an email here using your email service
+    // Example with Resend, SendGrid, or Supabase Edge Functions
 
     return NextResponse.json({ 
       success: true, 
