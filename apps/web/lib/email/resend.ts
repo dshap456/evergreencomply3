@@ -16,7 +16,7 @@ export async function sendEmail({
   subject,
   html,
   text,
-  from = 'support@evergreencomply.com', // Using your support email
+  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
 }: SendEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
@@ -115,5 +115,6 @@ This invitation will expire in 30 days.`;
     subject,
     html,
     text,
+    from: 'support@evergreencomply.com', // Explicitly set for course invitations
   });
 }
