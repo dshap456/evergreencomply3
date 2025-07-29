@@ -1,7 +1,16 @@
 # Fix Instructions for Course Invitation Bug
 
-## Problem
-The course seat management feature is failing with a 500 error because the required database tables (`course_invitations` and `course_seats`) don't exist.
+## Problem Summary
+The course seat management feature is failing with a 500 error when team owners try to invite users to courses.
+
+### Root Causes Identified:
+1. **Missing Database Tables**: The required tables (`course_invitations` and `course_seats`) don't exist in the database
+2. **Wrong Server Action**: The UI was using a simplified action without proper validation (already fixed)
+
+### Investigation Details:
+- The migration file exists: `apps/web/supabase/migrations/20250128_add_course_seat_management.sql`
+- TypeScript types don't include these tables, confirming migrations haven't been run
+- The 500 error occurs because the code tries to query non-existent tables
 
 ## Solution Steps
 
@@ -11,13 +20,20 @@ The course seat management feature is failing with a 500 error because the requi
    ```
 
 2. **Run the database migrations**:
+   
+   **Option A - Reset database (if you don't have important data):**
    ```bash
    pnpm supabase:web:reset
    ```
    
-   This will:
-   - Reset the database
-   - Run all migrations including `20250128_add_course_seat_management.sql`
+   **Option B - Run migrations without reset (preserves data):**
+   ```bash
+   cd apps/web
+   pnpm supabase db push
+   ```
+   
+   Either option will:
+   - Run all pending migrations including `20250128_add_course_seat_management.sql`
    - Create the missing `course_invitations` and `course_seats` tables
 
 3. **Regenerate TypeScript types**:
