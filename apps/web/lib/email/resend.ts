@@ -16,7 +16,7 @@ export async function sendEmail({
   subject,
   html,
   text,
-  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev', // Default to Resend's test email
+  from = 'support@evergreencomply.com', // Using your support email
 }: SendEmailParams) {
   try {
     const { data, error } = await resend.emails.send({
