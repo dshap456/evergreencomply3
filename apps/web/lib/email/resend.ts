@@ -7,6 +7,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const DEFAULT_FROM = 'Evergreen Comply <onboarding@resend.dev>';
 const CUSTOM_FROM = 'Evergreen Comply <support@evergreencomply.com>';
 
+// For now, just use what works
+const WORKING_FROM = 'Evergreen Comply <onboarding@resend.dev>';
+
 interface SendEmailParams {
   to: string | string[];
   subject: string;
@@ -20,47 +23,23 @@ export async function sendEmail({
   subject,
   html,
   text,
-  from = DEFAULT_FROM,
+  from = WORKING_FROM,
 }: SendEmailParams) {
   try {
-    // Try with custom domain first
-    console.log('Attempting to send with custom domain:', CUSTOM_FROM);
-    
-    try {
-      const { data, error } = await resend.emails.send({
-        from: CUSTOM_FROM,
-        to,
-        subject,
-        html,
-        text,
-      });
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+      text,
+    });
 
-      if (error) {
-        throw error;
-      }
-
-      console.log('Email sent successfully from custom domain:', data);
-      return data;
-    } catch (customError) {
-      console.error('Failed with custom domain, falling back to default:', customError);
-      
-      // Fallback to default
-      const { data, error } = await resend.emails.send({
-        from: DEFAULT_FROM,
-        to,
-        subject,
-        html,
-        text,
-      });
-
-      if (error) {
-        console.error('Resend API error:', JSON.stringify(error, null, 2));
-        throw error;
-      }
-
-      console.log('Email sent with fallback:', data);
-      return data;
+    if (error) {
+      console.error('Resend API error:', error);
+      throw error;
     }
+
+    return data;
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;
