@@ -3,6 +3,10 @@ import { Resend } from 'resend';
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Default from email
+const DEFAULT_FROM = 'Evergreen Comply <onboarding@resend.dev>';
+const CUSTOM_FROM = 'Evergreen Comply <support@evergreencomply.com>';
+
 interface SendEmailParams {
   to: string | string[];
   subject: string;
@@ -16,26 +20,47 @@ export async function sendEmail({
   subject,
   html,
   text,
-  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+  from = DEFAULT_FROM,
 }: SendEmailParams) {
   try {
-    console.log('Sending email with from:', from);
+    // Try with custom domain first
+    console.log('Attempting to send with custom domain:', CUSTOM_FROM);
     
-    const { data, error } = await resend.emails.send({
-      from,
-      to,
-      subject,
-      html,
-      text,
-    });
+    try {
+      const { data, error } = await resend.emails.send({
+        from: CUSTOM_FROM,
+        to,
+        subject,
+        html,
+        text,
+      });
 
-    if (error) {
-      console.error('Resend API error:', JSON.stringify(error, null, 2));
-      throw error;
+      if (error) {
+        throw error;
+      }
+
+      console.log('Email sent successfully from custom domain:', data);
+      return data;
+    } catch (customError) {
+      console.error('Failed with custom domain, falling back to default:', customError);
+      
+      // Fallback to default
+      const { data, error } = await resend.emails.send({
+        from: DEFAULT_FROM,
+        to,
+        subject,
+        html,
+        text,
+      });
+
+      if (error) {
+        console.error('Resend API error:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+
+      console.log('Email sent with fallback:', data);
+      return data;
     }
-
-    console.log('Email sent successfully:', data);
-    return data;
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;
@@ -118,6 +143,5 @@ This invitation will expire in 30 days.`;
     subject,
     html,
     text,
-    from: 'Evergreen Comply <support@evergreencomply.com>', // Format: "Name <email>"
   });
 }
