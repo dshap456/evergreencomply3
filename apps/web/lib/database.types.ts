@@ -205,6 +205,136 @@ export type Database = {
         }
         Relationships: []
       }
+      course_invitations: {
+        Row: {
+          id: number
+          email: string
+          course_id: string
+          account_id: string
+          invited_by: string
+          invite_token: string
+          created_at: string
+          expires_at: string
+          accepted_at: string | null
+          accepted_by: string | null
+        }
+        Insert: {
+          id?: number
+          email: string
+          course_id: string
+          account_id: string
+          invited_by: string
+          invite_token?: string
+          created_at?: string
+          expires_at?: string
+          accepted_at?: string | null
+          accepted_by?: string | null
+        }
+        Update: {
+          id?: number
+          email?: string
+          course_id?: string
+          account_id?: string
+          invited_by?: string
+          invite_token?: string
+          created_at?: string
+          expires_at?: string
+          accepted_at?: string | null
+          accepted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_invitations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_invitations_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_invitations_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_seats: {
+        Row: {
+          id: string
+          account_id: string
+          course_id: string
+          total_seats: number
+          created_at: string | null
+          updated_at: string | null
+          created_by: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          account_id: string
+          course_id: string
+          total_seats?: number
+          created_at?: string | null
+          updated_at?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          account_id?: string
+          course_id?: string
+          total_seats?: number
+          created_at?: string | null
+          updated_at?: string | null
+          created_by?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_seats_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_seats_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_seats_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_seats_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_completions: {
         Row: {
           certificate_url: string | null
@@ -274,6 +404,9 @@ export type Database = {
           id: string
           progress_percentage: number | null
           user_id: string
+          account_id: string | null
+          invited_by: string | null
+          invitation_id: number | null
         }
         Insert: {
           completed_at?: string | null
@@ -283,6 +416,9 @@ export type Database = {
           id?: string
           progress_percentage?: number | null
           user_id: string
+          account_id?: string | null
+          invited_by?: string | null
+          invitation_id?: number | null
         }
         Update: {
           completed_at?: string | null
@@ -292,6 +428,9 @@ export type Database = {
           id?: string
           progress_percentage?: number | null
           user_id?: string
+          account_id?: string | null
+          invited_by?: string | null
+          invitation_id?: number | null
         }
         Relationships: [
           {
@@ -1083,6 +1222,24 @@ export type Database = {
             referencedColumns: ["name"]
           },
         ]
+      }
+      team_course_enrollments: {
+        Row: {
+          id: string | null
+          user_id: string | null
+          course_id: string | null
+          account_id: string | null
+          enrolled_at: string | null
+          completed_at: string | null
+          progress_percentage: number | null
+          final_score: number | null
+          user_email: string | null
+          user_name: string | null
+          course_title: string | null
+          enrollment_type: string | null
+          inviter_email: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
