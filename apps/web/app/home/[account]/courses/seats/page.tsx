@@ -7,12 +7,11 @@ import { Trans } from '@kit/ui/trans';
 import { Spinner } from '@kit/ui/spinner';
 
 import { TeamAccountLayoutPageHeader } from '../../_components/team-account-layout-page-header';
-import { withI18n } from '~/lib/i18n/with-i18n';
 import { CourseSeatManagement } from './_components/course-seat-management';
 import { ErrorBoundary } from './_components/error-boundary';
 import { useParams } from 'next/navigation';
 
-function TeamCourseSeatPage() {
+export default function TeamCourseSeatPage() {
   const params = useParams();
   const account = params.account as string;
 
@@ -38,5 +37,3 @@ function TeamCourseSeatPage() {
     </>
   );
 }
-
-export default withI18n(TeamCourseSeatPage);
