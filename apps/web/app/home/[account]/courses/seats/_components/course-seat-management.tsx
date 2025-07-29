@@ -187,7 +187,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                   <TableHead className="text-center"><Trans i18nKey="courses:totalSeats" /></TableHead>
                   <TableHead className="text-center"><Trans i18nKey="courses:usedSeats" /></TableHead>
                   <TableHead className="text-center"><Trans i18nKey="courses:availableSeats" /></TableHead>
-                  <TableHead className="text-right"><Trans i18nKey="common:actions" /></TableHead>
+                  <TableHead><Trans i18nKey="common:actions" /></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,32 +197,40 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                     <TableCell className="text-center">{course.total_seats}</TableCell>
                     <TableCell className="text-center">{course.used_seats}</TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={course.available_seats > 0 ? 'default' : 'secondary'}>
+                      <Badge 
+                        variant={course.available_seats > 0 ? 'default' : 'secondary'}
+                        className={course.available_seats > 0 ? 'bg-green-600 hover:bg-green-700' : ''}
+                      >
                         {course.available_seats}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleUpdateSeats(course)}
-                      >
-                        <Trans i18nKey="courses:updateSeats" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewEnrollments(course)}
-                      >
-                        <Trans i18nKey="courses:viewEnrollments" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleInvite(course)}
-                        disabled={course.available_seats <= 0}
-                      >
-                        <Trans i18nKey="courses:inviteMember" />
-                      </Button>
+                    <TableCell>
+                      <div className="flex flex-col gap-2 lg:flex-row lg:justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleUpdateSeats(course)}
+                          className="w-full lg:w-auto"
+                        >
+                          <Trans i18nKey="courses:updateSeats" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleViewEnrollments(course)}
+                          className="w-full lg:w-auto"
+                        >
+                          <Trans i18nKey="courses:viewEnrollments" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleInvite(course)}
+                          disabled={course.available_seats <= 0}
+                          className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          <Trans i18nKey="courses:inviteMember" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
