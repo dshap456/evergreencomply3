@@ -14,7 +14,7 @@ interface TeamCourseSeatPageProps {
   params: Promise<{ account: string }>;
 }
 
-async function TeamCourseSeatPageSimple({ params }: TeamCourseSeatPageProps) {
+async function TeamCourseSeatPage({ params }: TeamCourseSeatPageProps) {
   const { account: accountSlug } = use(params);
   
   try {
@@ -101,4 +101,4 @@ async function TeamCourseSeatPageSimple({ params }: TeamCourseSeatPageProps) {
   }
 }
 
-export default withI18n(TeamCourseSeatPageSimple);
+export default withI18n(TeamCourseSeatPage);
