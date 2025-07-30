@@ -187,7 +187,7 @@ export function SimpleQuizBuilder({ lessonId, isFinalQuiz = false, onClose }: Si
         <CardContent>
           {questions.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-4">📝</div>
+              <div className="text-4xl mb-4"></div>
               <h3 className="text-lg font-medium mb-2">No questions yet</h3>
               <p className="text-muted-foreground mb-4">
                 Add your first question to get started

@@ -379,9 +379,9 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
                       <div key={lesson.id} className="flex items-center justify-between p-2 bg-muted rounded">
                         <div className="flex items-center gap-3">
                           <span className="text-sm">
-                            {lesson.content_type === 'video' && '📹'}
-                            {lesson.content_type === 'text' && '📄'}
-                            {lesson.content_type === 'quiz' && '📝'}
+                            {lesson.content_type === 'video' && ''}
+                            {lesson.content_type === 'text' && ''}
+                            {lesson.content_type === 'quiz' && ''}
                           </span>
                           <div>
                             <p className="text-sm font-medium">{lesson.title}</p>
@@ -466,9 +466,9 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
                       <div key={lesson.id} className="flex items-center justify-between p-2 bg-muted rounded">
                         <div className="flex items-center gap-3">
                           <span className="text-sm">
-                            {lesson.content_type === 'video' && '📹'}
-                            {lesson.content_type === 'text' && '📄'}
-                            {lesson.content_type === 'quiz' && '📝'}
+                            {lesson.content_type === 'video' && ''}
+                            {lesson.content_type === 'text' && ''}
+                            {lesson.content_type === 'quiz' && ''}
                           </span>
                           <div>
                             <p className="text-sm font-medium">{lesson.title}</p>

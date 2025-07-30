@@ -54,24 +54,24 @@ export function UserManagement() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      console.log('🔄 UserManagement: Loading users...');
+      console.log('UserManagement: Loading users...');
       const userData = await loadUsersAction();
-      console.log('✅ UserManagement: Loaded users:', userData);
-      console.log('📊 UserManagement: User count:', userData.length);
-      console.log('📊 UserManagement: Users with enrollments:', userData.filter(u => u.enrollments > 0).length);
+      console.log('UserManagement: Loaded users:', userData);
+      console.log('UserManagement: User count:', userData.length);
+      console.log('UserManagement: Users with enrollments:', userData.filter(u => u.enrollments > 0).length);
       
       // Look for the specific user we know has enrollments
       const davidUser = userData.find(u => u.email === 'davidbannon010@gmail.com');
       if (davidUser) {
-        console.log('🔍 Found davidbannon010@gmail.com:', davidUser);
+        console.log('Found davidbannon010@gmail.com:', davidUser);
       } else {
-        console.log('❌ davidbannon010@gmail.com not found in user data!');
+        console.log('davidbannon010@gmail.com not found in user data!');
       }
       
       setUsers(userData);
       setLastRefresh(new Date());
     } catch (error) {
-      console.error('❌ UserManagement: Failed to load users:', error);
+      console.error('UserManagement: Failed to load users:', error);
       toast.error('Failed to load user data');
     } finally {
       setLoading(false);
@@ -80,12 +80,12 @@ export function UserManagement() {
 
   const runDebugTest = async () => {
     try {
-      console.log('🔬 Running enrollment debug test...');
+      console.log('Running enrollment debug test...');
       const debugResult = await debugEnrollmentAction();
-      console.log('🔬 Debug test results:', debugResult);
+      console.log('Debug test results:', debugResult);
       toast.success('Debug test completed - check console');
     } catch (error) {
-      console.error('🔬 Debug test failed:', error);
+      console.error('Debug test failed:', error);
       toast.error('Debug test failed');
     }
   };
@@ -152,12 +152,6 @@ export function UserManagement() {
           <h2 className="text-2xl font-bold">User Management</h2>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={loadUsers} disabled={loading}>
-            🔄 Refresh
-          </Button>
-          <Button variant="outline" onClick={runDebugTest}>
-            🔬 Debug
-          </Button>
           <Button>+ Invite User</Button>
         </div>
       </div>
@@ -240,7 +234,7 @@ export function UserManagement() {
         <CardContent>
           {filteredUsers.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-4">👥</div>
+              <div className="text-4xl mb-4"></div>
               <h3 className="text-lg font-medium mb-2">No users found</h3>
               <p className="text-muted-foreground">
                 Try adjusting your search or filters
@@ -288,7 +282,7 @@ export function UserManagement() {
                       </Button>
                     </UserDetailsDialog>
                     <Button variant="ghost" size="sm">
-                      ⋮
+                      …
                     </Button>
                   </div>
                 </div>

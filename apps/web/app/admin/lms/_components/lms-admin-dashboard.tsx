@@ -12,7 +12,7 @@ import { UserManagement } from './user-management';
 import { AdminEnrollmentTool } from './admin-enrollment-tool';
 
 export function LMSAdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('courses');
 
   return (
     <div className="space-y-6">
@@ -21,7 +21,6 @@ export function LMSAdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-            <span className="text-2xl">📚</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">24</div>
@@ -32,7 +31,6 @@ export function LMSAdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Learners</CardTitle>
-            <span className="text-2xl">👥</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,247</div>
@@ -43,7 +41,6 @@ export function LMSAdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Course Completions</CardTitle>
-            <span className="text-2xl">✅</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">892</div>
@@ -54,7 +51,6 @@ export function LMSAdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-            <span className="text-2xl">💰</span>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$12,847</div>
@@ -65,15 +61,10 @@ export function LMSAdminDashboard() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="courses">Courses</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <LMSAnalytics />
-        </TabsContent>
 
         <TabsContent value="courses" className="space-y-6">
           <CourseManagement />

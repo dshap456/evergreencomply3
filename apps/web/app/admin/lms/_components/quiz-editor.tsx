@@ -69,7 +69,7 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
   // Update quiz state when existingQuizData changes
   useEffect(() => {
     if (existingQuizData) {
-      console.log('🔄 QuizEditor: Loading existing quiz data:', existingQuizData);
+      console.log('QuizEditor: Loading existing quiz data:', existingQuizData);
       setQuiz(existingQuizData);
     }
   }, [existingQuizData]);
@@ -182,10 +182,10 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
 
   const getQuestionTypeIcon = (type: string) => {
     switch (type) {
-      case 'multiple_choice': return '📋';
-      case 'true_false': return '✅';
-      case 'open_ended': return '✍️';
-      default: return '❓';
+      case 'multiple_choice': return '';
+      case 'true_false': return '';
+      case 'open_ended': return '';
+      default: return '';
     }
   };
 
@@ -306,7 +306,7 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
         <CardContent>
           {quiz.questions.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-4">📝</div>
+              <div className="text-4xl mb-4"></div>
               <h3 className="text-lg font-medium mb-2">No questions yet</h3>
               <p className="text-muted-foreground mb-4">
                 Add your first question to get started
@@ -396,8 +396,8 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="multiple_choice">📋 Multiple Choice</SelectItem>
-                    <SelectItem value="true_false">✅ True/False</SelectItem>
+                    <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
+                    <SelectItem value="true_false">True/False</SelectItem>
                     <SelectItem value="open_ended">✍️ Open Ended</SelectItem>
                   </SelectContent>
                 </Select>

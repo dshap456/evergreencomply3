@@ -46,21 +46,21 @@ export function UserDetailsDialog({ userId, userName, children }: UserDetailsDia
     setOpen(true);
     
     if (!userDetails) {
-      console.log('🔄 UserDetailsDialog: Loading user details for:', userId);
+      console.log('UserDetailsDialog: Loading user details for:', userId);
       
       startTransition(async () => {
         try {
           const result = await getUserDetailsAction({ userId });
           
           if (result.success) {
-            console.log('✅ UserDetailsDialog: Loaded user details:', result.data);
+            console.log('UserDetailsDialog: Loaded user details:', result.data);
             setUserDetails(result.data);
           } else {
-            console.error('❌ UserDetailsDialog: Failed to load user details');
+            console.error('UserDetailsDialog: Failed to load user details');
             toast.error('Failed to load user details');
           }
         } catch (error) {
-          console.error('❌ UserDetailsDialog: Error loading user details:', error);
+          console.error('UserDetailsDialog: Error loading user details:', error);
           toast.error('Failed to load user details');
         }
       });
@@ -138,7 +138,7 @@ export function UserDetailsDialog({ userId, userName, children }: UserDetailsDia
               <CardContent>
                 {userDetails.courseCompletions.length === 0 ? (
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-4">📚</div>
+                    <div className="text-4xl mb-4"></div>
                     <h3 className="text-lg font-medium mb-2">No course completions</h3>
                     <p className="text-muted-foreground">
                       This user hasn't completed any courses yet
@@ -222,7 +222,7 @@ export function UserDetailsDialog({ userId, userName, children }: UserDetailsDia
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="text-4xl mb-4">❌</div>
+            <div className="text-4xl mb-4"></div>
             <h3 className="text-lg font-medium mb-2">Failed to load user details</h3>
             <p className="text-muted-foreground">
               Please try again or contact support

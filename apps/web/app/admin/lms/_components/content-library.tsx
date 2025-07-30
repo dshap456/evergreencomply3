@@ -103,11 +103,11 @@ export function ContentLibrary() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return '📹';
-      case 'text': return '📄';
-      case 'quiz': return '📝';
-      case 'asset': return '📎';
-      default: return '📄';
+      case 'video': return '';
+      case 'text': return '';
+      case 'quiz': return '';
+      case 'asset': return '';
+      default: return '';
     }
   };
 
@@ -164,10 +164,10 @@ export function ContentLibrary() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="video">📹 Videos</SelectItem>
-                <SelectItem value="text">📄 Text</SelectItem>
-                <SelectItem value="quiz">📝 Quizzes</SelectItem>
-                <SelectItem value="asset">📎 Assets</SelectItem>
+                <SelectItem value="video">Videos</SelectItem>
+                <SelectItem value="text">Text</SelectItem>
+                <SelectItem value="quiz">Quizzes</SelectItem>
+                <SelectItem value="asset">Assets</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -262,7 +262,7 @@ export function ContentLibrary() {
           {filteredContent.length === 0 && (
             <Card className="p-12 text-center">
               <div className="space-y-4">
-                <div className="text-4xl">📚</div>
+                <div className="text-4xl"></div>
                 <div>
                   <h3 className="text-lg font-medium">No content found</h3>
                   <p className="text-muted-foreground">
@@ -287,7 +287,7 @@ export function ContentLibrary() {
             <CardContent>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
                 <div className="space-y-4">
-                  <div className="text-4xl">📁</div>
+                  <div className="text-4xl"></div>
                   <div>
                     <h3 className="text-lg font-medium">Upload Content</h3>
                     <p className="text-muted-foreground">
@@ -341,7 +341,7 @@ export function ContentLibrary() {
                 <CardTitle className="text-sm font-medium">Most Used</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">📝</div>
+                <div className="text-2xl font-bold"></div>
                 <p className="text-xs text-muted-foreground">Quizzes (65%)</p>
               </CardContent>
             </Card>

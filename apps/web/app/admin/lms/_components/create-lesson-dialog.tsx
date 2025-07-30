@@ -70,17 +70,17 @@ interface CreateLessonDialogProps {
 const contentTypes = [
   {
     value: 'video',
-    label: '📹 Video Lesson',
+    label: 'Video Lesson',
     description: 'Upload and stream video content'
   },
   {
     value: 'text',
-    label: '📄 Text/Reading',
+    label: 'Text/Reading',
     description: 'Written content with rich text formatting'
   },
   {
     value: 'quiz',
-    label: '📝 Quiz',
+    label: 'Quiz',
     description: 'Assessment with multiple choice and other question types'
   }
 ];
@@ -110,7 +110,7 @@ export function CreateLessonDialog({
   const onSubmit = (data: CreateLessonForm) => {
     startTransition(async () => {
       try {
-        console.log('🔄 CreateLessonDialog: Creating lesson in database...', {
+        console.log('CreateLessonDialog: Creating lesson in database...', {
           moduleId,
           title: data.title,
           contentType: data.content_type,
@@ -127,7 +127,7 @@ export function CreateLessonDialog({
           language: language,
         });
 
-        console.log('✅ CreateLessonDialog: Lesson created successfully:', result.lesson);
+        console.log('CreateLessonDialog: Lesson created successfully:', result.lesson);
 
         // Create lesson object for UI update
         const newLesson: Lesson = {
@@ -147,7 +147,7 @@ export function CreateLessonDialog({
         onOpenChange(false);
         toast.success('Lesson created successfully');
       } catch (error) {
-        console.error('❌ CreateLessonDialog: Failed to create lesson:', error);
+        console.error('CreateLessonDialog: Failed to create lesson:', error);
         toast.error('Failed to create lesson');
       }
     });

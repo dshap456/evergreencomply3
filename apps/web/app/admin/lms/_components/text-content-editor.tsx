@@ -132,7 +132,7 @@ Regular paragraphs work normally."
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   <div className="text-center">
-                    <div className="text-4xl mb-4">📄</div>
+                    <div className="text-4xl mb-4"></div>
                     <p>Start writing content to see the preview</p>
                   </div>
                 </div>

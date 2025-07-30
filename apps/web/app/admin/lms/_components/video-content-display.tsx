@@ -24,14 +24,14 @@ export function VideoContentDisplay({ lessonId, languageCode = 'en' }: VideoCont
         setLoading(true);
         setError(null);
         
-        console.log('🔍 VideoContentDisplay: Loading video data using server action for lesson:', lessonId);
+        console.log('VideoContentDisplay: Loading video data using server action for lesson:', lessonId);
 
         const result = await loadVideoDataAction({
           lessonId,
           languageCode,
         });
 
-        console.log('✅ VideoContentDisplay: Video data loaded successfully:', {
+        console.log('VideoContentDisplay: Video data loaded successfully:', {
           hasLesson: !!result.lesson,
           hasVideoMetadata: !!result.videoMetadata,
           video_url: result.lesson?.video_url ? 'present' : 'missing'
@@ -40,7 +40,7 @@ export function VideoContentDisplay({ lessonId, languageCode = 'en' }: VideoCont
         setLesson(result.lesson);
         setVideoMetadata(result.videoMetadata);
       } catch (err) {
-        console.error('❌ VideoContentDisplay: Failed to load video data:', err);
+        console.error('VideoContentDisplay: Failed to load video data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load video data');
       } finally {
         setLoading(false);

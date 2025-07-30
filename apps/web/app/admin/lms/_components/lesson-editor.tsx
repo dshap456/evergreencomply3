@@ -57,7 +57,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   // Load existing quiz data if this is a quiz lesson
   useEffect(() => {
     if (lessonData.content_type === 'quiz') {
-      console.log('🔄 LessonEditor: Loading existing quiz data for lesson:', lessonData.id);
+      console.log('LessonEditor: Loading existing quiz data for lesson:', lessonData.id);
       setLoadingQuizData(true);
       
       loadQuizDataAction({ lessonId: lessonData.id })
@@ -90,14 +90,14 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
               questions: transformedQuestions
             };
             
-            console.log('✅ LessonEditor: Loaded and transformed quiz data:', quizData);
+            console.log('LessonEditor: Loaded and transformed quiz data:', quizData);
             setExistingQuizData(quizData);
           } else {
-            console.log('ℹ️ LessonEditor: No existing quiz data found');
+            console.log('LessonEditor: No existing quiz data found');
           }
         })
         .catch((error) => {
-          console.error('❌ LessonEditor: Failed to load quiz data:', error);
+          console.error('LessonEditor: Failed to load quiz data:', error);
         })
         .finally(() => {
           setLoadingQuizData(false);
@@ -108,7 +108,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const handleSave = () => {
     startTransition(async () => {
       try {
-        console.log('🔄 LessonEditor: Saving lesson with video data...', {
+        console.log('LessonEditor: Saving lesson with video data...', {
           id: lessonData.id,
           title: lessonData.title,
           content_type: lessonData.content_type,
@@ -127,20 +127,20 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           video_url: lessonData.video_url || undefined,
         };
         
-        console.log('🔍 LessonEditor: Update data being sent:', updateData);
+        console.log('LessonEditor: Update data being sent:', updateData);
         
         await updateLessonAction(updateData);
 
         // If this is a quiz lesson, save the quiz data
         if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
-          console.log('🔄 LessonEditor: Saving quiz data...');
+          console.log('LessonEditor: Saving quiz data...');
           const quizData = quizEditorRef.current.getQuizData();
           
-          console.log('📊 LessonEditor: Raw quiz data from editor:', quizData);
+          console.log('LessonEditor: Raw quiz data from editor:', quizData);
           
           // Only try to save if there are actually questions
           if (quizData.questions.length > 0) {
-            console.log('📊 LessonEditor: Quiz data structure for server:', {
+            console.log('LessonEditor: Quiz data structure for server:', {
               lessonId: lessonData.id,
               quizData: {
                 ...quizData,
@@ -161,13 +161,13 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                 quizData,
               });
               
-              console.log('✅ LessonEditor: Quiz data saved successfully');
+              console.log('LessonEditor: Quiz data saved successfully');
             } catch (quizError) {
-              console.error('❌ LessonEditor: Quiz save failed:', quizError);
+              console.error('LessonEditor: Quiz save failed:', quizError);
               throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
             }
           } else {
-            console.log('ℹ️ LessonEditor: No quiz questions to save, skipping quiz data save');
+            console.log('LessonEditor: No quiz questions to save, skipping quiz data save');
           }
         }
         
@@ -183,10 +183,10 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
 
   const getContentTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return '📹';
-      case 'text': return '📄';
-      case 'quiz': return '📝';
-      default: return '📄';
+      case 'video': return '';
+      case 'text': return '';
+      case 'quiz': return '';
+      default: return '';
     }
   };
 

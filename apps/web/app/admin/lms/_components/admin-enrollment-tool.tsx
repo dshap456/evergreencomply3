@@ -39,14 +39,14 @@ export function AdminEnrollmentTool() {
 
   const loadData = async () => {
     try {
-      console.log('🔄 AdminEnrollmentTool: Starting to load data...');
+      console.log('AdminEnrollmentTool: Starting to load data...');
       
       const [coursesData, usersData] = await Promise.all([
         loadCoursesAction({}),
         listUsersForEnrollmentAction({})
       ]);
       
-      console.log('📊 AdminEnrollmentTool: Raw data loaded:', {
+      console.log('AdminEnrollmentTool: Raw data loaded:', {
         coursesCount: coursesData?.length || 0,
         usersCount: usersData?.length || 0,
         courses: coursesData?.map(c => ({ id: c.id, title: c.title, status: c.status })),
@@ -54,15 +54,15 @@ export function AdminEnrollmentTool() {
       });
       
       const publishedCourses = coursesData.filter((c: Course) => c.status === 'published');
-      console.log('📚 AdminEnrollmentTool: Published courses:', publishedCourses.length);
+      console.log('AdminEnrollmentTool: Published courses:', publishedCourses.length);
       
       setCourses(publishedCourses);
       setUsers(usersData);
       
-      console.log('✅ AdminEnrollmentTool: Data loaded successfully');
+      console.log('AdminEnrollmentTool: Data loaded successfully');
     } catch (error) {
-      console.error('❌ AdminEnrollmentTool: Failed to load data:', error);
-      console.error('❌ Error details:', {
+      console.error('AdminEnrollmentTool: Failed to load data:', error);
+      console.error('Error details:', {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : 'No stack trace'
       });
@@ -78,7 +78,7 @@ export function AdminEnrollmentTool() {
       return;
     }
 
-    console.log('🔄 AdminEnrollmentTool: Starting enrollment...', {
+    console.log('AdminEnrollmentTool: Starting enrollment...', {
       courseId: selectedCourse,
       userEmail: userEmail.trim()
     });
@@ -89,7 +89,7 @@ export function AdminEnrollmentTool() {
       const result = await simpleEnrollUserAction(userEmail.trim(), selectedCourse);
       
       if (result.success) {
-        console.log('✅ AdminEnrollmentTool: Enrollment successful:', result);
+        console.log('AdminEnrollmentTool: Enrollment successful:', result);
         toast.success(result.message);
         setUserEmail('');
         setSelectedCourse('');
@@ -97,8 +97,8 @@ export function AdminEnrollmentTool() {
         throw new Error(result.error || 'Enrollment failed');
       }
     } catch (error) {
-      console.error('❌ AdminEnrollmentTool: Enrollment failed:', error);
-      console.error('❌ Enrollment error details:', {
+      console.error('AdminEnrollmentTool: Enrollment failed:', error);
+      console.error('Enrollment error details:', {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : 'No stack trace',
         courseId: selectedCourse,
@@ -124,7 +124,7 @@ export function AdminEnrollmentTool() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>👨‍🎓 Manual Learner Enrollment</CardTitle>
+        <CardTitle>Manual Learner Enrollment</CardTitle>
         <p className="text-sm text-muted-foreground">
           Assign users to courses without payment (for testing)
         </p>

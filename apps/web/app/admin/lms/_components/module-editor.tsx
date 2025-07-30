@@ -118,10 +118,10 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
 
   const getContentTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return '📹';
-      case 'text': return '📄';
-      case 'quiz': return '📝';
-      default: return '📄';
+      case 'video': return '';
+      case 'text': return '';
+      case 'quiz': return '';
+      default: return '';
     }
   };
 
@@ -211,7 +211,7 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         <CardContent>
           {moduleData.lessons.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-4">📚</div>
+              <div className="text-4xl mb-4"></div>
               <h3 className="text-lg font-medium mb-2">No lessons yet</h3>
               <p className="text-muted-foreground mb-4">
                 Add your first lesson to get started with this module

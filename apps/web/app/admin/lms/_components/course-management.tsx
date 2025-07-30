@@ -56,18 +56,18 @@ export function CourseManagement() {
 
   const loadCourses = async () => {
     try {
-      console.log('🔄 CourseManagement: Starting to load courses...');
+      console.log('CourseManagement: Starting to load courses...');
       setLoading(true);
       setError(null);
       const coursesData = await loadCoursesAction();
-      console.log('📥 CourseManagement: Received courses data:', {
+      console.log('CourseManagement: Received courses data:', {
         count: coursesData.length,
         courses: coursesData.map(c => ({ id: c.id, title: c.title, status: c.status }))
       });
       setCourses(coursesData);
-      console.log('✅ CourseManagement: State updated with courses');
+      console.log('CourseManagement: State updated with courses');
     } catch (err) {
-      console.error('❌ CourseManagement: Error loading courses:', err);
+      console.error('CourseManagement: Error loading courses:', err);
       setError(err instanceof Error ? err.message : 'Failed to load courses');
     } finally {
       setLoading(false);
@@ -221,7 +221,7 @@ export function CourseManagement() {
               {course.enrollments_count > 0 && (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2 text-xs">
                   <span className="text-yellow-800">
-                    ⚠️ {course.enrollments_count} active enrollment{course.enrollments_count > 1 ? 's' : ''}
+                    {course.enrollments_count} active enrollment{course.enrollments_count > 1 ? 's' : ''}
                   </span>
                 </div>
               )}
@@ -272,7 +272,7 @@ export function CourseManagement() {
       {filteredCourses.length === 0 && (
         <Card className="p-12 text-center">
           <div className="space-y-4">
-            <div className="text-4xl">📚</div>
+            <div className="text-4xl"></div>
             <div>
               <h3 className="text-lg font-medium">No courses found</h3>
               <p className="text-muted-foreground">

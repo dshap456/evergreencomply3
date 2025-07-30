@@ -20,13 +20,13 @@ export function SimpleCourseEditor({ course, onBack, onSave }: SimpleCourseEdito
   const [saving, setSaving] = useState(false);
   const [modules, setModules] = useState(course?.modules || []);
 
-  console.log('🎨 SimpleCourseEditor: Rendering with course:', course);
+  console.log('SimpleCourseEditor: Rendering with course:', course);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       // For now, just log the save action
-      console.log('💾 Saving course changes:', { title, description });
+      console.log('Saving course changes:', { title, description });
       
       // Simulate save delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -35,9 +35,9 @@ export function SimpleCourseEditor({ course, onBack, onSave }: SimpleCourseEdito
         onSave({ ...course, title, description });
       }
       
-      console.log('✅ Course saved successfully');
+      console.log('Course saved successfully');
     } catch (error) {
-      console.error('❌ Error saving course:', error);
+      console.error('Error saving course:', error);
     } finally {
       setSaving(false);
     }
