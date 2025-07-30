@@ -25,8 +25,8 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className={'m-2'}>
-        <AppLogo href={'/admin'} className="max-w-full" />
+      <SidebarHeader className={'m-2 overflow-hidden'}>
+        <AppLogo href={'/admin'} className="max-w-full truncate" />
       </SidebarHeader>
 
       <SidebarContent>

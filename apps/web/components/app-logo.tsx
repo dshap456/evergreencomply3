@@ -10,7 +10,7 @@ function LogoImage({
   width?: number;
 }) {
   return (
-    <div className={cn('text-primary dark:text-white font-bold text-lg lg:text-xl', className)}>
+    <div className={cn('text-primary dark:text-white font-bold text-lg lg:text-xl whitespace-nowrap', className)}>
       Evergreen Comply
     </div>
   );
