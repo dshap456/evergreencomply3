@@ -23,28 +23,15 @@ export default createBillingSchema({
       highlighted: true,
       plans: [
         {
-          name: 'DOT HAZMAT Individual',
+          name: 'DOT HAZMAT License',
           id: 'dot-hazmat-individual',
           paymentType: 'one-time',
           lineItems: [
             {
               id: 'price_1RsDQh97cNCBYOcXZBML0Cwf', // DOT HAZMAT General
-              name: 'Individual License',
+              name: 'Training License',
               cost: 1.00,
               type: 'flat' as const,
-            },
-          ],
-        },
-        {
-          name: 'DOT HAZMAT Team',
-          id: 'dot-hazmat-team',
-          paymentType: 'one-time',
-          lineItems: [
-            {
-              id: 'price_1RsDQh97cNCBYOcXZBML0Cwf', // DOT HAZMAT General - same price for team for now
-              name: 'Per Seat',
-              cost: 1.00,
-              type: 'per_seat' as const,
             },
           ],
         },
@@ -65,28 +52,15 @@ export default createBillingSchema({
       currency: 'USD',
       plans: [
         {
-          name: 'Advanced HAZMAT Individual',
+          name: 'Advanced HAZMAT License',
           id: 'advanced-hazmat-individual',
           paymentType: 'one-time',
           lineItems: [
             {
               id: 'price_1RsDev97cNCBYOcX008NiFR8', // HAZMAT Advanced
-              name: 'Individual License',
+              name: 'Training License',
               cost: 1.00,
               type: 'flat' as const,
-            },
-          ],
-        },
-        {
-          name: 'Advanced HAZMAT Team',
-          id: 'advanced-hazmat-team',
-          paymentType: 'one-time',
-          lineItems: [
-            {
-              id: 'price_1RsDev97cNCBYOcX008NiFR8', // HAZMAT Advanced - same price for team for now
-              name: 'Per Seat',
-              cost: 1.00,
-              type: 'per_seat' as const,
             },
           ],
         },
@@ -107,28 +81,15 @@ export default createBillingSchema({
       currency: 'USD',
       plans: [
         {
-          name: 'EPA RCRA Individual',
+          name: 'EPA RCRA License',
           id: 'epa-rcra-individual',
           paymentType: 'one-time',
           lineItems: [
             {
               id: 'price_1RsDf697cNCBYOcXkMlo2mPt', // EPA RCRA
-              name: 'Individual License',
+              name: 'Training License',
               cost: 1.00,
               type: 'flat' as const,
-            },
-          ],
-        },
-        {
-          name: 'EPA RCRA Team',
-          id: 'epa-rcra-team',
-          paymentType: 'one-time',
-          lineItems: [
-            {
-              id: 'price_1RsDf697cNCBYOcXkMlo2mPt', // EPA RCRA - same price for team for now
-              name: 'Per Seat',
-              cost: 1.00,
-              type: 'per_seat' as const,
             },
           ],
         },
