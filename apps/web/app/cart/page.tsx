@@ -120,13 +120,18 @@ function CartPage() {
         throw new Error('Checkout failed');
       }
 
-      const { url } = await response.json();
+      const data = await response.json();
       
-      // Redirect to Stripe checkout
-      window.location.href = url;
+      if (data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'No checkout URL received');
+      }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Failed to start checkout. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start checkout';
+      alert(`Checkout error: ${errorMessage}`);
       setIsCheckingOut(false);
     }
   };
