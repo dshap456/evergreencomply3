@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createBillingGatewayService } from '@kit/billing-gateway';
 import { z } from 'zod';
-import billingConfig from '~/config/billing.config';
+import Stripe from 'stripe';
 
 // Map cart IDs to billing config IDs
 const COURSE_MAPPING = {
   'dot-hazmat-general': 'dot-hazmat',
   'dot-hazmat-advanced': 'advanced-hazmat',
   'epa-rcra': 'epa-rcra',
-};
+} as const;
 
 // Validation schema
 const CheckoutSchema = z.object({
@@ -30,44 +29,54 @@ export async function POST(request: NextRequest) {
     
     const { cartItems } = result.data;
 
-    // For now, we'll use individual pricing for all purchases
-    // Later you can add logic to determine team vs individual
-    const lineItems = cartItems.map((item: any) => {
-      const billingProductId = COURSE_MAPPING[item.courseId as keyof typeof COURSE_MAPPING];
-      const product = billingConfig.products.find(p => p.id === billingProductId);
-      
-      if (!product) {
-        throw new Error(`Product not found: ${item.courseId}`);
-      }
-
-      // Use individual plan for now
-      const plan = product.plans.find(p => p.id.includes('individual'));
-      if (!plan) {
-        throw new Error(`Individual plan not found for: ${product.id}`);
-      }
-
-      return {
-        price: plan.lineItems[0].id, // Stripe price ID
-        quantity: item.quantity,
-      };
+    // Initialize Stripe
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2025-06-30.basil',
     });
 
-    // Log the line items for debugging
-    console.log('Creating checkout with line items:', JSON.stringify(lineItems, null, 2));
+    // Build line items for Stripe
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     
-    // Create Stripe checkout session
-    const billingGateway = createBillingGatewayService('stripe');
-    
-    const session = await billingGateway.createCheckoutSession({
-      lineItems,
-      mode: 'payment', // one-time payment
-      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/cart`,
+    for (const item of cartItems) {
+      const courseId = item.courseId as keyof typeof COURSE_MAPPING;
+      
+      // Map to the correct price ID based on course
+      let priceId: string;
+      switch (courseId) {
+        case 'dot-hazmat-general':
+          priceId = 'price_1RsDQh97cNCBYOcXZBML0Cwf';
+          break;
+        case 'dot-hazmat-advanced':
+          priceId = 'price_1RsDev97cNCBYOcX008NiFR8';
+          break;
+        case 'epa-rcra':
+          priceId = 'price_1RsDf697cNCBYOcXkMlo2mPt';
+          break;
+        default:
+          throw new Error(`Unknown course: ${item.courseId}`);
+      }
+
+      lineItems.push({
+        price: priceId,
+        quantity: item.quantity,
+      });
+    }
+
+    console.log('Creating Stripe checkout with line items:', lineItems);
+
+    // Create Stripe checkout session directly
+    const session = await stripe.checkout.sessions.create({
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/cart`,
       metadata: {
         type: 'training-purchase',
         items: JSON.stringify(cartItems),
       },
     });
+
+    console.log('Checkout session created:', session.id);
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
