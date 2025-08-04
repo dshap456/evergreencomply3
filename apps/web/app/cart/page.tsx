@@ -9,26 +9,26 @@ import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../_components/custom-icons';
 
-// Hardcoded available courses
+// Hardcoded available courses - $1 for testing
 const AVAILABLE_COURSES = [
   {
     id: 'dot-hazmat-general',
     name: 'DOT HAZMAT - General Awareness',
-    price: 79,
+    price: 1, // $1 for testing
     duration: '3-year certification',
     slug: 'dot-hazmat',
   },
   {
     id: 'dot-hazmat-advanced',
     name: 'DOT HAZMAT - Advanced Awareness',
-    price: 179,
+    price: 1, // $1 for testing
     duration: '3-year certification',
     slug: 'advanced-hazmat',
   },
   {
     id: 'epa-rcra',
     name: 'EPA RCRA Hazardous Waste - Annual',
-    price: 129,
+    price: 1, // $1 for testing
     duration: '1-year certification',
     slug: 'epa-rcra',
   }
@@ -42,6 +42,7 @@ interface CartItem {
 function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -102,6 +103,32 @@ function CartPage() {
 
   const getTotalSeats = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const handleCheckout = async () => {
+    setIsCheckingOut(true);
+    try {
+      const response = await fetch('/api/checkout/training', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cartItems }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Checkout failed');
+      }
+
+      const { url } = await response.json();
+      
+      // Redirect to Stripe checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Failed to start checkout. Please try again.');
+      setIsCheckingOut(false);
+    }
   };
 
   if (isLoading) {
@@ -265,10 +292,11 @@ function CartPage() {
 
                   <Button 
                     className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] h-9 md:h-10" 
-                    disabled={cartItems.length === 0}
+                    disabled={cartItems.length === 0 || isCheckingOut}
+                    onClick={handleCheckout}
                   >
                     <ShoppingCart className="h-4 w-4 mr-1" />
-                    Checkout
+                    {isCheckingOut ? 'Processing...' : 'Checkout'}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
