@@ -70,6 +70,13 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/cart`,
+      customer_email: undefined, // Let Stripe collect the email
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          description: 'Evergreen Comply Training Course(s)',
+        },
+      },
       metadata: {
         type: 'training-purchase',
         items: JSON.stringify(cartItems),
