@@ -25,6 +25,8 @@ export async function GET() {
             unitAmount: price.unit_amount,
             currency: price.currency,
             productId: price.product,
+            type: price.type,
+            recurring: price.recurring,
           };
         } catch (error) {
           return {
