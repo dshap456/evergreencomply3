@@ -116,11 +116,11 @@ function CartPage() {
         body: JSON.stringify({ cartItems }),
       });
 
-      if (!response.ok) {
-        throw new Error('Checkout failed');
-      }
-
       const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Checkout failed');
+      }
       
       if (data.url) {
         // Redirect to Stripe checkout
