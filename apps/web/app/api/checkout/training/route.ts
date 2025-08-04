@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
       };
     });
 
+    // Log the line items for debugging
+    console.log('Creating checkout with line items:', JSON.stringify(lineItems, null, 2));
+    
     // Create Stripe checkout session
     const billingGateway = createBillingGatewayService('stripe');
     
