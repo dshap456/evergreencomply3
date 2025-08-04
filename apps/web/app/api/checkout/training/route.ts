@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
     const session = await billingGateway.createCheckoutSession({
       lineItems,
       mode: 'payment', // one-time payment
-      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/cart`,
+      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/cart`,
       metadata: {
         type: 'training-purchase',
         items: JSON.stringify(cartItems),
