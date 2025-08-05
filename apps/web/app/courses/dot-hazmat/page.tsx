@@ -31,6 +31,7 @@ import {
 import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { CustomShieldIcon } from '../../_components/custom-icons';
+import { AddToCartButton } from '../../_components/add-to-cart-button';
 
 function DOTHazmatGeneralPage() {
   return (
@@ -135,14 +136,12 @@ function DOTHazmatGeneralPage() {
                   </div>
                 </div>
                 <div className="pt-4">
-                  <Link href="/cart">
-                    <Button
-                      size="lg"
-                      className="w-full sm:w-auto bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
-                    >
-                      Buy Seats - $79 per seat
-                    </Button>
-                  </Link>
+                  <AddToCartButton
+                    courseId="dot-hazmat-general"
+                    price={79}
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  />
                 </div>
               </div>
               <div className="relative h-64 md:h-full w-full overflow-hidden rounded-lg shadow-lg">
@@ -259,11 +258,14 @@ function DOTHazmatGeneralPage() {
                         <span className="font-medium">24/7 access</span>
                       </div>
                     </div>
-                    <Link href="/cart" className="block w-full mt-2">
-                      <Button size="lg" className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]">
-                        Buy Seats
-                      </Button>
-                    </Link>
+                    <AddToCartButton
+                      courseId="dot-hazmat-general"
+                      price={79}
+                      size="lg"
+                      className="w-full mt-2"
+                    >
+                      Buy Seats
+                    </AddToCartButton>
                   </CardContent>
                 </Card>
 
