@@ -23,7 +23,7 @@ import { useTeamAccountWorkspace } from '@kit/team-accounts/hooks/use-team-accou
 
 import { InviteToCourseDialog } from './invite-to-course-dialog';
 import { TeamEnrollmentsDialog } from './team-enrollments-dialog';
-import { AddToCartButton } from '../../../../_components/add-to-cart-button';
+import { AddToCartButton } from '../../../../../_components/add-to-cart-button';
 
 interface CourseSeatData {
   course_id: string;
