@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 interface RouteContext {
@@ -16,16 +17,17 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
     }
 
-    console.log('🔧 Creating client...');
-    const client = getSupabaseServerClient();
-    console.log('✅ Client created');
-
-    // Check if user is authenticated
-    const { data: { user } } = await client.auth.getUser();
+    // Check if user is authenticated first
+    const authClient = getSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       console.error('❌ User not authenticated');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    console.log('🔧 Creating admin client...');
+    const client = getSupabaseServerAdminClient();
+    console.log('✅ Admin client created');
 
     // Load course data - RLS will handle permissions
     const { data: course, error: courseError } = await client
@@ -69,7 +71,8 @@ export async function GET(request: Request, context: RouteContext) {
     // Transform course data to match the expected interface
     const transformedCourse = {
       ...course,
-      status: (course.is_published ? 'published' : 'draft') as 'draft' | 'published' | 'archived',
+      // Use the actual status field from the database - no transformation needed
+      status: course.status as 'draft' | 'published' | 'archived',
       version: '1.0', // Default version
       lessons_count: formattedModules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0),
       enrollments_count: 0, // Would need a separate query for accurate count
@@ -94,13 +97,16 @@ export async function GET(request: Request, context: RouteContext) {
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { courseId } = await context.params;
-    const client = getSupabaseServerClient();
     
-    // Check if user is authenticated
-    const { data: { user } } = await client.auth.getUser();
+    // Check if user is authenticated first
+    const authClient = getSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    // Use admin client for consistency
+    const client = getSupabaseServerAdminClient();
     
     const body = await request.json();
 
