@@ -183,9 +183,16 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
       
       console.log('✅ CourseEditor: Save result:', result);
       
-      toast.success('Course saved successfully');
-      setIsDirty(false);
-      onSave(courseData);
+      if (result.success && result.updatedCourse) {
+        // Update local state with the server response
+        setCourseData(result.updatedCourse);
+        toast.success('Course saved successfully');
+        setIsDirty(false);
+        // Pass the updated course data from server
+        onSave(result.updatedCourse);
+      } else {
+        throw new Error('Update succeeded but no data returned');
+      }
     } catch (error) {
       console.error('❌ CourseEditor: Failed to save course:', error);
       toast.error(`Failed to save course: ${error.message || 'Unknown error'}`);
@@ -205,24 +212,25 @@ export function CourseEditor({ course, onBack, onSave }: CourseEditorProps) {
       });
       
       // Update course status to published and save all changes
-      const updatedCourse = {
-        ...courseData,
-        status: 'published' as const
-      };
-      
       const result = await updateCourseAction({
-        id: updatedCourse.id,
-        title: updatedCourse.title,
-        description: updatedCourse.description,
-        status: updatedCourse.status,
+        id: courseData.id,
+        title: courseData.title,
+        description: courseData.description,
+        status: 'published' as const,
       });
       
       console.log('✅ CourseEditor: Publish result:', result);
       
-      toast.success('Course published successfully');
-      setCourseData(updatedCourse);
-      setIsDirty(false);
-      onSave(updatedCourse);
+      if (result.success && result.updatedCourse) {
+        // Update local state with the server response
+        setCourseData(result.updatedCourse);
+        toast.success('Course published successfully');
+        setIsDirty(false);
+        // Pass the updated course data from server
+        onSave(result.updatedCourse);
+      } else {
+        throw new Error('Publish succeeded but no data returned');
+      }
     } catch (error) {
       console.error('❌ CourseEditor: Failed to publish course:', error);
       toast.error(`Failed to publish course: ${error.message || 'Unknown error'}`);

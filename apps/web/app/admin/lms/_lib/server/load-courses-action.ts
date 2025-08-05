@@ -92,11 +92,9 @@ export const loadCoursesAction = enhanceAction(
     console.log('🚀 LoadCoursesAction: Action called');
     console.log('👤 LoadCoursesAction: Called by user:', user?.id);
     
-    // Since this is in the admin panel, we know the user is authenticated and a super admin
-    // We'll use the regular client which will have the user context, allowing RLS policies
-    // that check for super admin status to work properly
-    const client = getSupabaseServerClient();
-    console.log('✅ LoadCoursesAction: Using authenticated client for super admin access');
+    // Use admin client to bypass RLS for consistent behavior with updateCourseAction
+    const client = getSupabaseServerAdminClient();
+    console.log('✅ LoadCoursesAction: Using admin client to bypass RLS');
 
     console.log('🔍 LoadCoursesAction: Starting to load courses from database...');
 

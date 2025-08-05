@@ -29,11 +29,16 @@ export const updateCourseAction = enhanceAction(
         userId: user?.id 
       });
 
+      // Validate required fields
+      if (!data.id) {
+        throw new Error('Course ID is required for update');
+      }
+
       // First, verify the course exists and get current state
       const { data: currentCourse, error: fetchError } = await client
         .from('courses')
         .select('*')
-        .eq('id', data.id!)
+        .eq('id', data.id)
         .single();
 
       if (fetchError || !currentCourse) {
@@ -41,26 +46,53 @@ export const updateCourseAction = enhanceAction(
         throw new Error(`Course not found: ${fetchError?.message || 'Unknown error'}`);
       }
 
-      console.log('📋 UpdateCourseAction: Current course state:', currentCourse);
+      console.log('📋 UpdateCourseAction: Current course state:', {
+        id: currentCourse.id,
+        title: currentCourse.title,
+        status: currentCourse.status,
+        account_id: currentCourse.account_id
+      });
 
       // Use data transformer for safe conversion
       const updateData = CourseTransformer.toDatabase(data);
       
-      console.log('🔄 UpdateCourseAction: Transformed data:', updateData);
+      // Ensure we're not trying to update protected fields
+      delete (updateData as any).id;
+      delete (updateData as any).account_id;
+      delete (updateData as any).created_at;
+      
+      console.log('🔄 UpdateCourseAction: Transformed data for update:', updateData);
 
+      // Perform the update
       const { error, data: updateResult } = await client
         .from('courses')
         .update(updateData)
-        .eq('id', data.id!)
-        .select();
+        .eq('id', data.id)
+        .select()
+        .single();
 
       if (error) {
-        console.error('❌ UpdateCourseAction: Failed to update course:', error);
+        console.error('❌ UpdateCourseAction: Database update failed:', {
+          error: error,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          message: error.message
+        });
         throw new Error(`Failed to update course: ${error.message}`);
       }
 
+      if (!updateResult) {
+        throw new Error('No data returned from update operation');
+      }
+
       console.log('✅ UpdateCourseAction: Course updated successfully');
-      console.log('📊 UpdateCourseAction: Update result:', updateResult);
+      console.log('📊 UpdateCourseAction: Update result:', {
+        id: updateResult.id,
+        title: updateResult.title,
+        status: updateResult.status,
+        updated_at: updateResult.updated_at
+      });
       
       // Revalidate the admin LMS pages to refresh cached data
       revalidatePath('/admin/lms');
@@ -68,9 +100,10 @@ export const updateCourseAction = enhanceAction(
       
       return { 
         success: true, 
-        updatedCourse: updateResult?.[0] ? CourseTransformer.toUI(updateResult[0]) : undefined 
+        updatedCourse: CourseTransformer.toUI(updateResult)
       };
     } catch (error) {
+      console.error('❌ UpdateCourseAction: Unhandled error:', error);
       handleTransformationError(error as Error, 'updateCourseAction');
       throw error;
     }
