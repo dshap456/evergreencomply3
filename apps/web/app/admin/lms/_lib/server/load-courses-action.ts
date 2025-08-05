@@ -57,11 +57,27 @@ async function formatCourses(courses: any[], client: any) {
 
   // Format the courses data with better type safety and logging
   const formattedCourses = courses?.map(course => {
+    // Determine status based on available fields
+    let courseStatus: 'draft' | 'published' | 'archived';
+    
+    if (course.status) {
+      // New schema with status enum
+      courseStatus = course.status as 'draft' | 'published' | 'archived';
+    } else if (course.is_published !== undefined) {
+      // Old schema with is_published boolean
+      courseStatus = course.is_published ? 'published' : 'draft';
+    } else {
+      // Fallback
+      courseStatus = 'draft';
+    }
+    
     // Log each course to debug potential issues
     console.log('🔍 formatCourses: Processing course:', {
       id: course.id,
       title: course.title,
-      status: course.status,
+      status: courseStatus,
+      originalStatus: course.status,
+      isPublished: course.is_published,
       hasDescription: !!course.description,
       descriptionLength: course.description?.length || 0
     });
@@ -70,7 +86,7 @@ async function formatCourses(courses: any[], client: any) {
       id: course.id,
       title: course.title,
       description: course.description || '',
-      status: course.status as 'draft' | 'published' | 'archived',
+      status: courseStatus,
       lessons_count: lessonCounts[course.id] || 0,
       enrollments_count: enrollmentCounts[course.id] || 0,
       created_at: course.created_at,
@@ -136,7 +152,7 @@ export const loadCoursesAction = enhanceAction(
     
     const { data: courses, error: coursesError } = await client
       .from('courses')
-      .select('id, title, description, status, created_at, updated_at, account_id')
+      .select('id, title, description, status, is_published, created_at, updated_at, account_id')
       .order('created_at', { ascending: false });
 
     if (coursesError) {
