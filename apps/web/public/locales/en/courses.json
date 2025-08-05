@@ -113,6 +113,7 @@
   "seatManagementDescription": "Manage course seats and invite team members",
   "courseSeatOverview": "Course Seat Overview",
   "noCoursesWithSeats": "No courses with purchased seats yet",
+  "noPublishedCourses": "No published courses available",
   "courseName": "Course Name",
   "totalSeats": "Total Seats",
   "usedSeats": "Used Seats",

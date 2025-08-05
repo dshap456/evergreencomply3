@@ -31,6 +31,7 @@ interface CourseSeatData {
   total_seats: number;
   used_seats: number;
   available_seats: number;
+  is_purchased: boolean;
 }
 
 export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
@@ -55,7 +56,23 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
     queryKey: ['course-seats', account.id],
     queryFn: async () => {
       try {
-        // Get all courses with seat information
+        // First, get ALL published courses
+        const { data: allCourses, error: coursesError } = await supabase
+          .from('courses')
+          .select('id, title, status')
+          .eq('is_published', true)
+          .order('title');
+
+        if (coursesError) {
+          console.error('Error fetching courses:', coursesError);
+          throw coursesError;
+        }
+
+        if (!allCourses || allCourses.length === 0) {
+          return [];
+        }
+
+        // Get purchased seats for this account
         const { data: seats, error: seatsError } = await supabase
           .from('course_seats')
           .select(`
@@ -70,71 +87,57 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
           throw seatsError;
         }
 
-      // Get course details
-      const courseIds = seats?.map(s => s.course_id) || [];
-      
-      // If no course seats, return empty array
-      if (courseIds.length === 0) {
-        return [];
-      }
+        // Create a map of purchased seats
+        const seatsMap = seats?.reduce((acc, seat) => {
+          acc[seat.course_id] = seat;
+          return acc;
+        }, {} as Record<string, typeof seats[0]>) || {};
 
-      const { data: courses, error: coursesError } = await supabase
-        .from('courses')
-        .select('id, title, status')
-        .in('id', courseIds);
+        // Get enrollment counts for all courses
+        const { data: enrollments, error: enrollError } = await supabase
+          .from('course_enrollments')
+          .select('course_id')
+          .eq('account_id', account.id);
 
-      if (coursesError) throw coursesError;
+        if (enrollError) throw enrollError;
 
-      // Get enrollment counts for each course
-      const { data: enrollments, error: enrollError } = await supabase
-        .from('course_enrollments')
-        .select('course_id')
-        .eq('account_id', account.id)
-        .in('course_id', courseIds);
+        // Get pending invitations count for all courses
+        const { data: invitations, error: inviteError } = await supabase
+          .from('course_invitations')
+          .select('course_id')
+          .eq('account_id', account.id)
+          .is('accepted_at', null);
 
-      if (enrollError) throw enrollError;
+        if (inviteError) throw inviteError;
 
-      // Get pending invitations count for each course
-      const { data: invitations, error: inviteError } = await supabase
-        .from('course_invitations')
-        .select('course_id')
-        .eq('account_id', account.id)
-        .in('course_id', courseIds)
-        .is('accepted_at', null);
+        // Calculate used seats per course (enrolled + pending invites)
+        const enrollmentMap = enrollments?.reduce((acc, enrollment) => {
+          acc[enrollment.course_id] = (acc[enrollment.course_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>) || {};
 
-      if (inviteError) throw inviteError;
+        const invitationMap = invitations?.reduce((acc, invitation) => {
+          acc[invitation.course_id] = (acc[invitation.course_id] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>) || {};
 
-      // Calculate used seats per course (enrolled + pending invites)
-      const enrollmentMap = enrollments?.reduce((acc, enrollment) => {
-        acc[enrollment.course_id] = (acc[enrollment.course_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
+        // Map all courses with their seat information
+        return allCourses.map(course => {
+          const seatInfo = seatsMap[course.id];
+          const enrolledCount = enrollmentMap[course.id] || 0;
+          const invitedCount = invitationMap[course.id] || 0;
+          const usedSeats = enrolledCount + invitedCount;
+          const totalSeats = seatInfo?.total_seats || 0;
 
-      const invitationMap = invitations?.reduce((acc, invitation) => {
-        acc[invitation.course_id] = (acc[invitation.course_id] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      // Combine enrolled and pending counts
-      const usedSeatsMap = courseIds.reduce((acc, courseId) => {
-        acc[courseId] = (enrollmentMap[courseId] || 0) + (invitationMap[courseId] || 0);
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Create a map of course data for easy lookup
-      const courseMap = courses?.reduce((acc, course) => {
-        acc[course.id] = course;
-        return acc;
-      }, {} as Record<string, typeof courses[0]>) || {};
-
-        // Combine data
-        return seats?.map(seat => ({
-          course_id: seat.course_id,
-          course_title: courseMap[seat.course_id]?.title || 'Unknown Course',
-          total_seats: seat.total_seats,
-          used_seats: usedSeatsMap[seat.course_id] || 0,
-          available_seats: seat.total_seats - (usedSeatsMap[seat.course_id] || 0),
-        })) || [];
+          return {
+            course_id: course.id,
+            course_title: course.title,
+            total_seats: totalSeats,
+            used_seats: usedSeats,
+            available_seats: totalSeats - usedSeats,
+            is_purchased: !!seatInfo,
+          };
+        });
       } catch (error) {
         console.error('Error in course seat query:', error);
         throw error;
@@ -170,7 +173,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
           <If condition={isLoading} fallback={
             <If condition={!courseSeatData || courseSeatData.length === 0}>
               <div className="text-center py-8 text-muted-foreground">
-                <Trans i18nKey="courses:noCoursesWithSeats" />
+                <Trans i18nKey="courses:noPublishedCourses" />
               </div>
             </If>
           }>
@@ -194,39 +197,49 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                 {courseSeatData?.map((course) => (
                   <TableRow key={course.course_id}>
                     <TableCell className="font-medium">{course.course_title}</TableCell>
-                    <TableCell className="text-center">{course.total_seats}</TableCell>
-                    <TableCell className="text-center">{course.used_seats}</TableCell>
                     <TableCell className="text-center">
-                      <Badge 
-                        variant={course.available_seats > 0 ? 'default' : 'secondary'}
-                        className={course.available_seats > 0 ? 'bg-green-600 hover:bg-green-700' : ''}
-                      >
-                        {course.available_seats}
-                      </Badge>
+                      {course.is_purchased ? course.total_seats : '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {course.is_purchased ? course.used_seats : '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {course.is_purchased ? (
+                        <Badge 
+                          variant={course.available_seats > 0 ? 'default' : 'secondary'}
+                          className={course.available_seats > 0 ? 'bg-green-600 hover:bg-green-700' : ''}
+                        >
+                          {course.available_seats}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Not Purchased</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-2 lg:flex-row lg:justify-end">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleUpdateSeats(course)}
-                          className="w-full lg:w-auto"
-                        >
-                          <Trans i18nKey="courses:updateSeats" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleViewEnrollments(course)}
-                          className="w-full lg:w-auto"
-                        >
-                          <Trans i18nKey="courses:viewEnrollments" />
-                        </Button>
+                        <If condition={course.is_purchased}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleUpdateSeats(course)}
+                            className="w-full lg:w-auto"
+                          >
+                            <Trans i18nKey="courses:updateSeats" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleViewEnrollments(course)}
+                            className="w-full lg:w-auto"
+                          >
+                            <Trans i18nKey="courses:viewEnrollments" />
+                          </Button>
+                        </If>
                         <Button
                           size="sm"
                           onClick={() => handleInvite(course)}
-                          disabled={course.available_seats <= 0}
-                          className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+                          disabled={!course.is_purchased || course.available_seats <= 0}
+                          className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                           <Trans i18nKey="courses:inviteMember" />
                         </Button>
