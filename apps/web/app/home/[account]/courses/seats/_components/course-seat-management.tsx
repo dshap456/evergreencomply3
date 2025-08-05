@@ -60,7 +60,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         const { data: allCourses, error: coursesError } = await supabase
           .from('courses')
           .select('id, title, status')
-          .eq('is_published', true)
+          .eq('status', 'published')
           .order('title');
 
         if (coursesError) {
