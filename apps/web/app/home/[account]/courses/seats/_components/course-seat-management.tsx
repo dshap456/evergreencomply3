@@ -23,7 +23,7 @@ import { useTeamAccountWorkspace } from '@kit/team-accounts/hooks/use-team-accou
 
 import { InviteToCourseDialog } from './invite-to-course-dialog';
 import { TeamEnrollmentsDialog } from './team-enrollments-dialog';
-import { UpdateSeatsDialog } from './update-seats-dialog';
+import { AddToCartButton } from '~/app/_components/add-to-cart-button';
 
 interface CourseSeatData {
   course_id: string;
@@ -41,7 +41,6 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
   const [selectedCourse, setSelectedCourse] = useState<CourseSeatData | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showEnrollmentsDialog, setShowEnrollmentsDialog] = useState(false);
-  const [showUpdateSeatsDialog, setShowUpdateSeatsDialog] = useState(false);
 
   // Early return if account is not loaded
   if (!account?.id) {
@@ -156,11 +155,6 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
     setShowEnrollmentsDialog(true);
   };
 
-  const handleUpdateSeats = (course: CourseSeatData) => {
-    setSelectedCourse(course);
-    setShowUpdateSeatsDialog(true);
-  };
-
   return (
     <div className="space-y-6">
       <Card>
@@ -218,14 +212,13 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                     <TableCell>
                       <div className="flex flex-col gap-2 lg:flex-row lg:justify-end">
                         <If condition={course.is_purchased}>
-                          <Button
+                          <AddToCartButton
+                            courseId={course.course_id}
                             size="sm"
-                            variant="outline"
-                            onClick={() => handleUpdateSeats(course)}
                             className="w-full lg:w-auto"
                           >
-                            <Trans i18nKey="courses:updateSeats" />
-                          </Button>
+                            <Trans i18nKey="courses:buyMoreSeats" />
+                          </AddToCartButton>
                           <Button
                             size="sm"
                             variant="secondary"
@@ -234,15 +227,24 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                           >
                             <Trans i18nKey="courses:viewEnrollments" />
                           </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleInvite(course)}
+                            disabled={course.available_seats <= 0}
+                            className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          >
+                            <Trans i18nKey="courses:inviteMember" />
+                          </Button>
                         </If>
-                        <Button
-                          size="sm"
-                          onClick={() => handleInvite(course)}
-                          disabled={!course.is_purchased || course.available_seats <= 0}
-                          className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        >
-                          <Trans i18nKey="courses:inviteMember" />
-                        </Button>
+                        <If condition={!course.is_purchased}>
+                          <AddToCartButton
+                            courseId={course.course_id}
+                            size="sm"
+                            className="w-full lg:w-auto"
+                          >
+                            <Trans i18nKey="courses:purchaseSeats" />
+                          </AddToCartButton>
+                        </If>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -268,14 +270,6 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
           course={selectedCourse!}
           accountId={account.id}
           onUpdate={() => refetch()}
-        />
-
-        <UpdateSeatsDialog
-          open={showUpdateSeatsDialog}
-          onOpenChange={setShowUpdateSeatsDialog}
-          course={selectedCourse!}
-          accountId={account.id}
-          onSuccess={() => refetch()}
         />
       </If>
     </div>
