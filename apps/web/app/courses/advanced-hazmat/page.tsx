@@ -193,10 +193,10 @@ function DOTHazmatAdvancedPage() {
                     {targetAudience.map((audience, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg border border-primary/20 hover:border-primary/30 transition-colors"
+                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-[rgba(233,195,81,0.05)] to-[rgba(233,195,81,0.15)] rounded-lg border border-[rgba(233,195,81,0.3)] hover:border-[rgba(233,195,81,0.5)] transition-all hover:shadow-md"
                       >
-                        <div className="bg-primary/20 p-2 rounded-full">
-                          <Users className="h-5 w-5 text-primary flex-shrink-0" />
+                        <div className="bg-[rgba(233,195,81,0.3)] p-2 rounded-full">
+                          <Users className="h-5 w-5 text-[rgba(233,195,81,1)] flex-shrink-0" />
                         </div>
                         <span className="font-medium text-foreground">{audience}</span>
                       </div>
