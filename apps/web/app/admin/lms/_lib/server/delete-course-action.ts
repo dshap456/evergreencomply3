@@ -14,7 +14,6 @@ export const deleteCourseAction = enhanceAction(
     
     console.log('🗑️ Deleting course:', data.courseId);
     
-    // Start a transaction to delete the course and all related data
     try {
       // Check if course has active enrollments
       const { count: enrollmentCount } = await client
@@ -26,76 +25,13 @@ export const deleteCourseAction = enhanceAction(
         throw new Error(`Cannot delete course with ${enrollmentCount} active enrollments. Please remove all enrollments first.`);
       }
       
-      // Delete in order of dependencies (reverse of foreign key relationships)
+      // Since all foreign keys have ON DELETE CASCADE, we can simply delete the course
+      // and let the database handle cascading deletes for related tables:
+      // - course_modules (and their lessons, quiz_questions, video_metadata)
+      // - course_seats
+      // - course_invitations
+      // - course_completions
       
-      // 1. Delete quiz questions (if any)
-      const { error: quizError } = await client
-        .from('quiz_questions')
-        .delete()
-        .in('lesson_id', 
-          client
-            .from('lessons')
-            .select('id')
-            .in('module_id', 
-              client
-                .from('course_modules')
-                .select('id')
-                .eq('course_id', data.courseId)
-            )
-        );
-      
-      if (quizError) {
-        console.error('Error deleting quiz questions:', quizError);
-      }
-      
-      // 2. Delete video metadata
-      const { error: videoError } = await client
-        .from('video_metadata')
-        .delete()
-        .in('lesson_id',
-          client
-            .from('lessons')
-            .select('id')
-            .in('module_id',
-              client
-                .from('course_modules')
-                .select('id')
-                .eq('course_id', data.courseId)
-            )
-        );
-      
-      if (videoError) {
-        console.error('Error deleting video metadata:', videoError);
-      }
-      
-      // 3. Delete lessons
-      const { error: lessonsError } = await client
-        .from('lessons')
-        .delete()
-        .in('module_id',
-          client
-            .from('course_modules')
-            .select('id')
-            .eq('course_id', data.courseId)
-        );
-      
-      if (lessonsError) {
-        console.error('Error deleting lessons:', lessonsError);
-        throw new Error('Failed to delete course lessons');
-      }
-      
-      // 4. Delete modules
-      const { error: modulesError } = await client
-        .from('course_modules')
-        .delete()
-        .eq('course_id', data.courseId);
-      
-      if (modulesError) {
-        console.error('Error deleting modules:', modulesError);
-        throw new Error('Failed to delete course modules');
-      }
-      
-      // 5. Finally, delete the course itself
       const { error: courseError } = await client
         .from('courses')
         .delete()
@@ -103,7 +39,7 @@ export const deleteCourseAction = enhanceAction(
       
       if (courseError) {
         console.error('Error deleting course:', courseError);
-        throw new Error('Failed to delete course');
+        throw new Error(`Failed to delete course: ${courseError.message}`);
       }
       
       console.log('✅ Course deleted successfully');
