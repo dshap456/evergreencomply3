@@ -189,10 +189,10 @@ function EPARCRAPage() {
                     {targetAudience.map((audience, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-muted"
+                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-secondary/5 to-secondary/10 rounded-lg border border-secondary/20 hover:border-secondary/30 transition-colors"
                       >
-                        <div className="bg-primary/10 p-2 rounded-full">
-                          <Users className="h-5 w-5 text-primary flex-shrink-0" />
+                        <div className="bg-secondary/20 p-2 rounded-full">
+                          <Users className="h-5 w-5 text-secondary flex-shrink-0" />
                         </div>
                         <span className="font-medium text-foreground">{audience}</span>
                       </div>
