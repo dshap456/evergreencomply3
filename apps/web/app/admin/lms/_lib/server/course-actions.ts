@@ -140,7 +140,7 @@ export const createCourseAction = enhanceAction(
         account_id: userAccountId,
         title: data.title,
         description: data.description,
-        is_published: false,
+        status: 'draft',
       })
       .select()
       .single();

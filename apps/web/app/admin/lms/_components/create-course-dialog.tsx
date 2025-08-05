@@ -100,7 +100,7 @@ export function CreateCourseDialog({
           // Format the course for the UI with additional fields
           const formattedCourse = {
             ...result.course,
-            status: result.course.is_published ? 'published' : 'draft',
+            status: result.course.status || 'draft',
             lessons_count: 0,
             enrollments_count: 0,
             category: data.category,
