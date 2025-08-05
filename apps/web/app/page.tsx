@@ -15,7 +15,8 @@ import {
 
 import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
-import { CustomShieldIcon, CustomSmartphoneIcon, CustomGlobeIcon, CustomAwardIcon } from './_components/custom-icons';
+import { CustomShieldIcon, CustomSmartphoneIcon, CustomAwardIcon } from './_components/custom-icons';
+import { Globe } from 'lucide-react';
 
 function Home() {
   return (
@@ -146,7 +147,7 @@ function Home() {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
-                      <CustomGlobeIcon className="h-10 w-10 transition-transform duration-300 group-hover:scale-110" />
+                      <Globe className="h-10 w-10 text-[rgba(233,195,81,1)] transition-transform duration-300 group-hover:scale-110" />
                     </div>
                     <div className="flex-1">
                       <CardTitle className="mb-2">Your Language</CardTitle>
