@@ -407,7 +407,7 @@ const courses = [
   {
     title: "EPA RCRA Hazardous Waste - Annual",
     slug: "epa-rcra",
-    description: "Annual certification for Large and Small Quantity Generators",
+    description: "Annual certification and compliance for large and small quantity generators",
     features: [
       "40 CFR §262.17(a)(7) compliant",
       "Hazardous waste identification and classification",
