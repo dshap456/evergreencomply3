@@ -12,6 +12,7 @@ const UpdateCourseSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
+  slug: z.string().optional(),
   status: z.enum([CourseStatus.DRAFT, CourseStatus.PUBLISHED, CourseStatus.ARCHIVED]).optional(),
   sku: z.string().optional(),
   price: z.number().min(0).optional(),

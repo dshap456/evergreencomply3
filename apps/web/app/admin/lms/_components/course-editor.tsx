@@ -27,6 +27,7 @@ interface Course {
   id: string;
   title: string;
   description: string;
+  slug?: string;
   status: 'draft' | 'published' | 'archived';
   lessons_count: number;
   enrollments_count: number;

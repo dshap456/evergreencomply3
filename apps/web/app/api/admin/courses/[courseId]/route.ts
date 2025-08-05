@@ -143,6 +143,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const updateData: any = {
       title: body.title,
       description: body.description,
+      slug: body.slug,
       updated_at: new Date().toISOString()
     };
 

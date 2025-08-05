@@ -52,6 +52,7 @@ interface Lesson {
 export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorProps) {
   const [title, setTitle] = useState(course?.title || '');
   const [description, setDescription] = useState(course?.description || '');
+  const [slug, setSlug] = useState(course?.slug || '');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState<Module[]>([]);
@@ -100,13 +101,13 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
       const response = await fetch(`/api/admin/courses/${course.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description })
+        body: JSON.stringify({ title, description, slug })
       });
 
       if (response.ok) {
         toast.success('Course updated successfully');
         if (onSave) {
-          onSave({ ...course, title, description });
+          onSave({ ...course, title, description, slug });
         }
       } else {
         toast.error('Failed to update course');
@@ -447,6 +448,24 @@ export function FullCourseEditor({ course, onBack, onSave }: FullCourseEditorPro
               placeholder="Enter course description"
               rows={3}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              URL Slug 
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (e.g., dot-hazmat-general)
+              </span>
+            </label>
+            <Input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+              placeholder="course-url-slug"
+              className="font-mono"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Course URL will be: /courses/{slug || 'course-url-slug'}
+            </p>
           </div>
 
           <div className="flex gap-4">

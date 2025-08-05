@@ -37,6 +37,7 @@ interface Course {
   id: string;
   title: string;
   description: string;
+  slug?: string;
   is_published: boolean;
   created_at: string;
   updated_at: string;
@@ -128,6 +129,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
+          slug: courseData.slug,
           status: courseData.is_published ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
         });
         
@@ -147,6 +149,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
+          slug: courseData.slug,
           status: CourseStatus.PUBLISHED,
         });
         
@@ -300,6 +303,26 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
                   }}
                   className="min-h-[100px]"
                 />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  URL Slug 
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    (e.g., dot-hazmat-general)
+                  </span>
+                </label>
+                <Input
+                  value={courseData.slug || ''}
+                  onChange={(e) => {
+                    setCourseData(prev => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }));
+                    setIsDirty(true);
+                  }}
+                  placeholder="course-url-slug"
+                  className="font-mono"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Course URL will be: /courses/{courseData.slug || 'course-url-slug'}
+                </p>
               </div>
             </CardContent>
           </Card>
