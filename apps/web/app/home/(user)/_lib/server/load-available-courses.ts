@@ -40,15 +40,32 @@ export async function loadAvailableCourses(): Promise<AvailableCourse[]> {
   const enrolledCourseIds = enrollments?.map(e => e.course_id) || [];
 
   // Get available courses (published but not enrolled)
+  // First, get all courses to check schema
+  const { data: sampleCourse } = await client
+    .from('courses')
+    .select('*')
+    .limit(1)
+    .single();
+  
+  const hasStatusColumn = sampleCourse && 'status' in sampleCourse && sampleCourse.status !== undefined;
+  
   let availableCoursesQuery = client
     .from('courses')
     .select(`
       id,
       title,
       description,
-      price
-    `)
-    .eq('status', 'published') as any;
+      price,
+      status,
+      is_published
+    `);
+  
+  // Filter by published status based on schema
+  if (hasStatusColumn) {
+    availableCoursesQuery = availableCoursesQuery.eq('status', 'published') as any;
+  } else {
+    availableCoursesQuery = availableCoursesQuery.eq('is_published', true) as any;
+  }
 
   // Only add the NOT IN clause if there are enrolled courses
   if (enrolledCourseIds.length > 0) {
