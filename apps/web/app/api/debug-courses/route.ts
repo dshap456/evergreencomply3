@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 export async function GET() {
-  const supabase = getSupabaseServerClient();
+  // Use admin client to see ALL courses regardless of account
+  const supabase = getSupabaseServerAdminClient();
   
   // Fetch all courses
   const { data: allCourses, error: allError } = await supabase
