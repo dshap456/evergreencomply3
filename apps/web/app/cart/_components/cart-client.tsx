@@ -47,7 +47,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
     }
     console.log('Available courses:', availableCourses);
     setIsLoading(false);
-  }, []);
+  }, [availableCourses]); // Add availableCourses as dependency
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
