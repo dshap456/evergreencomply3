@@ -137,7 +137,7 @@ function DOTHazmatGeneralPage() {
                 </div>
                 <div className="pt-4">
                   <AddToCartButton
-                    courseId="dot-hazmat-general"
+                    courseId="dot-hazmat"
                     price={79}
                     size="lg"
                     className="w-full sm:w-auto"
@@ -259,7 +259,7 @@ function DOTHazmatGeneralPage() {
                       </div>
                     </div>
                     <AddToCartButton
-                      courseId="dot-hazmat-general"
+                      courseId="dot-hazmat"
                       price={79}
                       size="lg"
                       className="w-full mt-2"

@@ -27,6 +27,7 @@ import { AddToCartButton } from '../../../../../_components/add-to-cart-button';
 
 interface CourseSeatData {
   course_id: string;
+  course_slug: string;
   course_title: string;
   total_seats: number;
   used_seats: number;
@@ -58,7 +59,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         // First, get ALL published courses
         const { data: allCourses, error: coursesError } = await supabase
           .from('courses')
-          .select('id, title, status')
+          .select('id, title, slug, status')
           .eq('status', 'published')
           .order('title');
 
@@ -130,6 +131,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
 
           return {
             course_id: course.id,
+            course_slug: course.slug,
             course_title: course.title,
             total_seats: totalSeats,
             used_seats: usedSeats,
@@ -213,7 +215,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                       <div className="flex flex-col gap-2 lg:flex-row lg:justify-end">
                         <If condition={course.is_purchased}>
                           <AddToCartButton
-                            courseId={course.course_id}
+                            courseId={course.course_slug}
                             size="sm"
                             className="w-full lg:w-auto"
                           >
@@ -238,7 +240,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
                         </If>
                         <If condition={!course.is_purchased}>
                           <AddToCartButton
-                            courseId={course.course_id}
+                            courseId={course.course_slug}
                             size="sm"
                             className="w-full lg:w-auto"
                           >

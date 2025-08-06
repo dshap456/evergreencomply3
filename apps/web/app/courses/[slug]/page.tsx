@@ -153,7 +153,7 @@ async function CoursePage({ params }: CoursePageProps) {
 
                 <div className="flex items-center gap-4 pt-4">
                   <AddToCartButton 
-                    courseId={course.id} 
+                    courseId={course.slug} 
                     price={Number(course.price)}
                     size="lg"
                   />
