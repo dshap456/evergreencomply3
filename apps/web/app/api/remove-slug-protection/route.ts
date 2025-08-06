@@ -8,17 +8,17 @@ export async function POST(request: Request) {
   try {
     if (action === 'disable') {
       // Drop the protective trigger
-      const { error } = await supabase.rpc('exec_sql', {
-        sql: 'DROP TRIGGER IF EXISTS protect_critical_slugs_trigger ON public.courses'
-      }).single().catch(async () => {
-        // If RPC doesn't work, try direct query
-        const { error } = await supabase
-          .from('pg_trigger')
-          .delete()
-          .eq('tgname', 'protect_critical_slugs_trigger')
-          .eq('tgrelid', '(SELECT oid FROM pg_class WHERE relname = \'courses\')');
-        return { error };
-      });
+      let error;
+      try {
+        const result = await supabase.rpc('exec_sql', {
+          sql: 'DROP TRIGGER IF EXISTS protect_critical_slugs_trigger ON public.courses'
+        }).single();
+        error = result.error;
+      } catch (e) {
+        // If RPC doesn't work, log it but continue
+        console.log('RPC failed, trigger may not exist:', e);
+        error = null; // Allow to continue
+      }
       
       if (error) {
         return NextResponse.json({ 

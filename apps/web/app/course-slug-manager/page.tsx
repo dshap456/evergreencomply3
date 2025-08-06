@@ -46,13 +46,13 @@ export default function CourseSlugManagerPage() {
     setUpdating(courseId);
     
     try {
-      // First try the force update endpoint
-      const res = await fetch('/api/force-update-course', {
+      // Use the direct update endpoint
+      const res = await fetch('/api/direct-course-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           courseId,
-          updates: { slug: newSlug }
+          slug: newSlug
         })
       });
       
@@ -64,44 +64,11 @@ export default function CourseSlugManagerPage() {
         setCourses(courses.map(c => 
           c.id === courseId ? { ...c, slug: newSlug } : c
         ));
+      } else if (data.hint?.includes('protected')) {
+        // If blocked by trigger, show specific message
+        toast.error('This slug is protected. Use the "Fix Cart Slugs" button to apply cart-compatible slugs.');
       } else {
-        // If that fails, try disabling protection and updating
-        console.log('Force update failed, trying with protection disabled...');
-        
-        // Disable protection
-        await fetch('/api/remove-slug-protection', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'disable' })
-        });
-        
-        // Try update again
-        const retryRes = await fetch('/api/force-update-course', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            courseId,
-            updates: { slug: newSlug }
-          })
-        });
-        
-        const retryData = await retryRes.json();
-        
-        // Re-enable protection
-        await fetch('/api/remove-slug-protection', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'enable' })
-        });
-        
-        if (retryData.success) {
-          toast.success('Slug updated (protection was temporarily disabled)');
-          setCourses(courses.map(c => 
-            c.id === courseId ? { ...c, slug: newSlug } : c
-          ));
-        } else {
-          toast.error('Failed to update slug: ' + (retryData.error || 'Unknown error'));
-        }
+        toast.error('Failed to update slug: ' + (data.error || 'Unknown error'));
       }
     } catch (error) {
       toast.error('Failed to update slug');

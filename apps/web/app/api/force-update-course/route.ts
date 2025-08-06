@@ -14,11 +14,13 @@ export async function POST(request: Request) {
     console.log('[Force Update] Attempting to update course:', courseId, 'with:', updates);
     
     // First, disable all triggers on the courses table
-    await supabase.rpc('exec_sql', {
-      sql: 'ALTER TABLE public.courses DISABLE TRIGGER ALL'
-    }).single().catch(() => {
-      console.log('Could not disable triggers (may not have permission)');
-    });
+    try {
+      await supabase.rpc('exec_sql', {
+        sql: 'ALTER TABLE public.courses DISABLE TRIGGER ALL'
+      }).single();
+    } catch (e) {
+      console.log('Could not disable triggers (may not have permission):', e);
+    }
     
     // Perform the update
     const { data, error } = await supabase
@@ -41,11 +43,13 @@ export async function POST(request: Request) {
     }
     
     // Re-enable triggers
-    await supabase.rpc('exec_sql', {
-      sql: 'ALTER TABLE public.courses ENABLE TRIGGER ALL'
-    }).single().catch(() => {
-      console.log('Could not re-enable triggers');
-    });
+    try {
+      await supabase.rpc('exec_sql', {
+        sql: 'ALTER TABLE public.courses ENABLE TRIGGER ALL'
+      }).single();
+    } catch (e) {
+      console.log('Could not re-enable triggers:', e);
+    }
     
     // Verify the update
     const { data: verified, error: verifyError } = await supabase
