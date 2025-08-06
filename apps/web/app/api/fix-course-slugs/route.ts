@@ -22,6 +22,12 @@ export async function GET() {
         title: 'DOT HAZMAT - Advanced Awareness',
         newSlug: 'advanced-hazmat',
         currentSlug: 'dot-hazmat---advanced-awareness'
+      },
+      {
+        id: 'f47ac10b-58cc-4372-a567-0e02b2c3d485',
+        title: 'DOT HAZMAT - 3',
+        newSlug: 'dot-hazmat',
+        currentSlug: 'dot-hazmat-3'
       }
     ];
     
