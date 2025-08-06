@@ -8,7 +8,7 @@ async function CartPage() {
   // Fetch all published courses
   const { data: courses, error } = await supabase
     .from('courses')
-    .select('id, title, slug, price, description, billing_product_id')
+    .select('id, title, slug, sku, price, description, billing_product_id')
     .eq('status', 'published')
     .order('title');
 
@@ -17,6 +17,7 @@ async function CartPage() {
   }
 
   console.log('Courses loaded from database:', courses);
+  console.log('Course slugs:', courses?.map(c => ({ id: c.id, slug: c.slug, title: c.title })));
 
   // Pass courses to client component
   return <CartClient availableCourses={courses || []} />;

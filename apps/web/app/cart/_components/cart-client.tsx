@@ -87,9 +87,13 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      // Find course by slug (which is what we store in the cart)
-      const course = availableCourses.find(c => c.slug === item.courseId);
-      console.log(`Looking for course with slug: ${item.courseId}`, course);
+      // Find course by slug, SKU, or ID
+      const course = availableCourses.find(c => 
+        c.slug === item.courseId || 
+        c.sku === item.courseId ||
+        c.id === item.courseId
+      );
+      console.log(`Looking for course with courseId: ${item.courseId}`, course);
       return total + (parseFloat(course?.price || '0') * item.quantity);
     }, 0);
   };
@@ -145,9 +149,22 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const total = subtotal + tax;
 
   // Filter cart items to only include courses that still exist
-  const validCartItems = cartItems.filter(item => 
-    availableCourses.some(course => course.slug === item.courseId)
-  );
+  const validCartItems = cartItems.filter(item => {
+    // Check by slug first, then by SKU, then by ID
+    const courseExists = availableCourses.some(course => 
+      course.slug === item.courseId || 
+      course.sku === item.courseId ||
+      course.id === item.courseId
+    );
+    console.log(`Checking cart item ${item.courseId}:`, courseExists);
+    console.log('Available courses:', availableCourses.map(c => ({ 
+      id: c.id, 
+      slug: c.slug, 
+      sku: c.sku,
+      title: c.title 
+    })));
+    return courseExists;
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -211,7 +228,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
             <div className="grid gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-4">
                 {validCartItems.map((item) => {
-                  const course = availableCourses.find(c => c.slug === item.courseId);
+                  const course = availableCourses.find(c => 
+                    c.slug === item.courseId || 
+                    c.sku === item.courseId ||
+                    c.id === item.courseId
+                  );
                   if (!course) return null;
                   
                   return (
