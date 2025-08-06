@@ -57,6 +57,7 @@ export interface DatabaseCourse {
   account_id: string;
   title: string;
   description: string | null;
+  slug: string | null;
   is_published?: boolean; // ⚠️ LEGACY: Boolean in old schema
   status?: keyof typeof CourseStatus; // NEW: Enum in updated schema
   sku: string | null;
@@ -146,6 +147,7 @@ export interface UICourse {
   account_id: string;
   title: string;
   description: string;
+  slug?: string;
   status: keyof typeof CourseStatus; // ⚠️ Enum in UI
   sku?: string;
   price?: number;

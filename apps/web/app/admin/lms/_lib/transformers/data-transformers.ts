@@ -35,6 +35,7 @@ export const CourseTransformer = {
         account_id: dbCourse.account_id,
         title: dbCourse.title,
         description: dbCourse.description || '',
+        slug: dbCourse.slug || undefined,
         status: uiStatus,
         sku: dbCourse.sku || undefined,
         price: dbCourse.price || undefined,
@@ -63,6 +64,7 @@ export const CourseTransformer = {
       // Only include fields that are actually present in the input
       if (uiCourse.title !== undefined) result.title = uiCourse.title;
       if (uiCourse.description !== undefined) result.description = uiCourse.description || null;
+      if (uiCourse.slug !== undefined) result.slug = uiCourse.slug || null;
       if (uiCourse.sku !== undefined) result.sku = uiCourse.sku || null;
       if (uiCourse.price !== undefined) result.price = uiCourse.price || null;
       if (uiCourse.sequential_completion !== undefined) result.sequential_completion = uiCourse.sequential_completion;
