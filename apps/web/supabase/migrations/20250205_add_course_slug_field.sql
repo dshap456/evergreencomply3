@@ -20,20 +20,20 @@ COMMENT ON COLUMN public.courses.slug IS 'URL-friendly identifier for the course
 -- These match the current frontend URLs
 UPDATE public.courses 
 SET slug = 'dot-hazmat' 
-WHERE status = 'published' 
+WHERE is_published = true 
   AND (title ILIKE '%DOT%' AND title ILIKE '%HAZMAT%' AND (title ILIKE '%General%' OR title ILIKE '%3%'))
   AND slug IS NULL;
 
 UPDATE public.courses 
 SET slug = 'advanced-hazmat' 
-WHERE status = 'published' 
+WHERE is_published = true 
   AND title ILIKE '%Advanced%' 
   AND title ILIKE '%HAZMAT%'
   AND slug IS NULL;
 
 UPDATE public.courses 
 SET slug = 'epa-rcra' 
-WHERE status = 'published' 
+WHERE is_published = true 
   AND title ILIKE '%EPA%' 
   AND title ILIKE '%RCRA%'
   AND slug IS NULL;

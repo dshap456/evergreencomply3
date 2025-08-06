@@ -14,7 +14,7 @@ export async function GET() {
   const { data: publishedCourses, error: pubError } = await supabase
     .from('courses')
     .select('*')
-    .eq('status', 'published');
+    .eq('is_published', true);
 
   return NextResponse.json({
     allCourses: allCourses || [],
@@ -28,13 +28,13 @@ export async function GET() {
         id: c.id, 
         title: c.title, 
         slug: c.slug, 
-        status: c.status,
+        is_published: c.is_published,
         sku: c.sku 
       })) || [],
       nullSlugs: allCourses?.filter(c => !c.slug).map(c => ({ 
         id: c.id, 
         title: c.title,
-        status: c.status 
+        is_published: c.is_published 
       })) || []
     }
   });
