@@ -20,7 +20,7 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ 
-  courseId, 
+  courseId, // This will now be the SKU like 'DOT-HAZMAT-001'
   price, 
   className,
   size = 'default',

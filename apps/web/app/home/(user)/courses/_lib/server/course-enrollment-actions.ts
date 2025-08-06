@@ -19,7 +19,7 @@ export const enrollInCourseAction = enhanceAction(
     // Check if course exists and is published
     const { data: course, error: courseError } = await client
       .from('courses')
-      .select('id, title, status')
+      .select('id, title, status, price, billing_product_id')
       .eq('id', data.courseId)
       .eq('status', 'published')
       .single();
@@ -42,6 +42,26 @@ export const enrollInCourseAction = enhanceAction(
 
     if (existingEnrollment) {
       throw new Error('Already enrolled in this course');
+    }
+
+    // Check if user has access to the course (handles both free and paid courses)
+    const { data: hasAccess, error: accessError } = await client
+      .rpc('has_course_access', {
+        p_user_id: user.id,
+        p_course_id: data.courseId,
+      });
+
+    if (accessError) {
+      throw accessError;
+    }
+
+    if (!hasAccess) {
+      // Course requires purchase
+      if (course.price && course.price > 0) {
+        throw new Error('This course requires purchase. Please complete the checkout process to gain access.');
+      } else {
+        throw new Error('You do not have access to this course.');
+      }
     }
 
     // Create enrollment record

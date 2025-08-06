@@ -8,6 +8,7 @@ import { Input } from '@kit/ui/input';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
+import { getCourseSku } from '~/lib/course-mappings';
 
 interface CartItem {
   courseId: string;
@@ -83,7 +84,13 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      const course = availableCourses.find(c => c.id === item.courseId);
+      // Try to find by ID first, then by slug, then by SKU mapping
+      const courseSku = getCourseSku(item.courseId);
+      const course = availableCourses.find(c => 
+        c.id === item.courseId || 
+        c.slug === item.courseId ||
+        c.sku === courseSku
+      );
       return total + (parseFloat(course?.price || '0') * item.quantity);
     }, 0);
   };
@@ -94,7 +101,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
     try {
       // Create line items for checkout
       const lineItems = cartItems.map(item => {
-        const course = availableCourses.find(c => c.id === item.courseId);
+        const course = availableCourses.find(c => 
+          c.id === item.courseId || c.slug === item.courseId
+        );
         return {
           price_data: {
             currency: 'usd',
@@ -137,9 +146,14 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const total = subtotal + tax;
 
   // Filter cart items to only include courses that still exist
-  const validCartItems = cartItems.filter(item => 
-    availableCourses.some(course => course.id === item.courseId)
-  );
+  const validCartItems = cartItems.filter(item => {
+    const courseSku = getCourseSku(item.courseId);
+    return availableCourses.some(course => 
+      course.id === item.courseId || 
+      course.slug === item.courseId ||
+      course.sku === courseSku
+    );
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -203,7 +217,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
             <div className="grid gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-4">
                 {validCartItems.map((item) => {
-                  const course = availableCourses.find(c => c.id === item.courseId);
+                  const courseSku = getCourseSku(item.courseId);
+                  const course = availableCourses.find(c => 
+                    c.id === item.courseId || 
+                    c.slug === item.courseId ||
+                    c.sku === courseSku
+                  );
                   if (!course) return null;
                   
                   return (

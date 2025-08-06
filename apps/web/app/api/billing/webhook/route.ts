@@ -1,10 +1,12 @@
 import { getPlanTypesMap } from '@kit/billing';
+import { UpsertOrderParams } from '@kit/billing/types';
 import { getBillingEventHandlerService } from '@kit/billing-gateway';
 import { enhanceRouteHandler } from '@kit/next/routes';
 import { getLogger } from '@kit/shared/logger';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
 import billingConfig from '~/config/billing.config';
+import { handleCoursePurchase } from './_lib/course-purchase-handler';
 
 /**
  * @description Handle the webhooks from Stripe related to checkouts
@@ -30,7 +32,23 @@ export const POST = enhanceRouteHandler(
     );
 
     try {
-      await service.handleWebhookEvent(request);
+      // Handle the webhook with custom handlers for course purchases
+      await service.handleWebhookEvent(request, {
+        // Custom handler for checkout completion (orders)
+        onCheckoutSessionCompleted: async (payload, customerId) => {
+          // Check if this is an order (one-time payment)
+          if ('target_order_id' in payload) {
+            const adminClient = getSupabaseServerAdminClient();
+            
+            // Process potential course purchase
+            await handleCoursePurchase(
+              payload as UpsertOrderParams,
+              customerId,
+              adminClient,
+            );
+          }
+        },
+      });
 
       logger.info(ctx, `Successfully processed billing webhook`);
 
