@@ -8,7 +8,6 @@ import { Input } from '@kit/ui/input';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
-import { getCourseSku } from '~/lib/course-mappings';
 
 interface CartItem {
   courseId: string;
@@ -21,6 +20,7 @@ interface Course {
   slug: string;
   price: string;
   description: string | null;
+  billing_product_id: string | null;
 }
 
 interface CartClientProps {
@@ -35,14 +35,17 @@ export function CartClient({ availableCourses }: CartClientProps) {
   // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('training-cart');
+    console.log('Saved cart from localStorage:', savedCart);
     if (savedCart) {
       try {
         const parsed = JSON.parse(savedCart);
+        console.log('Parsed cart items:', parsed);
         setCartItems(parsed);
       } catch (e) {
         console.error('Error parsing cart:', e);
       }
     }
+    console.log('Available courses:', availableCourses);
     setIsLoading(false);
   }, []);
 
@@ -84,13 +87,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      // Try to find by ID first, then by slug, then by SKU mapping
-      const courseSku = getCourseSku(item.courseId);
-      const course = availableCourses.find(c => 
-        c.id === item.courseId || 
-        c.slug === item.courseId ||
-        c.sku === courseSku
-      );
+      // Find course by slug (which is what we store in the cart)
+      const course = availableCourses.find(c => c.slug === item.courseId);
+      console.log(`Looking for course with slug: ${item.courseId}`, course);
       return total + (parseFloat(course?.price || '0') * item.quantity);
     }, 0);
   };
@@ -146,14 +145,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const total = subtotal + tax;
 
   // Filter cart items to only include courses that still exist
-  const validCartItems = cartItems.filter(item => {
-    const courseSku = getCourseSku(item.courseId);
-    return availableCourses.some(course => 
-      course.id === item.courseId || 
-      course.slug === item.courseId ||
-      course.sku === courseSku
-    );
-  });
+  const validCartItems = cartItems.filter(item => 
+    availableCourses.some(course => course.slug === item.courseId)
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -217,12 +211,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
             <div className="grid gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-4">
                 {validCartItems.map((item) => {
-                  const courseSku = getCourseSku(item.courseId);
-                  const course = availableCourses.find(c => 
-                    c.id === item.courseId || 
-                    c.slug === item.courseId ||
-                    c.sku === courseSku
-                  );
+                  const course = availableCourses.find(c => c.slug === item.courseId);
                   if (!course) return null;
                   
                   return (
