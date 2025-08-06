@@ -10,7 +10,7 @@ async function CartPage() {
   // First check if courses table exists and has data
   const { data: allCourses, error: allError } = await supabase
     .from('courses')
-    .select('id, title, slug, sku, price, description, billing_product_id, is_published, account_id')
+    .select('id, title, slug, sku, price, description, billing_product_id, status, account_id')
     .order('title');
 
   console.log('All courses in database:', allCourses);
@@ -18,14 +18,14 @@ async function CartPage() {
   console.log('Course account_ids:', allCourses?.map(c => ({ 
     title: c.title, 
     account_id: c.account_id,
-    is_published: c.is_published
+    status: c.status
   })));
 
   // Then fetch published courses
   const { data: courses, error } = await supabase
     .from('courses')
-    .select('id, title, slug, sku, price, description, billing_product_id, is_published')
-    .eq('is_published', true)
+    .select('id, title, slug, sku, price, description, billing_product_id, status')
+    .eq('status', 'published')
     .order('title');
 
   if (error) {
@@ -37,7 +37,7 @@ async function CartPage() {
     id: c.id, 
     slug: c.slug, 
     title: c.title, 
-    is_published: c.is_published,
+    status: c.status,
     sku: c.sku 
   })));
 

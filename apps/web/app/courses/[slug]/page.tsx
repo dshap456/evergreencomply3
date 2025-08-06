@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
     .from('courses')
     .select('title, description')
     .eq('slug', slug)
-    .eq('is_published', true)
+    .eq('status', 'published')
     .single();
 
   if (!course) {
@@ -67,7 +67,7 @@ async function CoursePage({ params }: CoursePageProps) {
     .from('courses')
     .select('*')
     .eq('slug', slug)
-    .eq('is_published', true)
+    .eq('status', 'published')
     .single();
 
   if (error || !course) {
