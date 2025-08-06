@@ -9,6 +9,7 @@ import { Label } from '@kit/ui/label';
 import { toast } from 'sonner';
 import { Spinner } from '@kit/ui/spinner';
 import { Badge } from '@kit/ui/badge';
+import { updateCourseAction } from '../_lib/server/actions';
 
 interface Course {
   id: string;
@@ -30,6 +31,8 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
   const updateCourse = async (courseId: string, updates: any) => {
     setSaving(courseId);
     
+    console.log('Updating course:', courseId, 'with:', updates);
+    
     const { data, error } = await supabase
       .from('courses')
       .update(updates)
@@ -37,13 +40,29 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
       .select()
       .single();
 
+    console.log('Update result:', { data, error });
+
     if (error) {
-      toast.error('Failed to update course');
-      console.error(error);
-    } else {
+      toast.error(`Failed to update course: ${error.message}`);
+      console.error('Update error:', error);
+    } else if (data) {
       toast.success('Course updated successfully');
+      console.log('Updated course data:', data);
       // Update local state
       setCourses(courses.map(c => c.id === courseId ? data : c));
+      
+      // Verify the update by fetching again
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', courseId)
+        .single();
+        
+      console.log('Verification fetch:', { verifyData, verifyError });
+      if (verifyData && verifyData.slug !== updates.slug) {
+        console.warn('Slug did not save! Expected:', updates.slug, 'Got:', verifyData.slug);
+        toast.error('Slug update may have failed - check console');
+      }
     }
     
     setSaving(null);
@@ -71,8 +90,28 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
     }
   };
 
+  const handleServerActionUpdate = async (courseId: string, updates: any) => {
+    setSaving(courseId);
+    console.log('Using server action to update:', courseId, updates);
+    
+    const result = await updateCourseAction(courseId, updates);
+    
+    if (result.success) {
+      toast.success('Course updated via server action');
+      // Update local state
+      setCourses(courses.map(c => c.id === courseId ? result.data : c));
+    } else {
+      toast.error(`Server action failed: ${result.error}`);
+    }
+    
+    setSaving(null);
+  };
+
   return (
     <>
+      <div className="mb-4 p-4 bg-muted rounded-lg">
+        <p className="text-sm">Debug: Click "Save" button or press Enter to update slug. Check console for details.</p>
+      </div>
       <div className="space-y-4">
         {courses.map((course) => (
           <Card key={course.id}>
@@ -93,13 +132,45 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
                       id={`slug-${course.id}`}
                       defaultValue={course.slug}
                       placeholder="course-url-slug"
-                      onBlur={(e) => {
-                        if (e.target.value !== course.slug) {
-                          handleSlugChange(course.id, e.target.value);
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const newSlug = (e.target as HTMLInputElement).value;
+                          if (newSlug !== course.slug) {
+                            handleSlugChange(course.id, newSlug);
+                          }
                         }
                       }}
                       disabled={saving === course.id}
                     />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const input = document.getElementById(`slug-${course.id}`) as HTMLInputElement;
+                        const newSlug = input?.value;
+                        if (newSlug && newSlug !== course.slug) {
+                          handleSlugChange(course.id, newSlug);
+                        }
+                      }}
+                      disabled={saving === course.id}
+                    >
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        const input = document.getElementById(`slug-${course.id}`) as HTMLInputElement;
+                        const newSlug = input?.value;
+                        if (newSlug && newSlug !== course.slug) {
+                          handleServerActionUpdate(course.id, { slug: newSlug });
+                        }
+                      }}
+                      disabled={saving === course.id}
+                      title="Use server action (admin client)"
+                    >
+                      SA
+                    </Button>
                     {saving === course.id && <Spinner className="h-4 w-4" />}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
