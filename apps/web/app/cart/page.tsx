@@ -9,7 +9,7 @@ async function CartPage() {
   const { data: courses, error } = await supabase
     .from('courses')
     .select('id, title, slug, price, description, billing_product_id')
-    .eq('is_published', true)
+    .eq('status', 'published')
     .order('title');
 
   if (error) {
