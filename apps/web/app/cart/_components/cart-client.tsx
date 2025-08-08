@@ -2,18 +2,15 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2 } from 'lucide-react';
+import { Badge } from '@kit/ui/badge';
+import { toast } from '@kit/ui/sonner';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
-import { CartMultiSelect } from './cart-multi-select';
-
-interface CartItem {
-  courseId: string;
-  quantity: number;
-}
 
 interface Course {
   id: string;
@@ -23,6 +20,8 @@ interface Course {
   description: string | null;
   billing_product_id: string | null;
   expectedSlug?: string;
+  sku?: string;
+  status: string;
 }
 
 interface CartClientProps {
@@ -30,125 +29,143 @@ interface CartClientProps {
 }
 
 export function CartClient({ availableCourses }: CartClientProps) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const router = useRouter();
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [showMultiSelect, setShowMultiSelect] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Load initial quantities from localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem('training-cart');
-    console.log('Saved cart from localStorage:', savedCart);
     if (savedCart) {
       try {
-        const parsed = JSON.parse(savedCart);
-        console.log('Parsed cart items:', parsed);
-        setCartItems(parsed);
+        const cartItems = JSON.parse(savedCart);
+        const newQuantities: Record<string, number> = {};
+        
+        cartItems.forEach((item: { courseId: string; quantity: number }) => {
+          // Find course by any identifier
+          const course = availableCourses.find(c => 
+            c.slug === item.courseId || 
+            c.expectedSlug === item.courseId ||
+            c.sku === item.courseId || 
+            c.id === item.courseId
+          );
+          
+          if (course) {
+            // Store by course ID for consistency
+            newQuantities[course.id] = item.quantity;
+          }
+        });
+        
+        setQuantities(newQuantities);
       } catch (e) {
-        console.error('Error parsing cart:', e);
+        console.error('Error loading cart:', e);
       }
     }
-    console.log('Available courses:', availableCourses);
     setIsLoading(false);
-  }, [availableCourses]); // Add availableCourses as dependency
+  }, [availableCourses]);
 
-  // Save cart to localStorage whenever it changes
+  // Save to localStorage whenever quantities change
   useEffect(() => {
     if (!isLoading) {
+      const cartItems = Object.entries(quantities)
+        .filter(([_, qty]) => qty > 0)
+        .map(([courseId, quantity]) => {
+          const course = availableCourses.find(c => c.id === courseId);
+          // Store by slug if available, otherwise by ID
+          return {
+            courseId: course?.slug || courseId,
+            quantity
+          };
+        });
+      
       localStorage.setItem('training-cart', JSON.stringify(cartItems));
     }
-  }, [cartItems, isLoading]);
-
-  // Function to reload cart from localStorage
-  const reloadCart = () => {
-    const savedCart = localStorage.getItem('training-cart');
-    if (savedCart) {
-      try {
-        const parsed = JSON.parse(savedCart);
-        setCartItems(parsed);
-      } catch (e) {
-        console.error('Error parsing cart:', e);
-      }
-    }
-  };
+  }, [quantities, isLoading, availableCourses]);
 
   const updateQuantity = (courseId: string, quantity: number) => {
     if (quantity <= 0) {
-      // Remove item if quantity is 0
-      setCartItems(prev => prev.filter(item => item.courseId !== courseId));
-    } else {
-      setCartItems(prev => {
-        const existing = prev.find(item => item.courseId === courseId);
-        if (existing) {
-          // Update existing item
-          return prev.map(item => 
-            item.courseId === courseId ? { ...item, quantity } : item
-          );
-        } else {
-          // Add new item
-          return [...prev, { courseId, quantity }];
-        }
+      setQuantities(prev => {
+        const newQuantities = { ...prev };
+        delete newQuantities[courseId];
+        return newQuantities;
       });
+    } else {
+      setQuantities(prev => ({
+        ...prev,
+        [courseId]: quantity
+      }));
     }
   };
 
-  const removeItem = (courseId: string) => {
-    setCartItems(prev => prev.filter(item => item.courseId !== courseId));
-  };
-
-  const getItemQuantity = (courseId: string) => {
-    const item = cartItems.find(item => item.courseId === courseId);
-    return item?.quantity || 0;
-  };
+  const getQuantity = (courseId: string) => quantities[courseId] || 0;
 
   const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => {
-      // Find course by slug, expectedSlug, SKU, or ID
-      const course = availableCourses.find(c => 
-        c.slug === item.courseId || 
-        c.expectedSlug === item.courseId ||
-        c.sku === item.courseId ||
-        c.id === item.courseId
-      );
-      console.log(`Looking for course with courseId: ${item.courseId}`, course);
-      return total + (parseFloat(course?.price || '0') * item.quantity);
+    return Object.entries(quantities).reduce((total, [courseId, qty]) => {
+      const course = availableCourses.find(c => c.id === courseId);
+      return total + (parseFloat(course?.price || '0') * qty);
     }, 0);
   };
 
+  const getTotalItems = () => {
+    return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+  };
+
+  const getCartCourses = () => {
+    return Object.entries(quantities)
+      .filter(([_, qty]) => qty > 0)
+      .map(([courseId, qty]) => {
+        const course = availableCourses.find(c => c.id === courseId);
+        return { course, quantity: qty };
+      })
+      .filter(item => item.course);
+  };
+
   const handleCheckout = async () => {
+    const cartCourses = getCartCourses();
+    
+    if (cartCourses.length === 0) {
+      toast.error('Please add at least one course to your cart');
+      return;
+    }
+
     setIsCheckingOut(true);
     
     try {
-      // Create line items for checkout
-      const lineItems = cartItems.map(item => {
-        const course = availableCourses.find(c => 
-          c.id === item.courseId || c.slug === item.courseId
-        );
-        return {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: course?.title || 'Course',
-              description: `Training seats for ${course?.title}`,
-            },
-            unit_amount: Math.round(parseFloat(course?.price || '0') * 100), // Convert to cents
-          },
-          quantity: item.quantity,
-        };
+      // Create checkout session
+      const response = await fetch('/api/billing/checkout/session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: cartCourses.map(({ course, quantity }) => ({
+            product_id: course?.billing_product_id,
+            price: parseFloat(course?.price || '0'),
+            quantity,
+            name: course?.title,
+            description: `Training seats for ${course?.title}`,
+          })),
+          success_url: `${window.location.origin}/checkout/success`,
+          cancel_url: `${window.location.origin}/cart`,
+        }),
       });
 
-      // TODO: Integrate with actual payment system
-      // For now, just simulate checkout
-      console.log('Checkout with items:', lineItems);
+      if (!response.ok) {
+        throw new Error('Failed to create checkout session');
+      }
+
+      const { sessionUrl } = await response.json();
       
-      // Redirect to success page after "payment"
-      setTimeout(() => {
-        localStorage.removeItem('training-cart');
-        window.location.href = '/checkout/success';
-      }, 1500);
-      
+      if (sessionUrl) {
+        // Redirect to Stripe checkout
+        window.location.href = sessionUrl;
+      } else {
+        throw new Error('No checkout URL received');
+      }
     } catch (error) {
       console.error('Checkout error:', error);
+      toast.error('Failed to start checkout. Please try again.');
       setIsCheckingOut(false);
     }
   };
@@ -156,34 +173,16 @@ export function CartClient({ availableCourses }: CartClientProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
 
+  const publishedCourses = availableCourses.filter(c => c.status === 'published');
   const subtotal = calculateSubtotal();
   const tax = 0; // No tax for digital products
   const total = subtotal + tax;
-
-  // Filter cart items to only include courses that still exist
-  const validCartItems = cartItems.filter(item => {
-    // Check by slug, expectedSlug, SKU, or ID
-    const courseExists = availableCourses.some(course => 
-      course.slug === item.courseId || 
-      course.expectedSlug === item.courseId ||
-      course.sku === item.courseId ||
-      course.id === item.courseId
-    );
-    console.log(`Checking cart item ${item.courseId}:`, courseExists);
-    console.log('Available courses:', availableCourses.map(c => ({ 
-      id: c.id, 
-      slug: c.slug, 
-      expectedSlug: c.expectedSlug,
-      sku: c.sku,
-      title: c.title 
-    })));
-    return courseExists;
-  });
+  const totalItems = getTotalItems();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -228,161 +227,172 @@ export function CartClient({ availableCourses }: CartClientProps) {
               <ShoppingCart className="h-8 w-8" />
               Shopping Cart
             </h1>
-          </div>
-          
-          {/* Add Course Selection Button */}
-          <div className="mb-6 flex justify-between items-center">
-            <p className="text-muted-foreground">
-              {validCartItems.length} {validCartItems.length === 1 ? 'course' : 'courses'} in cart
+            <p className="text-muted-foreground mt-2">
+              Select the courses and number of seats you need for your team
             </p>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowMultiSelect(!showMultiSelect)}
-            >
-              {showMultiSelect ? 'Hide Course Selection' : 'Add More Courses'}
-            </Button>
           </div>
 
-          {/* Multi-Select Course Interface */}
-          {showMultiSelect && (
-            <div className="mb-8">
-              <CartMultiSelect 
-                availableCourses={availableCourses} 
-                onCartUpdate={reloadCart}
-              />
-            </div>
-          )}
-
-          {validCartItems.length === 0 && !showMultiSelect ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
-                <p className="text-muted-foreground mb-6">
-                  Browse our courses and add training seats to your cart
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Button onClick={() => setShowMultiSelect(true)}>
-                    Select Courses
-                  </Button>
-                  <Link href="/courses">
-                    <Button variant="outline">Browse Course Catalog</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ) : validCartItems.length > 0 ? (
-            <div className="grid gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-4">
-                {validCartItems.map((item) => {
-                  const course = availableCourses.find(c => 
-                    c.slug === item.courseId || 
-                    c.expectedSlug === item.courseId ||
-                    c.sku === item.courseId ||
-                    c.id === item.courseId
-                  );
-                  if (!course) return null;
-                  
-                  return (
-                    <Card key={item.courseId}>
-                      <CardContent className="p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-1">{course.title}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              ${course.price} per seat
-                            </p>
-                          </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(item.courseId, item.quantity - 1)}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </Button>
-                              <Input
-                                type="number"
-                                value={item.quantity}
-                                onChange={(e) => updateQuantity(item.courseId, parseInt(e.target.value) || 0)}
-                                className="w-16 text-center"
-                                min="1"
-                              />
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8"
-                                onClick={() => updateQuantity(item.courseId, item.quantity + 1)}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            
-                            <div className="text-right min-w-[80px]">
-                              <p className="font-semibold">
-                                ${(parseFloat(course.price) * item.quantity).toFixed(2)}
-                              </p>
-                            </div>
-                            
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => removeItem(item.courseId)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-
-              <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Order Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span>Subtotal</span>
-                        <span>${subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Tax</span>
-                        <span>${tax.toFixed(2)}</span>
-                      </div>
-                      <div className="border-t pt-2">
-                        <div className="flex justify-between font-semibold text-lg">
-                          <span>Total</span>
-                          <span>${total.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={handleCheckout}
-                      disabled={isCheckingOut}
-                    >
-                      {isCheckingOut ? 'Processing...' : 'Proceed to Checkout'}
-                    </Button>
-                    
-                    <p className="text-xs text-muted-foreground text-center">
-                      Secure checkout powered by Stripe
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Course Selection */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Available Courses</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {publishedCourses.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No courses available at this time.
                     </p>
-                  </CardContent>
-                </Card>
-              </div>
+                  ) : (
+                    publishedCourses.map((course) => {
+                      const quantity = getQuantity(course.id);
+                      const lineTotal = parseFloat(course.price) * quantity;
+                      
+                      return (
+                        <div 
+                          key={course.id} 
+                          className={`p-4 border rounded-lg transition-colors ${
+                            quantity > 0 ? 'bg-primary/5 border-primary/20' : ''
+                          }`}
+                        >
+                          <div className="space-y-4">
+                            <div>
+                              <h4 className="font-semibold text-lg">{course.title}</h4>
+                              {course.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {course.description}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-lg font-medium">
+                                  ${course.price} per seat
+                                </span>
+                                {course.sku && (
+                                  <Badge variant="outline" className="text-xs">
+                                    SKU: {course.sku}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => updateQuantity(course.id, Math.max(0, quantity - 1))}
+                                  disabled={quantity === 0}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  value={quantity}
+                                  onChange={(e) => updateQuantity(course.id, parseInt(e.target.value) || 0)}
+                                  className="w-20 text-center h-8"
+                                  min="0"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-8 w-8"
+                                  onClick={() => updateQuantity(course.id, quantity + 1)}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                                <span className="text-sm text-muted-foreground ml-2">
+                                  seats
+                                </span>
+                              </div>
+                              
+                              {quantity > 0 && (
+                                <div className="text-right">
+                                  <p className="font-semibold">
+                                    ${lineTotal.toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          ) : null}
+
+            {/* Order Summary */}
+            <div>
+              <Card className="sticky top-24">
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {totalItems > 0 ? (
+                    <>
+                      <div className="space-y-2">
+                        {getCartCourses().map(({ course, quantity }) => (
+                          <div key={course!.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              {course!.title} × {quantity}
+                            </span>
+                            <span>${(parseFloat(course!.price) * quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="border-t pt-4 space-y-2">
+                        <div className="flex justify-between">
+                          <span>Subtotal</span>
+                          <span>${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Tax</span>
+                          <span>${tax.toFixed(2)}</span>
+                        </div>
+                        <div className="border-t pt-2">
+                          <div className="flex justify-between font-semibold text-lg">
+                            <span>Total</span>
+                            <span>${total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={handleCheckout}
+                        disabled={isCheckingOut || totalItems === 0}
+                      >
+                        {isCheckingOut ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          `Checkout (${totalItems} ${totalItems === 1 ? 'seat' : 'seats'})`
+                        )}
+                      </Button>
+                      
+                      <p className="text-xs text-muted-foreground text-center">
+                        Secure checkout powered by Stripe
+                      </p>
+                    </>
+                  ) : (
+                    <div className="text-center py-4">
+                      <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Select courses and seats to begin
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
     </div>
