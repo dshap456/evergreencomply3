@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, Grid, List } from 'lucide-react';
 import { Badge } from '@kit/ui/badge';
 import { toast } from '@kit/ui/sonner';
 import pathsConfig from '~/config/paths.config';
@@ -33,6 +33,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
   // Load initial quantities from localStorage
   useEffect(() => {
@@ -43,7 +44,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
         const newQuantities: Record<string, number> = {};
         
         cartItems.forEach((item: { courseId: string; quantity: number }) => {
-          // Find course by any identifier
           const course = availableCourses.find(c => 
             c.slug === item.courseId || 
             c.expectedSlug === item.courseId ||
@@ -52,7 +52,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
           );
           
           if (course) {
-            // Store by course ID for consistency
             newQuantities[course.id] = item.quantity;
           }
         });
@@ -72,7 +71,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
         .filter(([_, qty]) => qty > 0)
         .map(([courseId, quantity]) => {
           const course = availableCourses.find(c => c.id === courseId);
-          // Store by slug if available, otherwise by ID
           return {
             courseId: course?.slug || courseId,
             quantity
@@ -132,7 +130,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
     setIsCheckingOut(true);
     
     try {
-      // Create checkout session
       const response = await fetch('/api/courses/checkout', {
         method: 'POST',
         headers: {
@@ -158,7 +155,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
       const { sessionUrl } = await response.json();
       
       if (sessionUrl) {
-        // Redirect to Stripe checkout
         window.location.href = sessionUrl;
       } else {
         throw new Error('No checkout URL received');
@@ -180,7 +176,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const publishedCourses = availableCourses.filter(c => c.status === 'published');
   const subtotal = calculateSubtotal();
-  const tax = 0; // No tax for digital products
+  const tax = 0;
   const total = subtotal + tax;
   const totalItems = getTotalItems();
 
@@ -223,52 +219,126 @@ export function CartClient({ availableCourses }: CartClientProps) {
               <ArrowLeft className="h-4 w-4" />
               Continue Shopping
             </Link>
-            <h1 className="text-2xl font-bold flex items-center gap-3">
-              <ShoppingCart className="h-6 w-6" />
-              Shopping Cart
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Select the courses and number of seats you need for your team
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold flex items-center gap-3">
+                  <ShoppingCart className="h-6 w-6" />
+                  Shopping Cart
+                </h1>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Select the courses and number of seats you need for your team
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Course Selection */}
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Available Courses</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-1">
-                  {publishedCourses.length === 0 ? (
-                    <p className="text-muted-foreground text-center py-8">
-                      No courses available at this time.
-                    </p>
-                  ) : (
-                    publishedCourses.map((course) => {
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {publishedCourses.map((course) => {
+                    const quantity = getQuantity(course.id);
+                    const lineTotal = parseFloat(course.price) * quantity;
+                    
+                    return (
+                      <Card key={course.id} className={`transition-all ${
+                        quantity > 0 ? 'ring-2 ring-primary/20 shadow-sm' : ''
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="font-semibold text-sm">{course.title}</h4>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                ${course.price} per seat
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7"
+                                  onClick={() => updateQuantity(course.id, Math.max(0, quantity - 1))}
+                                  disabled={quantity === 0}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <Input
+                                  type="number"
+                                  value={quantity}
+                                  onChange={(e) => updateQuantity(course.id, parseInt(e.target.value) || 0)}
+                                  className="w-12 text-center h-7 px-1"
+                                  min="0"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7"
+                                  onClick={() => updateQuantity(course.id, quantity + 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              {quantity > 0 && (
+                                <p className="font-semibold text-sm">
+                                  ${lineTotal.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg">Available Courses</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {publishedCourses.map((course) => {
                       const quantity = getQuantity(course.id);
                       const lineTotal = parseFloat(course.price) * quantity;
                       
                       return (
                         <div 
                           key={course.id} 
-                          className={`p-2 border rounded-lg transition-all ${
+                          className={`p-3 border rounded-lg transition-all ${
                             quantity > 0 ? 'bg-primary/5 border-primary/20 shadow-sm' : 'hover:border-gray-300'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-sm truncate">{course.title}</h4>
-                              <p className="text-xs font-medium mt-0.5">
+                              <h4 className="font-semibold text-base truncate">{course.title}</h4>
+                              <p className="text-sm font-medium mt-1">
                                 ${course.price} per seat
                               </p>
                             </div>
                             
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-6 w-6"
+                                className="h-7 w-7"
                                 onClick={() => updateQuantity(course.id, Math.max(0, quantity - 1))}
                                 disabled={quantity === 0}
                               >
@@ -278,20 +348,23 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => updateQuantity(course.id, parseInt(e.target.value) || 0)}
-                                className="w-12 text-center h-6 px-1 text-xs"
+                                className="w-14 text-center h-7 px-1"
                                 min="0"
                               />
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-6 w-6"
+                                className="h-7 w-7"
                                 onClick={() => updateQuantity(course.id, quantity + 1)}
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
+                              <span className="text-xs text-muted-foreground ml-1">
+                                seats
+                              </span>
                               {quantity > 0 && (
-                                <div className="text-right min-w-[50px]">
-                                  <p className="font-semibold text-xs">
+                                <div className="text-right min-w-[60px]">
+                                  <p className="font-semibold text-sm">
                                     ${lineTotal.toFixed(2)}
                                   </p>
                                 </div>
@@ -300,10 +373,10 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           </div>
                         </div>
                       );
-                    })
-                  )}
-                </CardContent>
-              </Card>
+                    })}
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Order Summary */}
@@ -315,9 +388,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
                 <CardContent className="space-y-3">
                   {totalItems > 0 ? (
                     <>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
                         {getCartCourses().map(({ course, quantity }) => (
-                          <div key={course!.id} className="flex justify-between text-xs">
+                          <div key={course!.id} className="flex justify-between text-sm py-1">
                             <span className="text-muted-foreground truncate mr-2">
                               {course!.title} × {quantity}
                             </span>
@@ -326,19 +399,19 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         ))}
                       </div>
                       
-                      <div className="border-t pt-2 space-y-1">
-                        <div className="flex justify-between text-xs">
+                      <div className="border-t pt-3 space-y-2">
+                        <div className="flex justify-between text-sm">
                           <span>Subtotal</span>
                           <span>${subtotal.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-xs">
+                        <div className="flex justify-between text-sm">
                           <span>Tax</span>
                           <span>${tax.toFixed(2)}</span>
                         </div>
-                        <div className="border-t pt-1">
+                        <div className="border-t pt-2">
                           <div className="flex justify-between font-semibold">
                             <span>Total</span>
-                            <span className="text-base">${total.toFixed(2)}</span>
+                            <span className="text-lg">${total.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
@@ -367,7 +440,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                     <div className="text-center py-4">
                       <ShoppingCart className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
-                        Select courses and seats to begin
+                        Select courses to begin
                       </p>
                     </div>
                   )}
