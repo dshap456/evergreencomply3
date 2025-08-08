@@ -38,11 +38,32 @@ async function CartPage() {
     slug: c.slug, 
     title: c.title, 
     status: c.status,
-    sku: c.sku 
+    sku: c.sku,
+    price: c.price 
   })));
 
+  // Map common course identifiers to help with cart matching
+  const coursesWithMapping = courses?.map(course => {
+    // Map known titles to expected slugs
+    const slugMapping: Record<string, string> = {
+      'DOT HAZMAT - 3': 'dot-hazmat',
+      'Advanced HAZMAT': 'advanced-hazmat',
+      'Advanced Awareness': 'advanced-hazmat',
+      'DOT HAZMAT - General Awareness': 'dot-hazmat-general',
+      'EPA - RCRA': 'epa-rcra'
+    };
+    
+    // If the course has a slug mapping, add it as an alias
+    const expectedSlug = slugMapping[course.title];
+    
+    return {
+      ...course,
+      expectedSlug
+    };
+  });
+
   // Pass courses to client component
-  return <CartClient availableCourses={courses || []} />;
+  return <CartClient availableCourses={coursesWithMapping || []} />;
 }
 
 export default withI18n(CartPage);

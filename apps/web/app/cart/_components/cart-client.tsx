@@ -8,6 +8,7 @@ import { Input } from '@kit/ui/input';
 import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
+import { CartMultiSelect } from './cart-multi-select';
 
 interface CartItem {
   courseId: string;
@@ -21,6 +22,7 @@ interface Course {
   price: string;
   description: string | null;
   billing_product_id: string | null;
+  expectedSlug?: string;
 }
 
 interface CartClientProps {
@@ -31,6 +33,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showMultiSelect, setShowMultiSelect] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -55,6 +58,19 @@ export function CartClient({ availableCourses }: CartClientProps) {
       localStorage.setItem('training-cart', JSON.stringify(cartItems));
     }
   }, [cartItems, isLoading]);
+
+  // Function to reload cart from localStorage
+  const reloadCart = () => {
+    const savedCart = localStorage.getItem('training-cart');
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart);
+        setCartItems(parsed);
+      } catch (e) {
+        console.error('Error parsing cart:', e);
+      }
+    }
+  };
 
   const updateQuantity = (courseId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -87,9 +103,10 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      // Find course by slug, SKU, or ID
+      // Find course by slug, expectedSlug, SKU, or ID
       const course = availableCourses.find(c => 
         c.slug === item.courseId || 
+        c.expectedSlug === item.courseId ||
         c.sku === item.courseId ||
         c.id === item.courseId
       );
@@ -150,9 +167,10 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   // Filter cart items to only include courses that still exist
   const validCartItems = cartItems.filter(item => {
-    // Check by slug first, then by SKU, then by ID
+    // Check by slug, expectedSlug, SKU, or ID
     const courseExists = availableCourses.some(course => 
       course.slug === item.courseId || 
+      course.expectedSlug === item.courseId ||
       course.sku === item.courseId ||
       course.id === item.courseId
     );
@@ -160,6 +178,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
     console.log('Available courses:', availableCourses.map(c => ({ 
       id: c.id, 
       slug: c.slug, 
+      expectedSlug: c.expectedSlug,
       sku: c.sku,
       title: c.title 
     })));
@@ -210,8 +229,31 @@ export function CartClient({ availableCourses }: CartClientProps) {
               Shopping Cart
             </h1>
           </div>
+          
+          {/* Add Course Selection Button */}
+          <div className="mb-6 flex justify-between items-center">
+            <p className="text-muted-foreground">
+              {validCartItems.length} {validCartItems.length === 1 ? 'course' : 'courses'} in cart
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowMultiSelect(!showMultiSelect)}
+            >
+              {showMultiSelect ? 'Hide Course Selection' : 'Add More Courses'}
+            </Button>
+          </div>
 
-          {validCartItems.length === 0 ? (
+          {/* Multi-Select Course Interface */}
+          {showMultiSelect && (
+            <div className="mb-8">
+              <CartMultiSelect 
+                availableCourses={availableCourses} 
+                onCartUpdate={reloadCart}
+              />
+            </div>
+          )}
+
+          {validCartItems.length === 0 && !showMultiSelect ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -219,17 +261,23 @@ export function CartClient({ availableCourses }: CartClientProps) {
                 <p className="text-muted-foreground mb-6">
                   Browse our courses and add training seats to your cart
                 </p>
-                <Link href="/courses">
-                  <Button>Browse Courses</Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button onClick={() => setShowMultiSelect(true)}>
+                    Select Courses
+                  </Button>
+                  <Link href="/courses">
+                    <Button variant="outline">Browse Course Catalog</Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
-          ) : (
+          ) : validCartItems.length > 0 ? (
             <div className="grid gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-4">
                 {validCartItems.map((item) => {
                   const course = availableCourses.find(c => 
                     c.slug === item.courseId || 
+                    c.expectedSlug === item.courseId ||
                     c.sku === item.courseId ||
                     c.id === item.courseId
                   );
@@ -334,7 +382,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                 </Card>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       </main>
     </div>
