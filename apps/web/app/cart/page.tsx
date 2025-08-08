@@ -53,11 +53,27 @@ async function CartPage() {
       'EPA - RCRA': 'epa-rcra'
     };
     
+    // Map known prices based on course titles (temporary until DB is updated)
+    const priceMapping: Record<string, string> = {
+      'DOT HAZMAT - 3': '79',
+      'DOT HAZMAT - General Awareness': '79',
+      'Advanced HAZMAT': '179',
+      'Advanced Awareness': '179',
+      'EPA - RCRA': '129'
+    };
+    
     // If the course has a slug mapping, add it as an alias
     const expectedSlug = slugMapping[course.title];
     
+    // Use mapped price if database price is null or 0
+    const mappedPrice = priceMapping[course.title];
+    const price = (course.price && parseFloat(course.price) > 0) 
+      ? course.price 
+      : (mappedPrice || '0');
+    
     return {
       ...course,
+      price: price.toString(), // Ensure it's a string
       expectedSlug
     };
   });
