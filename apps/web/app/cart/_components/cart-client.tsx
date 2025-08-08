@@ -133,7 +133,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
     
     try {
       // Create checkout session
-      const response = await fetch('/api/billing/checkout/session', {
+      const response = await fetch('/api/courses/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
             product_id: course?.billing_product_id,
             price: parseFloat(course?.price || '0'),
             quantity,
-            name: course?.title,
+            name: course?.title || 'Course',
             description: `Training seats for ${course?.title}`,
           })),
           success_url: `${window.location.origin}/checkout/success`,
