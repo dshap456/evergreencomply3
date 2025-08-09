@@ -38,7 +38,7 @@ export const sendContactEmail = enhanceAction(
 
       await mailer.sendEmail({
         to: contactEmail,
-        from: emailFrom,
+        from: `Evergreen Comply <${emailFrom}>`,
         subject: 'Contact Form Submission - Evergreen Comply',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

@@ -39,9 +39,10 @@ export async function POST() {
     const mailer = await getMailer();
     
     // Try to send a test email
+    const fromEmail = process.env.EMAIL_SENDER || 'onboarding@resend.dev';
     await mailer.sendEmail({
       to: process.env.CONTACT_EMAIL || 'test@example.com',
-      from: process.env.EMAIL_SENDER || 'test@resend.dev',
+      from: `Evergreen Comply <${fromEmail}>`,
       subject: 'Test Email from Contact Form',
       html: '<p>This is a test email to verify the email configuration is working.</p>',
     });
