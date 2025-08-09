@@ -31,7 +31,6 @@ import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
 import { createModuleAction } from '../_lib/server/module-actions';
-import { testRawUpdateCourse, testDirectSQL } from '../_lib/server/test-course-actions';
 import {
   UICourse,
   UIModule,
@@ -110,34 +109,6 @@ export function CourseEditorClient({
   const handleSave = () => {
     startTransition(async () => {
       try {
-        // TEST 1: Check if course exists
-        console.log('🟢 TEST: Checking course exists...');
-        const checkResult = await testDirectSQL(courseData.id);
-        console.log('🟢 TEST: Course check result:', checkResult);
-        
-        // TEST 2: Try raw update
-        console.log('🟢 TEST: Trying raw update...');
-        const rawResult = await testRawUpdateCourse(
-          courseData.id,
-          courseData.slug || '',
-          courseData.status
-        );
-        console.log('🟢 TEST: Raw update result:', rawResult);
-        
-        if (!rawResult.success) {
-          throw new Error(`Raw update failed: ${rawResult.error}`);
-        }
-        
-        // If raw update worked, update local state
-        setCourseData(prev => ({
-          ...prev,
-          slug: courseData.slug,
-          status: courseData.status
-        }));
-        toast.success('Course saved successfully (TEST MODE)');
-        setIsDirty(false);
-        
-        /* ORIGINAL CODE - COMMENTED OUT FOR TESTING
         const updatePayload = {
           id: courseData.id,
           title: courseData.title,
@@ -159,10 +130,9 @@ export function CourseEditorClient({
         } else {
           throw new Error('Failed to save course');
         }
-        */
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to save course:', error);
-        toast.error('Failed to save course');
+        toast.error(error.message || 'Failed to save course');
       }
     });
   };

@@ -23,14 +23,32 @@ export const updateCourseAction = enhanceAction(
   async function (data: Partial<UICourse>, user) {
     const client = getSupabaseServerClient();
 
+    // Check if slug is already taken by another course
+    if (data.slug) {
+      const { data: existingCourse } = await client
+        .from('courses')
+        .select('id')
+        .eq('slug', data.slug)
+        .neq('id', data.id)
+        .single();
+        
+      if (existingCourse) {
+        throw new Error(`The URL slug "${data.slug}" is already in use by another course. Please choose a different slug.`);
+      }
+    }
+
     // Simple update with just the fields we need
-    const updateData = {
-      title: data.title,
-      description: data.description,
-      slug: data.slug,
-      status: data.status,
-      updated_at: new Date().toISOString(),
-    };
+    const updateData: any = {};
+    
+    // Only include fields that are actually being updated
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.status !== undefined) updateData.status = data.status;
+    
+    updateData.updated_at = new Date().toISOString();
+    
+    console.log('🔄 UpdateCourseAction: Updating with data:', updateData);
 
     const { error, data: updateResult } = await client
       .from('courses')
@@ -40,6 +58,10 @@ export const updateCourseAction = enhanceAction(
       .single();
 
     if (error) {
+      // Handle specific error cases
+      if (error.code === '23505' && error.message.includes('courses_slug_unique')) {
+        throw new Error(`The URL slug "${data.slug}" is already in use. Please choose a different slug.`);
+      }
       throw new Error(`Failed to update course: ${error.message}`);
     }
 
