@@ -46,48 +46,16 @@ export async function POST(request: Request) {
       sample: testData?.[0]
     });
 
-    // Step 5: Get course schema
-    const { data: schemaInfo, error: schemaError } = await adminClient.rpc(
-      'run_sql',
-      {
-        sql: `
-          SELECT column_name, data_type, is_nullable 
-          FROM information_schema.columns 
-          WHERE table_schema = 'public' 
-          AND table_name = 'courses'
-          ORDER BY ordinal_position
-        `
-      }
-    ).catch(err => {
-      // If run_sql doesn't exist, try a different approach
-      return { data: null, error: 'run_sql not available' };
-    });
-
+    // Step 5: Skip schema check (run_sql not available)
     debugInfo.steps.push({
       step: 'Schema check',
-      error: schemaError,
-      columns: schemaInfo
+      note: 'Skipped - run_sql RPC not available'
     });
 
-    // Step 6: Check RLS policies
-    const { data: policies, error: policyError } = await adminClient.rpc(
-      'run_sql',
-      {
-        sql: `
-          SELECT policyname, cmd, qual 
-          FROM pg_policies 
-          WHERE schemaname = 'public' 
-          AND tablename = 'courses'
-        `
-      }
-    ).catch(err => {
-      return { data: null, error: 'Cannot check policies' };
-    });
-
+    // Step 6: Skip RLS policy check
     debugInfo.steps.push({
       step: 'RLS policies check',
-      error: policyError,
-      policies: policies
+      note: 'Skipped - run_sql RPC not available'
     });
 
     // Step 7: Try to fetch the specific course
@@ -156,7 +124,13 @@ export async function POST(request: Request) {
     }
 
     // Step 10: Check user permissions
-    const { data: isSuperAdmin } = await adminClient.rpc('is_super_admin').catch(() => ({ data: false }));
+    let isSuperAdmin = false;
+    try {
+      const { data } = await adminClient.rpc('is_super_admin');
+      isSuperAdmin = data || false;
+    } catch (e) {
+      // Function might not exist
+    }
     
     const { data: userRoles } = await adminClient
       .from('accounts_memberships')
