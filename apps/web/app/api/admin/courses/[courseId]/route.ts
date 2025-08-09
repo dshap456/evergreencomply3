@@ -69,28 +69,9 @@ export async function GET(request: Request, context: RouteContext) {
     }));
 
     // Transform course data to match the expected interface
-    // Handle both old schema (is_published) and new schema (status)
-    let courseStatus: 'draft' | 'published' | 'archived';
-    
-    if (course.status) {
-      // New schema with status enum
-      courseStatus = course.status as 'draft' | 'published' | 'archived';
-      console.log('📊 Using status field from database:', courseStatus);
-    } else if (course.is_published !== undefined) {
-      // Old schema with is_published boolean
-      courseStatus = course.is_published ? 'published' : 'draft';
-      console.log('⚠️ Using legacy is_published field, converted to:', courseStatus);
-    } else {
-      // Fallback
-      courseStatus = 'draft';
-      console.log('⚠️ No status information found, defaulting to draft');
-    }
-    
     const transformedCourse = {
       ...course,
-      status: courseStatus,
-      // Also include is_published for backward compatibility
-      is_published: courseStatus === 'published',
+      status: course.status || 'draft',
       version: '1.0', // Default version
       lessons_count: formattedModules.reduce((acc, module) => acc + (module.lessons?.length || 0), 0),
       enrollments_count: 0, // Would need a separate query for accurate count
@@ -133,11 +114,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // First check what schema the database is using
     const { data: currentCourse } = await client
       .from('courses')
-      .select('id, status, is_published')
+      .select('*')
       .eq('id', courseId)
       .single();
     
-    const hasStatusColumn = currentCourse && 'status' in currentCourse && currentCourse.status !== null;
+    // Since we've migrated, we should always have status column now
+    const hasStatusColumn = true;
     
     // Prepare the update data
     const updateData: any = {
@@ -147,17 +129,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updated_at: new Date().toISOString()
     };
 
-    // Handle status update based on schema
+    // Handle status update
     if (body.status !== undefined) {
-      if (hasStatusColumn) {
-        // New schema - use status column
-        updateData.status = body.status;
-        console.log('📝 Setting status column:', updateData.status);
-      } else {
-        // Old schema - use is_published column
-        updateData.is_published = body.status === 'published';
-        console.log('📝 Setting is_published column:', updateData.is_published);
-      }
+      updateData.status = body.status;
+      console.log('📝 Setting status column:', updateData.status);
     }
 
     const { data, error } = await client
