@@ -1,7 +1,12 @@
 import { Resend } from 'resend';
 
+console.log('=== Resend Module Loading ===');
+console.log('RESEND_API_KEY at module load:', !!process.env.RESEND_API_KEY);
+console.log('RESEND_API_KEY prefix at module load:', process.env.RESEND_API_KEY?.substring(0, 10));
+
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
+console.log('Resend client created:', !!resend);
 
 // Default from email
 const DEFAULT_FROM = 'Evergreen Comply <onboarding@resend.dev>';
@@ -25,23 +30,47 @@ export async function sendEmail({
   text,
   from = WORKING_FROM,
 }: SendEmailParams) {
+  console.log('=== Resend sendEmail Debug ===');
+  console.log('Parameters:', {
+    to,
+    from,
+    subject,
+    hasHtml: !!html,
+    hasText: !!text,
+    htmlLength: html?.length,
+  });
+  console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+  console.log('RESEND_API_KEY prefix:', process.env.RESEND_API_KEY?.substring(0, 10));
+  
   try {
-    const { data, error } = await resend.emails.send({
+    console.log('Creating Resend client...');
+    const payload = {
       from,
       to,
       subject,
       html,
       text,
-    });
+    };
+    
+    console.log('Sending email with payload:', JSON.stringify(payload, null, 2));
+    
+    const { data, error } = await resend.emails.send(payload);
 
+    console.log('Resend response:', { data, error });
+    
     if (error) {
       console.error('Resend API error:', error);
       throw error;
     }
 
+    console.log('Email sent successfully, data:', data);
     return data;
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('=== Resend Error Details ===');
+    console.error('Error type:', error?.constructor?.name);
+    console.error('Error message:', error instanceof Error ? error.message : error);
+    console.error('Full error object:', error);
+    console.error('=== End Resend Error ===');
     throw error;
   }
 }

@@ -9,6 +9,15 @@ import { ContactEmailSchema } from '../contact-email.schema';
 
 export const sendContactEmail = enhanceAction(
   async (data) => {
+    console.log('=== Contact Form Debug Start ===');
+    console.log('1. Form data received:', data);
+    console.log('2. Environment check:', {
+      hasContactEmail: !!process.env.CONTACT_EMAIL,
+      contactEmail: process.env.CONTACT_EMAIL,
+      hasResendKey: !!process.env.RESEND_API_KEY,
+      resendKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10),
+    });
+
     try {
       // Parse environment variable inside the function to avoid module load errors
       const contactEmail = z
@@ -19,7 +28,9 @@ export const sendContactEmail = enhanceAction(
         })
         .parse(process.env.CONTACT_EMAIL);
 
-      await sendEmail({
+      console.log('3. Contact email parsed:', contactEmail);
+
+      const emailPayload = {
         to: contactEmail,
         subject: 'Contact Form Submission - Evergreen Comply',
         html: `
@@ -39,12 +50,29 @@ export const sendContactEmail = enhanceAction(
             </p>
           </div>
         `,
+      };
+
+      console.log('4. Attempting to send email with payload:', {
+        to: emailPayload.to,
+        subject: emailPayload.subject,
+        htmlLength: emailPayload.html.length,
       });
 
+      await sendEmail(emailPayload);
+
+      console.log('5. Email sent successfully!');
       console.log(`Contact form email sent to ${contactEmail} from ${data.email}`);
+      console.log('=== Contact Form Debug End ===');
+      
       return {};
     } catch (error) {
-      console.error('Failed to send contact email:', error);
+      console.error('=== Contact Form Error ===');
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error instanceof Error ? error.message : error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      console.error('Full error:', error);
+      console.error('=== End Error ===');
+      
       throw new Error('Failed to send contact email. Please try again later.');
     }
   },
