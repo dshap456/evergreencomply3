@@ -58,16 +58,17 @@ export const sendContactEmail = enhanceAction(
         htmlLength: emailPayload.html.length,
       });
 
-      await sendEmail({
+      const result = await sendEmail({
         ...emailPayload,
-        from: process.env.EMAIL_SENDER || 'support@evergreencomply.com',
+        from: process.env.EMAIL_SENDER || 'delivered@resend.dev',
       });
 
       console.log('5. Email sent successfully!');
       console.log(`Contact form email sent to ${contactEmail} from ${data.email}`);
+      console.log('Email send result:', result);
       console.log('=== Contact Form Debug End ===');
       
-      return {};
+      return { success: true, emailId: result?.id };
     } catch (error) {
       console.error('=== Contact Form Error ===');
       console.error('Error type:', error?.constructor?.name);
@@ -75,6 +76,17 @@ export const sendContactEmail = enhanceAction(
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
       console.error('Full error:', error);
       console.error('=== End Error ===');
+      
+      // More specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('RESEND_API_KEY')) {
+          throw new Error('Email service configuration error. Please contact support.');
+        } else if (error.message.includes('from')) {
+          throw new Error('Invalid sender email configuration. Please contact support.');
+        } else if (error.message.includes('rate limit')) {
+          throw new Error('Too many requests. Please try again later.');
+        }
+      }
       
       throw new Error('Failed to send contact email. Please try again later.');
     }

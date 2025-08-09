@@ -54,11 +54,18 @@ export function ContactForm() {
         onSubmit={form.handleSubmit((data) => {
           startTransition(async () => {
             try {
-              await sendContactEmail(data);
+              console.log('Submitting contact form with data:', data);
+              const result = await sendContactEmail(data);
+              console.log('Contact form submission result:', result);
 
               setState({ success: true, error: false });
+              form.reset();
             } catch (error) {
               console.error('Contact form error:', error);
+              console.error('Error details:', {
+                message: error instanceof Error ? error.message : 'Unknown error',
+                stack: error instanceof Error ? error.stack : undefined,
+              });
               setState({ error: true, success: false });
             }
           });

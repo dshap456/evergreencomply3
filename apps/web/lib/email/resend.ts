@@ -29,7 +29,7 @@ export async function sendEmail({
   html,
   text,
   from = WORKING_FROM,
-}: SendEmailParams) {
+}: SendEmailParams): Promise<{ id: string }> {
   console.log('=== Resend sendEmail Debug ===');
   console.log('Parameters:', {
     to,
@@ -41,6 +41,10 @@ export async function sendEmail({
   });
   console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
   console.log('RESEND_API_KEY prefix:', process.env.RESEND_API_KEY?.substring(0, 10));
+  
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
   
   try {
     console.log('Creating Resend client...');
@@ -61,6 +65,10 @@ export async function sendEmail({
     if (error) {
       console.error('Resend API error:', error);
       throw error;
+    }
+
+    if (!data) {
+      throw new Error('No data returned from Resend API');
     }
 
     console.log('Email sent successfully, data:', data);
