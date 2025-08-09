@@ -13,27 +13,15 @@ import {
 } from '@kit/ui/select';
 import { Switch } from '@kit/ui/switch';
 import { Badge } from '@kit/ui/badge';
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  status: 'draft' | 'published' | 'archived';
-  lessons_count: number;
-  enrollments_count: number;
-  completion_rate: number;
-  created_at: string;
-  updated_at: string;
-  version: string;
-}
+import { UICourse } from '../_lib/types/data-contracts';
 
 interface CourseSettingsProps {
-  course: Course;
-  onChange: (course: Course) => void;
+  course: UICourse;
+  onChange: (course: UICourse) => void;
 }
 
 export function CourseSettings({ course, onChange }: CourseSettingsProps) {
-  const updateCourse = (updates: Partial<Course>) => {
+  const updateCourse = (updates: Partial<UICourse>) => {
     onChange({ ...course, ...updates });
   };
 
@@ -83,7 +71,10 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Course Category</label>
-              <Select defaultValue="environment-safety">
+              <Select 
+                value={course.category || 'environment-safety'}
+                onValueChange={(value) => updateCourse({ category: value })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -106,7 +97,11 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
             
             <div className="space-y-2">
               <label className="text-sm font-medium">Estimated Duration</label>
-              <Input placeholder="e.g., 8 hours, 3 days, 2 weeks" />
+              <Input 
+                value={course.estimated_duration || ''}
+                onChange={(e) => updateCourse({ estimated_duration: e.target.value })}
+                placeholder="e.g., 8 hours, 3 days, 2 weeks" 
+              />
             </div>
           </div>
         </CardContent>
@@ -125,7 +120,10 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
                 Generate a certificate when students complete the course
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch 
+              checked={course.certificate_enabled ?? true}
+              onCheckedChange={(checked) => updateCourse({ certificate_enabled: checked })}
+            />
           </div>
         </CardContent>
       </Card>
@@ -143,7 +141,10 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
                 Students must complete lessons in order
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch 
+              checked={course.sequential_completion ?? true}
+              onCheckedChange={(checked) => updateCourse({ sequential_completion: checked })}
+            />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-4">
@@ -153,28 +154,43 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
                 Track student progress and completion
               </p>
             </div>
-            <Switch defaultChecked />
+            <Switch 
+              checked={course.progress_tracking_enabled ?? true}
+              onCheckedChange={(checked) => updateCourse({ progress_tracking_enabled: checked })}
+            />
           </div>
 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Content Completion Required (%)</label>
-              <Input type="number" min="0" max="100" defaultValue="100" disabled />
+              <Input type="number" min="0" max="100" value="100" disabled />
               <p className="text-xs text-muted-foreground">
                 100% of course content must be completed (fixed requirement)
               </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Final Quiz Passing Score (%)</label>
-              <Input type="number" min="0" max="100" defaultValue="80" />
+              <Input 
+                type="number" 
+                min="0" 
+                max="100" 
+                value={course.passing_score || 80}
+                onChange={(e) => updateCourse({ passing_score: parseInt(e.target.value) || 80 })}
+              />
               <p className="text-xs text-muted-foreground">
                 Minimum score required on final quiz to pass the course
               </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Time Limit (days)</label>
-              <Input type="number" min="0" placeholder="No limit" />
+              <Input 
+                type="number" 
+                min="0" 
+                value={course.time_limit_days || ''}
+                onChange={(e) => updateCourse({ time_limit_days: e.target.value ? parseInt(e.target.value) : undefined })}
+                placeholder="No limit" 
+              />
               <p className="text-xs text-muted-foreground">
                 Maximum days to complete the course
               </p>
@@ -192,6 +208,8 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">SEO Description</label>
             <Textarea
+              value={course.seo_description || ''}
+              onChange={(e) => updateCourse({ seo_description: e.target.value })}
               placeholder="A brief description for search engines and course listings"
               className="min-h-[80px]"
             />
@@ -208,11 +226,25 @@ export function CourseSettings({ course, onChange }: CourseSettingsProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Individual Price ($)</label>
-              <Input type="number" min="0" step="0.01" placeholder="0.00" />
+              <Input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                value={course.price || ''}
+                onChange={(e) => updateCourse({ price: e.target.value ? parseFloat(e.target.value) : undefined })}
+                placeholder="0.00" 
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Bulk License Price ($)</label>
-              <Input type="number" min="0" step="0.01" placeholder="0.00" />
+              <Input 
+                type="number" 
+                min="0" 
+                step="0.01" 
+                value={course.bulk_price || ''}
+                onChange={(e) => updateCourse({ bulk_price: e.target.value ? parseFloat(e.target.value) : undefined })}
+                placeholder="0.00" 
+              />
             </div>
           </div>
         </CardContent>

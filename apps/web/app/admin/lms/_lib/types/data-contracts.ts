@@ -151,6 +151,7 @@ export interface UICourse {
   status: keyof typeof CourseStatus; // ⚠️ Enum in UI
   sku?: string;
   price?: number;
+  bulk_price?: number;
   sequential_completion: boolean;
   passing_score: number;
   lessons_count: number; // Computed field
@@ -159,6 +160,12 @@ export interface UICourse {
   version: string; // UI-only field
   created_at: string;
   updated_at: string;
+  estimated_duration?: string;
+  seo_description?: string;
+  category?: string;
+  certificate_enabled?: boolean;
+  progress_tracking_enabled?: boolean;
+  time_limit_days?: number;
 }
 
 export interface UILesson {
