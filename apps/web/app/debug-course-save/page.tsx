@@ -1,13 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@kit/ui/button';
 import { Card } from '@kit/ui/card';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 export default function DebugCourseSavePage() {
   const [courseId, setCourseId] = useState('');
   const [debugOutput, setDebugOutput] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/list-courses')
+      .then(res => res.json())
+      .then(data => {
+        setCourses(data.courses || []);
+        setLoadingCourses(false);
+      })
+      .catch(() => setLoadingCourses(false));
+  }, []);
 
   const runDebug = async () => {
     setLoading(true);
@@ -50,6 +63,24 @@ export default function DebugCourseSavePage() {
               className="w-full p-2 border rounded"
             />
           </div>
+          
+          {!loadingCourses && courses.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-600 mb-2">Or select from existing courses:</p>
+              <select 
+                value={courseId} 
+                onChange={(e) => setCourseId(e.target.value)}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">Select a course</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.title} ({course.status}) - {course.id}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           
           <Button 
             onClick={runDebug} 
