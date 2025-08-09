@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
-import { Badge } from '@kit/ui/badge';
 import { Spinner } from '@kit/ui/spinner';
 import { Trans } from '@kit/ui/trans';
 import { toast } from '@kit/ui/sonner';
@@ -50,33 +49,10 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
     });
   };
 
-  const getLevelBadge = (level: string) => {
-    const colorMap = {
-      beginner: 'bg-green-100 text-green-800',
-      intermediate: 'bg-yellow-100 text-yellow-800',
-      advanced: 'bg-red-100 text-red-800',
-    };
-    
-    return (
-      <Badge className={colorMap[level as keyof typeof colorMap] || 'bg-gray-100 text-gray-800'}>
-        {level.charAt(0).toUpperCase() + level.slice(1)}
-      </Badge>
-    );
-  };
-
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-          {getLevelBadge(course.level)}
-        </div>
-        
-        {course.description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {course.description}
-          </p>
-        )}
+        <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
@@ -93,17 +69,11 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
         </div>
 
         {/* Additional Details */}
-        <div className="space-y-1">
-          {course.duration_minutes && (
-            <div className="text-xs text-muted-foreground">
-              Duration: {Math.floor(course.duration_minutes / 60)}h {course.duration_minutes % 60}m
-            </div>
-          )}
-          
+        {course.duration_minutes && (
           <div className="text-xs text-muted-foreground">
-            Language: {course.language}
+            Duration: {Math.floor(course.duration_minutes / 60)}h {course.duration_minutes % 60}m
           </div>
-        </div>
+        )}
 
         {/* Enrollment Button */}
         <Button 

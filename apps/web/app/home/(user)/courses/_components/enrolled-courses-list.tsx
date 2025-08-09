@@ -94,15 +94,7 @@ function CourseCard({ course }: { course: LearnerCourse }) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-        </div>
-        
-        {course.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {course.description}
-          </p>
-        )}
+        <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-4">
