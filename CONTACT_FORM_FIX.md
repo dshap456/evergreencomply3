@@ -1,7 +1,7 @@
 # Contact Form Fix Documentation
 
 ## Issue Summary
-The contact form was showing an error message even though emails were being sent successfully.
+The contact form was showing an error message due to a Next.js server action registration issue.
 
 ## Root Cause Analysis
 
@@ -9,11 +9,12 @@ The contact form was showing an error message even though emails were being sent
    - Resend API is properly configured
    - Environment variables are set correctly:
      - `RESEND_API_KEY`: Set and valid
-     - `CONTACT_EMAIL`: david.alan.shapiro@gmail.com
+     - `CONTACT_EMAIL`: support@evergreencomply.com
      - `EMAIL_SENDER`: delivered@resend.dev
    - Emails are being sent successfully to the configured email
 
-2. **Frontend Issue**: The form was not properly handling the response from the server action
+2. **Frontend Issue**: Server action was not being found by Next.js ("Failed to find Server Action")
+   - This was due to how Next.js registers server actions with the enhanceAction wrapper
 
 ## Changes Made
 
@@ -23,11 +24,16 @@ The contact form was showing an error message even though emails were being sent
 - Now returns a structured response with success status and email ID
 
 ### 2. Enhanced Contact Form Component (`apps/web/app/contact/_components/contact-form.tsx`)
+- Changed to use API route instead of direct server action call (workaround)
 - Added detailed console logging for debugging
 - Form now resets after successful submission
 - Better error logging in the browser console
 
-### 3. Improved Email Service (`apps/web/lib/email/resend.ts`)
+### 3. Created API Route (`apps/web/app/api/contact-form-submit/route.ts`)
+- Handles form submission and calls the server action
+- Provides a stable endpoint for the form to submit to
+
+### 4. Improved Email Service (`apps/web/lib/email/resend.ts`)
 - Added proper TypeScript return type
 - Added validation for RESEND_API_KEY
 - Better error handling for edge cases

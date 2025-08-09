@@ -55,8 +55,20 @@ export function ContactForm() {
           startTransition(async () => {
             try {
               console.log('Submitting contact form with data:', data);
-              const result = await sendContactEmail(data);
+              
+              // Use fetch to call the API route as a workaround
+              const response = await fetch('/api/contact-form-submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+              });
+              
+              const result = await response.json();
               console.log('Contact form submission result:', result);
+              
+              if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Failed to send message');
+              }
 
               setState({ success: true, error: false });
               form.reset();
