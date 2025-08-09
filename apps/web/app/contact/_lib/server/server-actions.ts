@@ -7,17 +7,18 @@ import { sendEmail } from '~/lib/email/resend';
 
 import { ContactEmailSchema } from '../contact-email.schema';
 
-const contactEmail = z
-  .string({
-    description: `The email where you want to receive the contact form submissions.`,
-    required_error:
-      'Contact email is required. Please use the environment variable CONTACT_EMAIL.',
-  })
-  .parse(process.env.CONTACT_EMAIL);
-
 export const sendContactEmail = enhanceAction(
   async (data) => {
     try {
+      // Parse environment variable inside the function to avoid module load errors
+      const contactEmail = z
+        .string({
+          description: `The email where you want to receive the contact form submissions.`,
+          required_error:
+            'Contact email is required. Please use the environment variable CONTACT_EMAIL.',
+        })
+        .parse(process.env.CONTACT_EMAIL);
+
       await sendEmail({
         to: contactEmail,
         subject: 'Contact Form Submission - Evergreen Comply',
