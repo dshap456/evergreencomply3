@@ -58,17 +58,71 @@ export const sendContactEmail = enhanceAction(
         htmlLength: emailPayload.html.length,
       });
 
-      const result = await sendEmail({
-        ...emailPayload,
-        from: process.env.EMAIL_SENDER || 'delivered@resend.dev',
-      });
-
-      console.log('5. Email sent successfully!');
-      console.log(`Contact form email sent to ${contactEmail} from ${data.email}`);
-      console.log('Email send result:', result);
-      console.log('=== Contact Form Debug End ===');
+      // Use the EMAIL_SENDER from environment, which should be from verified domain
+      const fromEmail = process.env.EMAIL_SENDER || 'delivered@resend.dev';
       
-      return { success: true, emailId: result?.id };
+      // If we're trying to send to a domain-specific email but the domain isn't verified,
+      // we need to use the default Resend sender
+      const isUsingCustomDomain = fromEmail !== 'delivered@resend.dev' && 
+                                  !fromEmail.includes('resend.dev');
+      
+      // If using custom domain fails, we'll retry with default sender
+      let emailSent = false;
+      let lastError: any = null;
+      
+      try {
+        const result = await sendEmail({
+          ...emailPayload,
+          from: fromEmail,
+        });
+        emailSent = true;
+        console.log('5. Email sent successfully!');
+        console.log(`Contact form email sent to ${contactEmail} from ${data.email}`);
+        console.log('Email send result:', result);
+        console.log('=== Contact Form Debug End ===');
+        
+        return { success: true, emailId: result?.id };
+      } catch (emailError: any) {
+        lastError = emailError;
+        
+        // If it's a domain verification error and we were trying to use a custom domain,
+        // fall back to using the account owner's email
+        if (isUsingCustomDomain && emailError?.error?.includes('domain is not verified')) {
+          console.log('Domain verification error detected, falling back to account owner email...');
+          
+          try {
+            // Use the account owner's email as recipient
+            const fallbackEmail = 'david.alan.shapiro@gmail.com';
+            const fallbackResult = await sendEmail({
+              to: fallbackEmail,
+              subject: emailPayload.subject + ' (Domain Verification Pending)',
+              html: emailPayload.html + `
+                <hr style="margin-top: 30px; border: 1px solid #eee;">
+                <p style="color: #999; font-size: 11px; margin-top: 20px;">
+                  Note: This email was sent to ${fallbackEmail} because the domain ${contactEmail.split('@')[1]} 
+                  is pending verification in Resend. Once verified, emails will be sent to ${contactEmail}.
+                </p>
+              `,
+              from: 'delivered@resend.dev',
+            });
+            
+            emailSent = true;
+            console.log('5. Email sent successfully using fallback!');
+            console.log(`Contact form email sent to ${fallbackEmail} (fallback) from ${data.email}`);
+            console.log('Email send result:', fallbackResult);
+            console.log('=== Contact Form Debug End ===');
+            
+            return { success: true, emailId: fallbackResult?.id, fallback: true };
+          } catch (fallbackError) {
+            console.error('Fallback email also failed:', fallbackError);
+            lastError = fallbackError;
+          }
+        }
+      }
+      
+      if (!emailSent) {
+        throw lastError;
+      }
     } catch (error) {
       console.error('=== Contact Form Error ===');
       console.error('Error type:', error?.constructor?.name);
