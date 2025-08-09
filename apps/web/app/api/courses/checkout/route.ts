@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import Stripe from 'stripe';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { requireUser } from '@kit/supabase/require-user';
 
 const CheckoutSchema = z.object({
   items: z.array(
@@ -23,6 +25,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
+    // Get authenticated user
+    const client = getSupabaseServerClient();
+    const auth = await requireUser(client);
+    
+    if (!auth.data) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const body = await request.json();
     const { items, success_url, cancel_url } = CheckoutSchema.parse(body);
     
@@ -46,8 +56,12 @@ export async function POST(request: Request) {
       mode: 'payment',
       success_url: success_url + '?session_id={CHECKOUT_SESSION_ID}',
       cancel_url,
+      // CRITICAL: Set user ID so webhook knows who purchased
+      client_reference_id: auth.data.id,
+      customer_email: auth.data.email,
       metadata: {
-        type: 'course_purchase',
+        type: 'training-purchase', // Changed to match webhook expectation
+        userId: auth.data.id,
         items: JSON.stringify(items.map(item => ({
           name: item.name,
           quantity: item.quantity,

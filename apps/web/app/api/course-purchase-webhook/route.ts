@@ -59,9 +59,12 @@ export async function POST(request: NextRequest) {
       payment_status: session.payment_status,
     });
     
-    // 4. Check if this is a course purchase
-    if (session.metadata?.type !== 'training-purchase') {
-      console.log('[COURSE-WEBHOOK] Not a training purchase, metadata:', session.metadata);
+    // 4. Check if this is a course purchase (handle both metadata types)
+    const isCoursePurchase = session.metadata?.type === 'training-purchase' || 
+                            session.metadata?.type === 'course_purchase';
+                            
+    if (!isCoursePurchase) {
+      console.log('[COURSE-WEBHOOK] Not a course purchase, metadata:', session.metadata);
       return NextResponse.json({ received: true });
     }
     
