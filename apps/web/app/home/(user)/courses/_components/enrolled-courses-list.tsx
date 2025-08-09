@@ -92,12 +92,12 @@ function CourseCard({ course }: { course: LearnerCourse }) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="flex-1 flex flex-col space-y-4">
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
@@ -139,6 +139,9 @@ function CourseCard({ course }: { course: LearnerCourse }) {
 
           {getScoreBadge()}
         </div>
+
+        {/* Spacer to push buttons to bottom */}
+        <div className="flex-1" />
 
         {/* Action Buttons */}
         <div className="flex gap-2">

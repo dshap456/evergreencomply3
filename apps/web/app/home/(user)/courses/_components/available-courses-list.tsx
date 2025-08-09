@@ -50,12 +50,12 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="flex-1 flex flex-col space-y-4">
         {/* Course Info */}
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
@@ -74,6 +74,9 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
             Duration: {Math.floor(course.duration_minutes / 60)}h {course.duration_minutes % 60}m
           </div>
         )}
+
+        {/* Spacer to push button to bottom */}
+        <div className="flex-1" />
 
         {/* Enrollment Button */}
         <Button 
