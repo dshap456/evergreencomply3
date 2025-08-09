@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
-import { requireUser } from '@kit/supabase/require-user';
 
 const CheckoutSchema = z.object({
   items: z.array(
@@ -14,6 +13,7 @@ const CheckoutSchema = z.object({
       description: z.string(),
     })
   ).min(1),
+  email: z.string().email().optional(), // Email for unauthenticated users
   success_url: z.string().url(),
   cancel_url: z.string().url(),
 });
@@ -25,16 +25,23 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
-    // Get authenticated user
-    const client = getSupabaseServerClient();
-    const auth = await requireUser(client);
-    
-    if (!auth.data) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
     const body = await request.json();
-    const { items, success_url, cancel_url } = CheckoutSchema.parse(body);
+    const { items, email, success_url, cancel_url } = CheckoutSchema.parse(body);
+    
+    // Try to get authenticated user (optional)
+    const client = getSupabaseServerClient();
+    let userId: string | undefined;
+    let userEmail: string | undefined;
+    
+    try {
+      const { data: { user } } = await client.auth.getUser();
+      if (user) {
+        userId = user.id;
+        userEmail = user.email;
+      }
+    } catch {
+      // User not authenticated, that's ok
+    }
     
     // Create line items for Stripe checkout
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(item => ({
@@ -50,25 +57,39 @@ export async function POST(request: Request) {
     }));
     
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items,
       mode: 'payment',
       success_url: success_url + '?session_id={CHECKOUT_SESSION_ID}',
       cancel_url,
-      // CRITICAL: Set user ID so webhook knows who purchased
-      client_reference_id: auth.data.id,
-      customer_email: auth.data.email,
+      // Set user ID if authenticated, otherwise webhook will create account
+      client_reference_id: userId || null,
       metadata: {
-        type: 'training-purchase', // Changed to match webhook expectation
-        userId: auth.data.id,
+        type: 'training-purchase',
+        userId: userId || '', // Empty string if not authenticated
         items: JSON.stringify(items.map(item => ({
           name: item.name,
           quantity: item.quantity,
           price: item.price,
         }))),
       },
-    });
+    };
+
+    // Handle email based on authentication status
+    if (userId && userEmail) {
+      // Authenticated user - use their email
+      sessionConfig.customer_email = userEmail;
+    } else if (email) {
+      // Unauthenticated with provided email
+      sessionConfig.customer_email = email;
+    } else {
+      // No email at all - let Stripe collect it
+      // This requires enabling email collection in Stripe checkout
+      sessionConfig.billing_address_collection = 'required';
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
     
     return NextResponse.json({
       sessionId: session.id,

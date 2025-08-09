@@ -98,21 +98,45 @@ export async function POST(request: NextRequest) {
         continue;
       }
       
-      // Use client_reference_id or try to find user by email
+      // Use client_reference_id or try to find/create user by email
       let accountId = session.client_reference_id;
       
       if (!accountId && session.customer_email) {
-        console.log('[COURSE-WEBHOOK] No client_reference_id, trying email lookup:', session.customer_email);
-        const { data: user } = await adminClient
-          .from('accounts')
-          .select('id')
-          .eq('email', session.customer_email)
-          .eq('is_personal_account', true)
-          .single();
+        console.log('[COURSE-WEBHOOK] No client_reference_id, checking for existing user:', session.customer_email);
+        
+        // First, check if user exists in auth.users
+        const { data: authUser } = await adminClient.auth.admin.listUsers({
+          filter: `email.eq.${session.customer_email}`,
+          perPage: 1,
+        });
+        
+        if (authUser?.users?.length > 0) {
+          // User exists in auth, get their account
+          accountId = authUser.users[0].id;
+          console.log('[COURSE-WEBHOOK] Found existing auth user:', accountId);
+        } else {
+          // Create new user
+          console.log('[COURSE-WEBHOOK] Creating new user for:', session.customer_email);
           
-        if (user) {
-          accountId = user.id;
-          console.log('[COURSE-WEBHOOK] Found user by email:', accountId);
+          const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+            email: session.customer_email,
+            email_confirm: true, // Auto-confirm email since they paid
+            user_metadata: {
+              source: 'course_purchase',
+            }
+          });
+          
+          if (createError || !newUser?.user) {
+            console.error('[COURSE-WEBHOOK] Failed to create user:', createError);
+            continue;
+          }
+          
+          accountId = newUser.user.id;
+          console.log('[COURSE-WEBHOOK] Created new user with ID:', accountId);
+          
+          // The user creation trigger should have created a personal account
+          // Wait a moment for the trigger to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
       
