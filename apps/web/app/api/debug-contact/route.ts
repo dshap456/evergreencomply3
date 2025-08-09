@@ -80,11 +80,40 @@ export async function POST() {
     results.success = true;
 
   } catch (error) {
-    results.error = error instanceof Error ? error.message : String(error);
+    let errorDetails = {
+      message: 'Unknown error',
+      type: 'unknown',
+      fullError: null as any,
+    };
+
+    if (error instanceof Error) {
+      errorDetails = {
+        message: error.message,
+        type: error.constructor.name,
+        fullError: {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        },
+      };
+    } else if (typeof error === 'object' && error !== null) {
+      errorDetails = {
+        message: JSON.stringify(error),
+        type: 'object',
+        fullError: error,
+      };
+    } else {
+      errorDetails = {
+        message: String(error),
+        type: typeof error,
+        fullError: error,
+      };
+    }
+
+    results.error = errorDetails.message;
     results.steps.push({
       step: 'Error occurred',
-      error: results.error,
-      stack: error instanceof Error ? error.stack : undefined,
+      error: errorDetails,
     });
   }
 
