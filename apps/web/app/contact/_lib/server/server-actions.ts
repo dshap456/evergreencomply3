@@ -2,8 +2,8 @@
 
 import { z } from 'zod';
 
-import { getMailer } from '@kit/mailers';
 import { enhanceAction } from '@kit/next/actions';
+import { sendEmail } from '~/lib/email/resend';
 
 import { ContactEmailSchema } from '../contact-email.schema';
 
@@ -15,30 +15,11 @@ const contactEmail = z
   })
   .parse(process.env.CONTACT_EMAIL);
 
-const emailFrom = z
-  .string({
-    description: `The email sending address.`,
-    required_error:
-      'Sender email is required. Please use the environment variable EMAIL_SENDER.',
-  })
-  .parse(process.env.EMAIL_SENDER);
-
-// Log environment variables (remove in production)
-console.log('Contact form configuration:', {
-  contactEmail,
-  emailFrom,
-  mailerProvider: process.env.MAILER_PROVIDER,
-  hasResendKey: !!process.env.RESEND_API_KEY,
-});
-
 export const sendContactEmail = enhanceAction(
   async (data) => {
     try {
-      const mailer = await getMailer();
-
-      await mailer.sendEmail({
+      await sendEmail({
         to: contactEmail,
-        from: `Evergreen Comply <${emailFrom}>`,
         subject: 'Contact Form Submission - Evergreen Comply',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -63,7 +44,7 @@ export const sendContactEmail = enhanceAction(
       return {};
     } catch (error) {
       console.error('Failed to send contact email:', error);
-      throw new Error('Failed to send contact email. Please ensure RESEND_API_KEY is set in environment variables.');
+      throw new Error('Failed to send contact email. Please try again later.');
     }
   },
   {
