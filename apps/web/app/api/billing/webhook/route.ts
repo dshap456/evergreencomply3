@@ -1,3 +1,5 @@
+// VERSION 2.0 - Clean webhook without orders table
+// Last updated: 2025-08-09 19:48 UTC
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import Stripe from 'stripe';
