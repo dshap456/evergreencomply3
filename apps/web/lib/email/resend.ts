@@ -13,7 +13,7 @@ const DEFAULT_FROM = 'Evergreen Comply <onboarding@resend.dev>';
 const CUSTOM_FROM = 'Evergreen Comply <support@evergreencomply.com>';
 
 // For now, just use what works
-const WORKING_FROM = 'Evergreen Comply <onboarding@resend.dev>';
+const WORKING_FROM = process.env.EMAIL_SENDER || 'Evergreen Comply <onboarding@resend.dev>';
 
 interface SendEmailParams {
   to: string | string[];

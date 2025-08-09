@@ -58,7 +58,10 @@ export const sendContactEmail = enhanceAction(
         htmlLength: emailPayload.html.length,
       });
 
-      await sendEmail(emailPayload);
+      await sendEmail({
+        ...emailPayload,
+        from: process.env.EMAIL_SENDER || 'support@evergreencomply.com',
+      });
 
       console.log('5. Email sent successfully!');
       console.log(`Contact form email sent to ${contactEmail} from ${data.email}`);

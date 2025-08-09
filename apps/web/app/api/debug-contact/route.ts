@@ -60,14 +60,16 @@ export async function POST() {
     });
 
     // Step 3: Try to send a simple test email
+    const fromEmail = process.env.EMAIL_SENDER || 'support@evergreencomply.com';
     results.steps.push({
       step: 'Attempting to send email',
       to: process.env.CONTACT_EMAIL,
-      from: 'Evergreen Comply <onboarding@resend.dev>',
+      from: fromEmail,
     });
 
     await sendEmail({
       to: process.env.CONTACT_EMAIL,
+      from: fromEmail,
       subject: 'Debug Test Email',
       html: '<p>This is a debug test email from the contact form debugging endpoint.</p>',
     });
