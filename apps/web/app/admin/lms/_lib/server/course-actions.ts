@@ -111,6 +111,19 @@ export const updateCourseAction = enhanceAction(
       });
       console.log('📊 UpdateCourseAction: Full update result:', updateResult);
       
+      // Double-check by fetching the course again
+      const { data: verifyData, error: verifyError } = await client
+        .from('courses')
+        .select('*')
+        .eq('id', data.id)
+        .single();
+        
+      console.log('🔍 UpdateCourseAction: Verification fetch:', {
+        slug: verifyData?.slug,
+        status: verifyData?.status,
+        error: verifyError
+      });
+      
       // Skip revalidatePath for now - it's causing server component render errors
       // revalidatePath('/admin/lms');
       

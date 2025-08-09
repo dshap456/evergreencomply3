@@ -70,12 +70,23 @@ export const CourseTransformer = {
    */
   toDatabase: (uiCourse: Partial<UICourse>, useOldSchema: boolean = false): Partial<DatabaseCourse> => {
     try {
+      console.log('🔄 CourseTransformer.toDatabase: Input data:', {
+        ...uiCourse,
+        hasSlug: uiCourse.slug !== undefined,
+        slugValue: uiCourse.slug,
+        hasStatus: uiCourse.status !== undefined,
+        statusValue: uiCourse.status,
+      });
+
       const result: Partial<DatabaseCourse> = {};
       
       // Only include fields that are actually present in the input
       if (uiCourse.title !== undefined) result.title = uiCourse.title;
       if (uiCourse.description !== undefined) result.description = uiCourse.description || null;
-      if (uiCourse.slug !== undefined) result.slug = uiCourse.slug || null;
+      if (uiCourse.slug !== undefined) {
+        result.slug = uiCourse.slug || null;
+        console.log('🔄 CourseTransformer.toDatabase: Setting slug to:', result.slug);
+      }
       if (uiCourse.sku !== undefined) result.sku = uiCourse.sku || null;
       if (uiCourse.price !== undefined) result.price = uiCourse.price || null;
       if (uiCourse.sequential_completion !== undefined) result.sequential_completion = uiCourse.sequential_completion;
