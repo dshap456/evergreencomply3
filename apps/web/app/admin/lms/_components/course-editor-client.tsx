@@ -38,9 +38,12 @@ interface Course {
   title: string;
   description: string;
   slug?: string;
-  is_published: boolean;
+  status: 'draft' | 'published' | 'archived';
   created_at: string;
   updated_at: string;
+  version?: string;
+  lessons_count?: number;
+  enrollments_count?: number;
 }
 
 interface Module {
@@ -125,16 +128,21 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await updateCourseAction({
+        const result = await updateCourseAction({
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
           slug: courseData.slug,
-          status: courseData.is_published ? CourseStatus.PUBLISHED : CourseStatus.DRAFT,
+          status: courseData.status,
         });
         
-        toast.success('Course saved successfully');
-        setIsDirty(false);
+        if (result.success && result.updatedCourse) {
+          setCourseData(result.updatedCourse);
+          toast.success('Course saved successfully');
+          setIsDirty(false);
+        } else {
+          throw new Error('Failed to save course');
+        }
       } catch (error) {
         console.error('Failed to save course:', error);
         toast.error('Failed to save course');
@@ -145,7 +153,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
   const handlePublish = () => {
     startTransition(async () => {
       try {
-        await updateCourseAction({
+        const result = await updateCourseAction({
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
@@ -153,9 +161,13 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
           status: CourseStatus.PUBLISHED,
         });
         
-        setCourseData(prev => ({ ...prev, is_published: true }));
-        toast.success('Course published successfully');
-        setIsDirty(false);
+        if (result.success && result.updatedCourse) {
+          setCourseData(result.updatedCourse);
+          toast.success('Course published successfully');
+          setIsDirty(false);
+        } else {
+          throw new Error('Failed to publish course');
+        }
       } catch (error) {
         console.error('Failed to publish course:', error);
         toast.error('Failed to publish course');
@@ -207,7 +219,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
             <h1 className="text-2xl font-bold">{courseData.title}</h1>
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="secondary">
-                {courseData.is_published ? 'Published' : 'Draft'}
+                {courseData.status}
               </Badge>
               {isDirty && (
                 <Badge variant="outline" className="text-orange-600">
@@ -229,7 +241,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
               'Save Changes'
             )}
           </Button>
-          {!courseData.is_published && (
+          {courseData.status !== 'published' && (
             <Button 
               onClick={handlePublish} 
               disabled={isPending}
@@ -277,9 +289,9 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Status</label>
                   <Select
-                    value={courseData.is_published ? 'published' : 'draft'}
-                    onValueChange={(value) => {
-                      setCourseData(prev => ({ ...prev, is_published: value === 'published' }));
+                    value={courseData.status}
+                    onValueChange={(value: 'draft' | 'published' | 'archived') => {
+                      setCourseData(prev => ({ ...prev, status: value }));
                       setIsDirty(true);
                     }}
                   >
@@ -289,6 +301,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -351,7 +364,7 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {courseData.is_published ? 'Live' : 'Draft'}
+                  {courseData.status === 'published' ? 'Live' : courseData.status}
                 </div>
               </CardContent>
             </Card>
