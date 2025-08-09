@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import Stripe from 'stripe';
 
-const PRICE_TO_COURSE_MAP = {
-  'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat',
+// Map Stripe price IDs to course slugs
+const PRICE_TO_COURSE_SLUG_MAP = {
+  'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat-general',
   'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',
   'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',
 } as const;
@@ -92,9 +93,9 @@ export async function POST(request: NextRequest) {
       
       if (!priceId) continue;
       
-      const courseSlug = PRICE_TO_COURSE_MAP[priceId as keyof typeof PRICE_TO_COURSE_MAP];
+      const courseSlug = PRICE_TO_COURSE_SLUG_MAP[priceId as keyof typeof PRICE_TO_COURSE_SLUG_MAP];
       if (!courseSlug) {
-        console.log('[COURSE-WEBHOOK] Price not mapped to course:', priceId);
+        console.log('[COURSE-WEBHOOK] Price not mapped to course slug:', priceId);
         continue;
       }
       
@@ -146,14 +147,14 @@ export async function POST(request: NextRequest) {
       }
       
       // Process the purchase
-      console.log('[COURSE-WEBHOOK] Calling process_course_purchase:', {
+      console.log('[COURSE-WEBHOOK] Calling process_course_purchase_by_slug:', {
         courseSlug,
         accountId,
         sessionId: session.id,
       });
       
-      const { data, error } = await adminClient.rpc('process_course_purchase', {
-        p_product_id: courseSlug,
+      const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
+        p_course_slug: courseSlug,
         p_account_id: accountId,
         p_payment_id: session.id,
         p_quantity: item.quantity || 1,
@@ -171,11 +172,11 @@ export async function POST(request: NextRequest) {
         // Try to get more info about the course
         const { data: courseCheck } = await adminClient
           .from('courses')
-          .select('id, title, billing_product_id')
-          .eq('billing_product_id', courseSlug)
+          .select('id, title, slug, billing_product_id')
+          .eq('slug', courseSlug)
           .single();
           
-        console.error('[COURSE-WEBHOOK] Course lookup:', {
+        console.error('[COURSE-WEBHOOK] Course lookup by slug:', {
           courseSlug,
           found: !!courseCheck,
           courseData: courseCheck,
