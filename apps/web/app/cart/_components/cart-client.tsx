@@ -6,9 +6,15 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown } from 'lucide-react';
 import { Badge } from '@kit/ui/badge';
 import { toast } from '@kit/ui/sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@kit/ui/dropdown-menu';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
 
@@ -198,11 +204,31 @@ export function CartClient({ availableCourses }: CartClientProps) {
             <Link href="/#features" className="text-sm font-medium hover:text-primary">
               Features
             </Link>
-            <Link href="/courses" className="text-sm font-medium hover:text-primary">
-              Courses
-            </Link>
-            <Link href="/#pricing" className="text-sm font-medium hover:text-primary">
-              Pricing
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary">
+                Courses
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem asChild>
+                  <Link href="/courses/dot-hazmat" className="cursor-pointer">
+                    DOT HAZMAT - General
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/courses/advanced-hazmat" className="cursor-pointer">
+                    DOT HAZMAT - Advanced
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/courses/epa-rcra" className="cursor-pointer">
+                    EPA RCRA
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Link href="/contact" className="text-sm font-medium hover:text-primary">
+              Contact
             </Link>
           </nav>
           <div className="flex items-center gap-4">
