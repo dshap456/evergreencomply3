@@ -10,7 +10,6 @@ import {
 import { Trans } from '@kit/ui/trans';
 
 import { TeamAccountDangerZone } from './team-account-danger-zone';
-import { UpdateTeamAccountImage } from './update-team-account-image-container';
 import { UpdateTeamAccountNameForm } from './update-team-account-name-form';
 
 export function TeamAccountSettingsContainer(props: {
@@ -32,22 +31,6 @@ export function TeamAccountSettingsContainer(props: {
 }) {
   return (
     <div className={'flex w-full flex-col space-y-4'}>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Trans i18nKey={'teams:settings.teamLogo'} />
-          </CardTitle>
-
-          <CardDescription>
-            <Trans i18nKey={'teams:settings.teamLogoDescription'} />
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <UpdateTeamAccountImage account={props.account} />
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>
