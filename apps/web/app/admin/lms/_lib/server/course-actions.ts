@@ -56,8 +56,9 @@ export const updateCourseAction = enhanceAction(
       });
 
       // Check if we're using the old schema (is_published) or new schema (status)
-      const useOldSchema = !('status' in currentCourse) && 'is_published' in currentCourse;
-      console.log('🔍 UpdateCourseAction: Schema detection:', { useOldSchema });
+      // Force new schema since the database has been migrated
+      const useOldSchema = false;
+      console.log('🔍 UpdateCourseAction: Using new schema with status field');
 
       // Use data transformer for safe conversion
       const updateData = CourseTransformer.toDatabase(data, useOldSchema);
@@ -148,27 +149,16 @@ export const createCourseAction = enhanceAction(
       throw new Error('User account not found');
     }
 
-    // Check if we need to use the old schema by testing with a simple select
-    const { data: testCourse } = await client
-      .from('courses')
-      .select('*')
-      .limit(1)
-      .single();
-      
-    const useOldSchema = testCourse && !('status' in testCourse) && 'is_published' in testCourse;
-    console.log('🔍 CreateCourseAction: Schema detection:', { useOldSchema });
+    // Force new schema since the database has been migrated
+    const useOldSchema = false;
+    console.log('🔍 CreateCourseAction: Using new schema with status field');
 
     const insertData: any = {
       account_id: userAccountId,
       title: data.title,
       description: data.description,
+      status: 'draft',
     };
-
-    if (useOldSchema) {
-      insertData.is_published = false; // Draft in old schema
-    } else {
-      insertData.status = 'draft';
-    }
 
     const { data: course, error } = await client
       .from('courses')
