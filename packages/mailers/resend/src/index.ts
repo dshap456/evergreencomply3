@@ -32,22 +32,39 @@ class ResendMailer implements Mailer {
             html: config.html,
           };
 
+    const payload = {
+      from: config.from,
+      to: Array.isArray(config.to) ? config.to : [config.to],
+      subject: config.subject,
+      ...contentObject,
+    };
+
+    console.log('Sending email via Resend:', {
+      from: payload.from,
+      to: payload.to,
+      subject: payload.subject,
+    });
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
-      body: JSON.stringify({
-        from: config.from,
-        to: [config.to],
-        subject: config.subject,
-        ...contentObject,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to send email: ${res.statusText}`);
+      const errorText = await res.text();
+      console.error('Resend API error:', {
+        status: res.status,
+        statusText: res.statusText,
+        body: errorText,
+      });
+      throw new Error(`Failed to send email: ${res.status} ${res.statusText} - ${errorText}`);
     }
+
+    const result = await res.json();
+    console.log('Email sent successfully:', result);
   }
 }
