@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import Stripe from 'stripe';
 
+// Course purchase webhook - NO orders table dependency
 const COURSE_PRODUCT_MAPPING = {
   'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat',
   'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',
@@ -9,24 +10,20 @@ const COURSE_PRODUCT_MAPPING = {
 } as const;
 
 export async function POST(request: NextRequest) {
-  console.log('[Webhook] Received webhook request');
+  console.log('[Course Webhook] Starting fresh webhook handler...');
   
   try {
-    // Get the raw body for signature verification
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
     
     if (!signature) {
-      console.error('[Webhook] Missing stripe-signature header');
-      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+      return NextResponse.json({ error: 'No signature' }, { status: 400 });
     }
     
-    // Initialize Stripe
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: '2025-06-30.basil',
     });
     
-    // Verify webhook signature
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(
@@ -35,140 +32,79 @@ export async function POST(request: NextRequest) {
         process.env.STRIPE_WEBHOOK_SECRET!
       );
     } catch (err) {
-      console.error('[Webhook] Signature verification failed:', err);
+      console.error('[Course Webhook] Signature failed:', err);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
     
-    console.log('[Webhook] Event type:', event.type);
+    console.log('[Course Webhook] Event type:', event.type);
     
-    // Handle the event - ONLY handle training purchases to avoid orders table error
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('[Webhook] Full session object:', JSON.stringify({
+      
+      console.log('[Course Webhook] Session details:', {
         id: session.id,
         client_reference_id: session.client_reference_id,
         metadata: session.metadata,
         customer_email: session.customer_email,
-        payment_status: session.payment_status,
-      }, null, 2));
+      });
       
-      // Check conditions
-      const isTrainingPurchase = session.metadata?.type === 'training-purchase';
-      console.log('[Webhook] Is training purchase?', isTrainingPurchase);
-      console.log('[Webhook] Metadata type:', session.metadata?.type);
-      
-      // ONLY process if this is a training purchase
-      if (isTrainingPurchase) {
-        console.log('[Webhook] Processing training purchase...');
-        try {
-          await handleCoursePurchase(session);
-          console.log('[Webhook] Course purchase handled successfully');
-        } catch (purchaseError) {
-          console.error('[Webhook] Error handling course purchase:', purchaseError);
-          // Return error so Stripe will retry
-          return NextResponse.json(
-            { error: 'Course purchase processing failed', details: purchaseError instanceof Error ? purchaseError.message : 'Unknown error' }, 
-            { status: 500 }
-          );
-        }
-      } else {
-        console.log('[Webhook] Not a training purchase, skipping. Metadata:', session.metadata);
+      // Check if training purchase
+      if (session.metadata?.type !== 'training-purchase') {
+        console.log('[Course Webhook] Not a training purchase, ignoring');
+        return NextResponse.json({ received: true });
       }
-    } else {
-      console.log('[Webhook] Ignoring event type:', event.type);
+      
+      console.log('[Course Webhook] Processing training purchase...');
+      
+      // Get line items
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      
+      for (const item of lineItems.data) {
+        const priceId = item.price?.id;
+        if (!priceId) continue;
+        
+        const courseSlug = COURSE_PRODUCT_MAPPING[priceId as keyof typeof COURSE_PRODUCT_MAPPING];
+        if (!courseSlug) {
+          console.log('[Course Webhook] Unknown price:', priceId);
+          continue;
+        }
+        
+        const accountId = session.client_reference_id;
+        if (!accountId) {
+          console.error('[Course Webhook] NO CLIENT_REFERENCE_ID!');
+          continue;
+        }
+        
+        console.log('[Course Webhook] Creating enrollment for:', {
+          courseSlug,
+          accountId,
+          quantity: item.quantity,
+        });
+        
+        const adminClient = getSupabaseServerAdminClient();
+        const { data, error } = await adminClient.rpc('process_course_purchase', {
+          p_product_id: courseSlug,
+          p_account_id: accountId,
+          p_payment_id: session.id,
+          p_quantity: item.quantity || 1,
+        });
+        
+        if (error) {
+          console.error('[Course Webhook] Database error:', error);
+          throw error;
+        }
+        
+        console.log('[Course Webhook] Enrollment created:', data);
+      }
     }
     
-    // Always return success for events we don't handle
     return NextResponse.json({ received: true });
+    
   } catch (error) {
-    console.error('[Webhook] Unexpected error:', error);
+    console.error('[Course Webhook] Error:', error);
     return NextResponse.json(
-      { error: 'Webhook processing failed', details: error instanceof Error ? error.message : 'Unknown error' }, 
+      { error: 'Webhook failed', details: error }, 
       { status: 500 }
     );
-  }
-}
-
-async function handleCoursePurchase(session: Stripe.Checkout.Session) {
-  console.log('[Course Purchase] Starting processing...');
-  const adminClient = getSupabaseServerAdminClient();
-  
-  console.log('[Course Purchase] Session details:', {
-    sessionId: session.id,
-    accountId: session.client_reference_id,
-    metadata: session.metadata,
-    amountTotal: session.amount_total,
-    currency: session.currency,
-    paymentStatus: session.payment_status,
-  });
-
-  try {
-    // Initialize Stripe
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-      apiVersion: '2025-06-30.basil',
-    });
-    
-    // Get line items
-    console.log('[Course Purchase] Fetching line items...');
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-    console.log('[Course Purchase] Line items count:', lineItems.data.length);
-
-    for (const item of lineItems.data) {
-      const priceId = item.price?.id;
-      console.log('[Course Purchase] Processing line item:', {
-        priceId,
-        quantity: item.quantity,
-        description: item.description,
-      });
-      
-      if (!priceId) {
-        console.warn('[Course Purchase] No price ID for line item');
-        continue;
-      }
-
-      // Get the course product ID from the price mapping
-      const productId = COURSE_PRODUCT_MAPPING[priceId as keyof typeof COURSE_PRODUCT_MAPPING];
-      if (!productId) {
-        console.log('[Course Purchase] Price ID not in course mapping:', priceId);
-        continue;
-      }
-
-      const quantity = item.quantity || 1;
-      const accountId = session.client_reference_id;
-      
-      if (!accountId) {
-        console.error('[Course Purchase] No client_reference_id in session - cannot process!');
-        continue;
-      }
-
-      console.log('[Course Purchase] Calling process_course_purchase with:', {
-        productId,
-        accountId,
-        quantity,
-        sessionId: session.id,
-      });
-
-      // Call the database function to process the purchase
-      const { data, error } = await adminClient.rpc('process_course_purchase', {
-        p_product_id: productId,
-        p_account_id: accountId,
-        p_payment_id: session.id,
-        p_quantity: quantity,
-      });
-
-      if (error) {
-        console.error('[Course Purchase] Database error:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-        });
-      } else {
-        console.log('[Course Purchase] Success! Result:', data);
-      }
-    }
-  } catch (error) {
-    console.error('[Course Purchase] Unexpected error:', error);
-    throw error; // Re-throw to ensure webhook returns error status
   }
 }
