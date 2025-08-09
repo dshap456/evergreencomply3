@@ -86,6 +86,13 @@ export const sendContactEmail = enhanceAction(
         } else if (error.message.includes('rate limit')) {
           throw new Error('Too many requests. Please try again later.');
         }
+      } else if (typeof error === 'object' && error !== null && 'statusCode' in error) {
+        // Handle Resend API errors
+        const resendError = error as any;
+        if (resendError.statusCode === 403 && resendError.error?.includes('verify a domain')) {
+          console.error('Resend domain verification required for:', contactEmail);
+          throw new Error('Email configuration error. The contact form is temporarily unavailable.');
+        }
       }
       
       throw new Error('Failed to send contact email. Please try again later.');
