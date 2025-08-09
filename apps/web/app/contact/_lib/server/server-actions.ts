@@ -25,24 +25,38 @@ const emailFrom = z
 
 export const sendContactEmail = enhanceAction(
   async (data) => {
-    const mailer = await getMailer();
+    try {
+      const mailer = await getMailer();
 
-    await mailer.sendEmail({
-      to: contactEmail,
-      from: emailFrom,
-      subject: 'Contact Form Submission',
-      html: `
-        <p>
-          You have received a new contact form submission.
-        </p>
+      await mailer.sendEmail({
+        to: contactEmail,
+        from: emailFrom,
+        subject: 'Contact Form Submission - Evergreen Comply',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">New Contact Form Submission</h2>
+            <p style="color: #666;">You have received a new contact form submission from the Evergreen Comply website.</p>
+            
+            <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Name:</strong> ${data.name}</p>
+              <p><strong>Email:</strong> ${data.email}</p>
+              <p><strong>Message:</strong></p>
+              <p style="white-space: pre-wrap;">${data.message}</p>
+            </div>
+            
+            <p style="color: #999; font-size: 12px; margin-top: 30px;">
+              This email was sent from the contact form at Evergreen Comply.
+            </p>
+          </div>
+        `,
+      });
 
-        <p>Name: ${data.name}</p>
-        <p>Email: ${data.email}</p>
-        <p>Message: ${data.message}</p>
-      `,
-    });
-
-    return {};
+      console.log(`Contact form email sent to ${contactEmail} from ${data.email}`);
+      return {};
+    } catch (error) {
+      console.error('Failed to send contact email:', error);
+      throw new Error('Failed to send contact email. Please ensure RESEND_API_KEY is set in environment variables.');
+    }
   },
   {
     schema: ContactEmailSchema,
