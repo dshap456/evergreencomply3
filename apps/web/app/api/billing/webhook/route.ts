@@ -44,11 +44,21 @@ export async function POST(request: NextRequest) {
     // Handle the event - ONLY handle training purchases to avoid orders table error
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('[Webhook] Session metadata:', session.metadata);
-      console.log('[Webhook] Client reference ID:', session.client_reference_id);
+      console.log('[Webhook] Full session object:', JSON.stringify({
+        id: session.id,
+        client_reference_id: session.client_reference_id,
+        metadata: session.metadata,
+        customer_email: session.customer_email,
+        payment_status: session.payment_status,
+      }, null, 2));
+      
+      // Check conditions
+      const isTrainingPurchase = session.metadata?.type === 'training-purchase';
+      console.log('[Webhook] Is training purchase?', isTrainingPurchase);
+      console.log('[Webhook] Metadata type:', session.metadata?.type);
       
       // ONLY process if this is a training purchase
-      if (session.metadata?.type === 'training-purchase') {
+      if (isTrainingPurchase) {
         console.log('[Webhook] Processing training purchase...');
         try {
           await handleCoursePurchase(session);
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
           );
         }
       } else {
-        console.log('[Webhook] Not a training purchase, ignoring (no orders table)');
+        console.log('[Webhook] Not a training purchase, skipping. Metadata:', session.metadata);
       }
     } else {
       console.log('[Webhook] Ignoring event type:', event.type);
