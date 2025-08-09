@@ -5,10 +5,11 @@ import Stripe from 'stripe';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { requireUser } from '@kit/supabase/require-user';
 
-// Map cart IDs to billing config IDs
+// Map frontend course IDs to database identifiers
+// Frontend sends these exact slugs from the course pages
 const COURSE_MAPPING = {
-  'dot-hazmat-general': 'dot-hazmat',
-  'dot-hazmat-advanced': 'advanced-hazmat',
+  'dot-hazmat': 'dot-hazmat',
+  'advanced-hazmat': 'advanced-hazmat',
   'epa-rcra': 'epa-rcra',
 } as const;
 
@@ -78,10 +79,10 @@ export async function POST(request: NextRequest) {
       // Map to the correct price ID based on course
       let priceId: string;
       switch (courseId) {
-        case 'dot-hazmat-general':
+        case 'dot-hazmat':
           priceId = 'price_1RsDQh97cNCBYOcXZBML0Cwf';
           break;
-        case 'dot-hazmat-advanced':
+        case 'advanced-hazmat':
           priceId = 'price_1RsDev97cNCBYOcX008NiFR8';
           break;
         case 'epa-rcra':
