@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Contact Form</title>
+</head>
+<body>
+    <h1>Test Contact Form</h1>
+    <form id="testForm">
+        <input type="text" id="name" placeholder="Name" value="Test User"><br>
+        <input type="email" id="email" placeholder="Email" value="test@example.com"><br>
+        <textarea id="message" placeholder="Message">Test message from browser</textarea><br>
+        <button type="submit">Send</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                message: document.getElementById('message').value
+            };
+            
+            console.log('Sending data:', data);
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/contact-form-submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                console.log('Response:', result);
+                
+                document.getElementById('result').innerHTML = `
+                    <p>Status: ${response.ok ? 'Success' : 'Failed'}</p>
+                    <p>Result: ${JSON.stringify(result, null, 2)}</p>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -63,13 +63,34 @@ export function ContactForm() {
                 body: JSON.stringify(data),
               });
               
-              const result = await response.json();
-              console.log('Contact form submission result:', result);
+              console.log('Response status:', response.status);
+              console.log('Response ok:', response.ok);
               
-              if (!response.ok || !result.success) {
-                throw new Error(result.error || 'Failed to send message');
+              let result;
+              try {
+                result = await response.json();
+                console.log('Contact form submission result:', result);
+              } catch (parseError) {
+                console.error('Failed to parse response:', parseError);
+                throw new Error('Invalid response from server');
+              }
+              
+              if (!response.ok) {
+                console.error('Response not ok:', response.status, result);
+                throw new Error(result?.error || `Server error: ${response.status}`);
+              }
+              
+              // Check multiple possible success indicators
+              const isSuccess = result?.success === true || 
+                               result?.result?.success === true || 
+                               (response.ok && result?.result?.emailId);
+              
+              if (!isSuccess) {
+                console.error('Result indicates failure:', result);
+                throw new Error(result?.error || 'Failed to send message');
               }
 
+              console.log('Email sent successfully!');
               setState({ success: true, error: false });
               form.reset();
             } catch (error) {
@@ -77,6 +98,7 @@ export function ContactForm() {
               console.error('Error details:', {
                 message: error instanceof Error ? error.message : 'Unknown error',
                 stack: error instanceof Error ? error.stack : undefined,
+                name: error instanceof Error ? error.name : undefined,
               });
               setState({ error: true, success: false });
             }
