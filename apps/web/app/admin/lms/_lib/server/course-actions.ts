@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { enhanceAction } from '@kit/next/actions';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { CourseTransformer } from '../transformers/data-transformers';
 import { UICourse, CourseStatus } from '../types/data-contracts';
@@ -20,122 +21,32 @@ const UpdateCourseSchema = z.object({
 
 export const updateCourseAction = enhanceAction(
   async function (data: Partial<UICourse>, user) {
-    try {
-      const client = getSupabaseServerAdminClient();
+    const client = getSupabaseServerClient();
 
-      console.log('🔄 UpdateCourseAction: Starting update with data contracts...', { 
-        id: data.id, 
-        title: data.title, 
-        status: data.status,
-        userId: user?.id 
-      });
+    // Simple update with just the fields we need
+    const updateData = {
+      title: data.title,
+      description: data.description,
+      slug: data.slug,
+      status: data.status,
+      updated_at: new Date().toISOString(),
+    };
 
-      // Validate required fields
-      if (!data.id) {
-        throw new Error('Course ID is required for update');
-      }
+    const { error, data: updateResult } = await client
+      .from('courses')
+      .update(updateData)
+      .eq('id', data.id)
+      .select()
+      .single();
 
-      // First, verify the course exists and get current state
-      const { data: currentCourse, error: fetchError } = await client
-        .from('courses')
-        .select('*')
-        .eq('id', data.id)
-        .single();
-
-      if (fetchError || !currentCourse) {
-        console.error('❌ UpdateCourseAction: Course not found:', fetchError);
-        throw new Error(`Course not found: ${fetchError?.message || 'Unknown error'}`);
-      }
-
-      console.log('📋 UpdateCourseAction: Current course state:', {
-        id: currentCourse.id,
-        title: currentCourse.title,
-        status: currentCourse.status,
-        is_published: (currentCourse as any).is_published,
-        account_id: currentCourse.account_id
-      });
-
-      // Check if we're using the old schema (is_published) or new schema (status)
-      // Force new schema since the database has been migrated
-      const useOldSchema = false;
-      console.log('🔍 UpdateCourseAction: Using new schema with status field');
-
-      // Use data transformer for safe conversion
-      const updateData = CourseTransformer.toDatabase(data, useOldSchema);
-      
-      // Ensure we're not trying to update protected fields
-      delete (updateData as any).id;
-      delete (updateData as any).account_id;
-      delete (updateData as any).created_at;
-      
-      console.log('🔄 UpdateCourseAction: Transformed data for update:', updateData);
-      console.log('🔄 UpdateCourseAction: Update data keys:', Object.keys(updateData));
-      console.log('🔄 UpdateCourseAction: Update data values:', {
-        title: updateData.title,
-        description: updateData.description,
-        slug: updateData.slug,
-        status: updateData.status,
-        updated_at: updateData.updated_at
-      });
-
-      // Perform the update
-      const { error, data: updateResult } = await client
-        .from('courses')
-        .update(updateData)
-        .eq('id', data.id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ UpdateCourseAction: Database update failed:', {
-          error: error,
-          code: error.code,
-          details: error.details,
-          hint: error.hint,
-          message: error.message
-        });
-        throw new Error(`Failed to update course: ${error.message}`);
-      }
-
-      if (!updateResult) {
-        throw new Error('No data returned from update operation');
-      }
-
-      console.log('✅ UpdateCourseAction: Course updated successfully');
-      console.log('📊 UpdateCourseAction: Update result:', {
-        id: updateResult.id,
-        title: updateResult.title,
-        status: updateResult.status,
-        slug: updateResult.slug,
-        updated_at: updateResult.updated_at
-      });
-      console.log('📊 UpdateCourseAction: Full update result:', updateResult);
-      
-      // Double-check by fetching the course again
-      const { data: verifyData, error: verifyError } = await client
-        .from('courses')
-        .select('*')
-        .eq('id', data.id)
-        .single();
-        
-      console.log('🔍 UpdateCourseAction: Verification fetch:', {
-        slug: verifyData?.slug,
-        status: verifyData?.status,
-        error: verifyError
-      });
-      
-      // Skip revalidatePath for now - it's causing server component render errors
-      // revalidatePath('/admin/lms');
-      
-      return { 
-        success: true, 
-        updatedCourse: CourseTransformer.toUI(updateResult)
-      };
-    } catch (error) {
-      console.error('❌ UpdateCourseAction: Unhandled error:', error);
-      handleTransformationError(error as Error, 'updateCourseAction');
-      throw error;
+    if (error) {
+      throw new Error(`Failed to update course: ${error.message}`);
     }
+
+    return { 
+      success: true, 
+      updatedCourse: CourseTransformer.toUI(updateResult)
+    };
   },
   {
     auth: true,
