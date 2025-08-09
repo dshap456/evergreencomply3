@@ -51,11 +51,16 @@ export const updateCourseAction = enhanceAction(
         id: currentCourse.id,
         title: currentCourse.title,
         status: currentCourse.status,
+        is_published: (currentCourse as any).is_published,
         account_id: currentCourse.account_id
       });
 
+      // Check if we're using the old schema (is_published) or new schema (status)
+      const useOldSchema = !('status' in currentCourse) && 'is_published' in currentCourse;
+      console.log('🔍 UpdateCourseAction: Schema detection:', { useOldSchema });
+
       // Use data transformer for safe conversion
-      const updateData = CourseTransformer.toDatabase(data);
+      const updateData = CourseTransformer.toDatabase(data, useOldSchema);
       
       // Ensure we're not trying to update protected fields
       delete (updateData as any).id;
@@ -134,14 +139,31 @@ export const createCourseAction = enhanceAction(
       throw new Error('User account not found');
     }
 
+    // Check if we need to use the old schema by testing with a simple select
+    const { data: testCourse } = await client
+      .from('courses')
+      .select('*')
+      .limit(1)
+      .single();
+      
+    const useOldSchema = testCourse && !('status' in testCourse) && 'is_published' in testCourse;
+    console.log('🔍 CreateCourseAction: Schema detection:', { useOldSchema });
+
+    const insertData: any = {
+      account_id: userAccountId,
+      title: data.title,
+      description: data.description,
+    };
+
+    if (useOldSchema) {
+      insertData.is_published = false; // Draft in old schema
+    } else {
+      insertData.status = 'draft';
+    }
+
     const { data: course, error } = await client
       .from('courses')
-      .insert({
-        account_id: userAccountId,
-        title: data.title,
-        description: data.description,
-        status: 'draft',
-      })
+      .insert(insertData)
       .select()
       .single();
 
