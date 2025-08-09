@@ -100,8 +100,8 @@ export const updateCourseAction = enhanceAction(
         updated_at: updateResult.updated_at
       });
       
-      // Revalidate the admin LMS page to refresh cached data
-      revalidatePath('/admin/lms');
+      // Skip revalidatePath for now - it's causing server component render errors
+      // revalidatePath('/admin/lms');
       
       return { 
         success: true, 

@@ -30,7 +30,6 @@ import { ModuleEditor } from './module-editor';
 import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
-import { simpleUpdateCourseAction } from '../_lib/server/simple-update-course-action';
 import { createModuleAction } from '../_lib/server/module-actions';
 import { CourseStatus } from '../_lib/types/data-contracts';
 
@@ -127,41 +126,25 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
   }
 
   const handleSave = () => {
-    console.log('🔵 CourseEditorClient: handleSave called');
-    console.log('🔵 Current courseData:', courseData);
-    
     startTransition(async () => {
       try {
-        console.log('🟡 CourseEditorClient: Calling updateCourseAction...');
-        
-        const actionPayload = {
+        const result = await updateCourseAction({
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
           slug: courseData.slug,
           status: courseData.status,
-        };
-        console.log('🟡 Action payload:', actionPayload);
-        
-        // Try simple action first to isolate the issue
-        console.log('🟡 Using simpleUpdateCourseAction instead...');
-        const result = await simpleUpdateCourseAction(actionPayload);
-        
-        console.log('🟢 CourseEditorClient: Action result:', result);
+        });
         
         if (result.success && result.updatedCourse) {
-          console.log('✅ CourseEditorClient: Success! Setting course data...');
           setCourseData(result.updatedCourse);
           toast.success('Course saved successfully');
           setIsDirty(false);
         } else {
-          console.error('❌ CourseEditorClient: Result missing success or updatedCourse:', result);
           throw new Error('Failed to save course');
         }
       } catch (error) {
-        console.error('🔴 CourseEditorClient: Caught error:', error);
-        console.error('🔴 Error type:', typeof error);
-        console.error('🔴 Error stack:', error instanceof Error ? error.stack : 'No stack');
+        console.error('Failed to save course:', error);
         toast.error('Failed to save course');
       }
     });
