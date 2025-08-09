@@ -68,6 +68,14 @@ export const updateCourseAction = enhanceAction(
       delete (updateData as any).created_at;
       
       console.log('🔄 UpdateCourseAction: Transformed data for update:', updateData);
+      console.log('🔄 UpdateCourseAction: Update data keys:', Object.keys(updateData));
+      console.log('🔄 UpdateCourseAction: Update data values:', {
+        title: updateData.title,
+        description: updateData.description,
+        slug: updateData.slug,
+        status: updateData.status,
+        updated_at: updateData.updated_at
+      });
 
       // Perform the update
       const { error, data: updateResult } = await client
@@ -97,8 +105,10 @@ export const updateCourseAction = enhanceAction(
         id: updateResult.id,
         title: updateResult.title,
         status: updateResult.status,
+        slug: updateResult.slug,
         updated_at: updateResult.updated_at
       });
+      console.log('📊 UpdateCourseAction: Full update result:', updateResult);
       
       // Skip revalidatePath for now - it's causing server component render errors
       // revalidatePath('/admin/lms');

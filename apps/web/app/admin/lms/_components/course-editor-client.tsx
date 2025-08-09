@@ -31,57 +31,38 @@ import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
 import { createModuleAction } from '../_lib/server/module-actions';
-import { CourseStatus } from '../_lib/types/data-contracts';
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  slug?: string;
-  status: 'draft' | 'published' | 'archived';
-  created_at: string;
-  updated_at: string;
-  version?: string;
-  lessons_count?: number;
-  enrollments_count?: number;
-}
-
-interface Module {
-  id: string;
-  title: string;
-  description: string;
-  order_index: number;
-  language: 'en' | 'es';
-  lessons: Lesson[];
-}
-
-interface Lesson {
-  id: string;
-  title: string;
-  description: string;
-  content_type: 'video' | 'text' | 'quiz';
-  order_index: number;
-  is_final_quiz: boolean;
-  language: 'en' | 'es';
-}
+import {
+  UICourse,
+  UIModule,
+  UILesson,
+  CourseStatus,
+} from '../_lib/types/data-contracts';
 
 interface CourseEditorClientProps {
-  course: Course;
-  modules: Module[];
+  course: UICourse;
+  modules: UIModule[];
   onBack: () => void;
 }
 
-export function CourseEditorClient({ course: initialCourse, modules: initialModules, onBack }: CourseEditorClientProps) {
+export function CourseEditorClient({
+  course: initialCourse,
+  modules: initialModules,
+  onBack,
+}: CourseEditorClientProps) {
   const [activeTab, setActiveTab] = useState('overview');
-  const [modules, setModules] = useState<Module[]>(initialModules);
-  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [modules, setModules] = useState<UIModule[]>(initialModules);
+  const [selectedModule, setSelectedModule] = useState<UIModule | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<UILesson | null>(null);
   const [courseData, setCourseData] = useState(initialCourse);
   const [isDirty, setIsDirty] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>('en');
   const [isAddModuleOpen, setIsAddModuleOpen] = useState(false);
-  const [newModule, setNewModule] = useState({ title: '', description: '', language: 'en' as 'en' | 'es' });
+  const [newModule, setNewModule] = useState({
+    title: '',
+    description: '',
+    language: 'en' as 'en' | 'es',
+  });
 
   // If editing a specific lesson
   if (selectedLesson && selectedModule) {
@@ -128,13 +109,19 @@ export function CourseEditorClient({ course: initialCourse, modules: initialModu
   const handleSave = () => {
     startTransition(async () => {
       try {
-        const result = await updateCourseAction({
+        const updatePayload = {
           id: courseData.id,
           title: courseData.title,
           description: courseData.description,
           slug: courseData.slug,
           status: courseData.status,
-        });
+        };
+        
+        console.log('🔵 CourseEditorClient: Sending update with:', updatePayload);
+        console.log('🔵 CourseEditorClient: Slug value:', updatePayload.slug);
+        console.log('🔵 CourseEditorClient: Status value:', updatePayload.status);
+        
+        const result = await updateCourseAction(updatePayload);
         
         if (result.success && result.updatedCourse) {
           setCourseData(result.updatedCourse);

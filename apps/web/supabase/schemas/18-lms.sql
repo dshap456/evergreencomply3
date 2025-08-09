@@ -9,6 +9,7 @@
 -- LMS Enums
 CREATE TYPE public.content_type AS ENUM('video', 'text', 'quiz', 'asset');
 CREATE TYPE public.lesson_status AS ENUM('not_started', 'in_progress', 'completed');
+CREATE TYPE public.course_status AS ENUM('draft', 'published', 'archived');
 
 -- Courses Table
 CREATE TABLE IF NOT EXISTS public.courses (
@@ -16,9 +17,10 @@ CREATE TABLE IF NOT EXISTS public.courses (
     account_id UUID NOT NULL REFERENCES public.accounts(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    slug VARCHAR(255),
     sku VARCHAR(100) UNIQUE,
     price DECIMAL(10,2) DEFAULT 0.00,
-    is_published BOOLEAN DEFAULT false,
+    status public.course_status NOT NULL DEFAULT 'draft',
     sequential_completion BOOLEAN DEFAULT true,
     passing_score INTEGER DEFAULT 80 CHECK (passing_score >= 0 AND passing_score <= 100),
     created_at TIMESTAMPTZ DEFAULT NOW(),
