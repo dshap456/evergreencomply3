@@ -100,9 +100,8 @@ export const updateCourseAction = enhanceAction(
         updated_at: updateResult.updated_at
       });
       
-      // Revalidate the admin LMS pages to refresh cached data
+      // Revalidate the admin LMS page to refresh cached data
       revalidatePath('/admin/lms');
-      revalidatePath('/admin/lms/courses');
       
       return { 
         success: true, 
@@ -174,9 +173,8 @@ export const createCourseAction = enhanceAction(
 
     console.log('✅ CreateCourseAction: Course created successfully:', course);
 
-    // Revalidate the admin LMS pages to refresh cached data
+    // Revalidate the admin LMS page to refresh cached data
     revalidatePath('/admin/lms');
-    revalidatePath('/admin/lms/courses');
 
     return { success: true, course };
   },

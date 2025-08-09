@@ -1,5 +1,5 @@
 import { loadCourseAction } from '../_lib/server/load-course-action';
-import { CourseEditor } from './course-editor';
+// import { CourseEditor } from './course-editor'; // Removed - using CourseEditorClient instead
 
 interface CourseEditorWrapperProps {
   courseId: string;
@@ -11,14 +11,15 @@ export async function CourseEditorWrapper({ courseId, onBack }: CourseEditorWrap
     const { course, modules } = await loadCourseAction({ courseId });
     
     return (
-      <CourseEditor 
-        course={course} 
-        onBack={onBack} 
-        onSave={(updatedCourse) => {
-          // Handle course save completion - could refresh the course list
-          console.log('Course saved:', updatedCourse);
-        }}
-      />
+      <div>CourseEditorWrapper is deprecated - use CourseEditorLoader instead</div>
+      // <CourseEditor 
+      //   course={course} 
+      //   onBack={onBack} 
+      //   onSave={(updatedCourse) => {
+      //     // Handle course save completion - could refresh the course list
+      //     console.log('Course saved:', updatedCourse);
+      //   }}
+      // />
     );
   } catch (error) {
     return (
