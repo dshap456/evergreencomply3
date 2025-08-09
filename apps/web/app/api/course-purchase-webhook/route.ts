@@ -164,6 +164,21 @@ export async function POST(request: NextRequest) {
           error,
           code: error.code,
           message: error.message,
+          hint: error.hint,
+          details: error.details,
+        });
+        
+        // Try to get more info about the course
+        const { data: courseCheck } = await adminClient
+          .from('courses')
+          .select('id, title, billing_product_id')
+          .eq('billing_product_id', courseSlug)
+          .single();
+          
+        console.error('[COURSE-WEBHOOK] Course lookup:', {
+          courseSlug,
+          found: !!courseCheck,
+          courseData: courseCheck,
         });
       } else {
         console.log('[COURSE-WEBHOOK] SUCCESS! Enrollment created:', data);
