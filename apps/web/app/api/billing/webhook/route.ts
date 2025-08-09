@@ -41,21 +41,34 @@ export async function POST(request: NextRequest) {
     
     console.log('[Webhook] Event type:', event.type);
     
-    // Handle the event
+    // Handle the event - ONLY handle training purchases to avoid orders table error
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log('[Webhook] Session metadata:', session.metadata);
       console.log('[Webhook] Client reference ID:', session.client_reference_id);
       
-      // Check if this is a training purchase
+      // ONLY process if this is a training purchase
       if (session.metadata?.type === 'training-purchase') {
         console.log('[Webhook] Processing training purchase...');
-        await handleCoursePurchase(session);
+        try {
+          await handleCoursePurchase(session);
+          console.log('[Webhook] Course purchase handled successfully');
+        } catch (purchaseError) {
+          console.error('[Webhook] Error handling course purchase:', purchaseError);
+          // Return error so Stripe will retry
+          return NextResponse.json(
+            { error: 'Course purchase processing failed', details: purchaseError instanceof Error ? purchaseError.message : 'Unknown error' }, 
+            { status: 500 }
+          );
+        }
       } else {
-        console.log('[Webhook] Not a training purchase, skipping course processing');
+        console.log('[Webhook] Not a training purchase, ignoring (no orders table)');
       }
+    } else {
+      console.log('[Webhook] Ignoring event type:', event.type);
     }
     
+    // Always return success for events we don't handle
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('[Webhook] Unexpected error:', error);
