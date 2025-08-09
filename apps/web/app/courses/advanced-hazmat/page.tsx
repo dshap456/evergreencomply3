@@ -10,7 +10,6 @@ import {
   Award,
   ShieldCheck,
   ArrowLeft,
-  ShoppingCart,
   BookOpen,
   ArrowRight,
   Monitor,
@@ -32,6 +31,7 @@ import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { CustomShieldIcon } from '../../_components/custom-icons';
 import { AddToCartButton } from '../../_components/add-to-cart-button';
+import { CartCount } from '../../_components/cart-count';
 
 function DOTHazmatAdvancedPage() {
   return (
@@ -76,14 +76,7 @@ function DOTHazmatAdvancedPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-4">
-            <Link href="/cart">
-              <Button variant="ghost" size="sm" className="relative">
-                <ShoppingCart className="h-5 w-5" />
-                <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  0
-                </span>
-              </Button>
-            </Link>
+            <CartCount />
             <Link href={pathsConfig.auth.signIn}>
               <Button variant="outline">Log In</Button>
             </Link>

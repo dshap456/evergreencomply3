@@ -86,6 +86,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
         });
       
       localStorage.setItem('training-cart', JSON.stringify(cartItems));
+      
+      // Dispatch custom event to update cart count
+      window.dispatchEvent(new Event('cart-updated'));
     }
   }, [quantities, isLoading, availableCourses]);
 

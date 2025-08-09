@@ -18,6 +18,8 @@ export default function CheckoutSuccessPage() {
     if (sessionId && !isClearing) {
       setIsClearing(true);
       localStorage.removeItem('training-cart');
+      // Dispatch custom event to update cart count
+      window.dispatchEvent(new Event('cart-updated'));
     }
   }, [sessionId, isClearing]);
 

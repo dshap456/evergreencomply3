@@ -56,6 +56,9 @@ export function AddToCartButton({
 
     // Save to localStorage
     localStorage.setItem('training-cart', JSON.stringify(cartItems));
+    
+    // Dispatch custom event to update cart count
+    window.dispatchEvent(new Event('cart-updated'));
 
     // Show success state
     setIsAdded(true);
