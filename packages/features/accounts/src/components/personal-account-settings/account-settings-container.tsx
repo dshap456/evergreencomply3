@@ -23,7 +23,6 @@ import { LinkAccountsList } from './link-accounts';
 import { MultiFactorAuthFactorsList } from './mfa/multi-factor-auth-list';
 import { UpdatePasswordFormContainer } from './password/update-password-container';
 import { UpdateAccountDetailsFormContainer } from './update-account-details-form-container';
-import { UpdateAccountImageContainer } from './update-account-image-container';
 
 export function PersonalAccountSettingsContainer(
   props: React.PropsWithChildren<{
@@ -51,27 +50,6 @@ export function PersonalAccountSettingsContainer(
 
   return (
     <div className={'flex w-full flex-col space-y-4 pb-32'}>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Trans i18nKey={'account:accountImage'} />
-          </CardTitle>
-
-          <CardDescription>
-            <Trans i18nKey={'account:accountImageDescription'} />
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <UpdateAccountImageContainer
-            user={{
-              pictureUrl: user.data.picture_url,
-              id: user.data.id,
-            }}
-          />
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>

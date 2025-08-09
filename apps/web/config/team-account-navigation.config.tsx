@@ -1,4 +1,4 @@
-import { CreditCard, Settings, Users, BookOpen, GraduationCap } from 'lucide-react';
+import { Settings, BookOpen, GraduationCap } from 'lucide-react';
 
 import { NavigationConfigSchema } from '@kit/ui/navigation-schema';
 
@@ -33,19 +33,7 @@ const getRoutes = (account: string) => [
         path: createPath(pathsConfig.app.accountSettings, account),
         Icon: <Settings className={iconClasses} />,
       },
-      {
-        label: 'common:routes.members',
-        path: createPath(pathsConfig.app.accountMembers, account),
-        Icon: <Users className={iconClasses} />,
-      },
-      featureFlagsConfig.enableTeamAccountBilling
-        ? {
-            label: 'common:routes.billing',
-            path: createPath(pathsConfig.app.accountBilling, account),
-            Icon: <CreditCard className={iconClasses} />,
-          }
-        : undefined,
-    ].filter(Boolean),
+    ],
   },
 ];
 
