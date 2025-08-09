@@ -23,6 +23,14 @@ const emailFrom = z
   })
   .parse(process.env.EMAIL_SENDER);
 
+// Log environment variables (remove in production)
+console.log('Contact form configuration:', {
+  contactEmail,
+  emailFrom,
+  mailerProvider: process.env.MAILER_PROVIDER,
+  hasResendKey: !!process.env.RESEND_API_KEY,
+});
+
 export const sendContactEmail = enhanceAction(
   async (data) => {
     try {
