@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
         });
         
         const adminClient = getSupabaseServerAdminClient();
-        const { data, error } = await adminClient.rpc('process_course_purchase', {
-          p_product_id: courseSlug,
+        const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
+          p_course_slug: courseSlug,
           p_account_id: accountId,
           p_payment_id: session.id,
           p_quantity: item.quantity || 1,
