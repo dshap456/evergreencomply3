@@ -5,18 +5,23 @@ import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client'
 import Stripe from 'stripe';
 
 // Course purchase webhook - NO orders table dependency
+// Map Stripe price IDs to course slugs in database
 const COURSE_PRODUCT_MAPPING = {
-  'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat',
-  'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',
-  'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',
+  'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat-general',  // DOT HAZMAT - General Awareness
+  'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',      // DOT HAZMAT - Advanced Awareness  
+  'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',            // EPA RCRA
 } as const;
 
 export async function POST(request: NextRequest) {
   console.log('[Course Webhook] Starting fresh webhook handler...');
+  console.log('[Course Webhook] Webhook hit at:', new Date().toISOString());
   
   try {
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
+    
+    console.log('[Course Webhook] Body length:', body.length);
+    console.log('[Course Webhook] Has signature:', !!signature);
     
     if (!signature) {
       return NextResponse.json({ error: 'No signature' }, { status: 400 });
@@ -67,7 +72,8 @@ export async function POST(request: NextRequest) {
         
         const courseSlug = COURSE_PRODUCT_MAPPING[priceId as keyof typeof COURSE_PRODUCT_MAPPING];
         if (!courseSlug) {
-          console.log('[Course Webhook] Unknown price:', priceId);
+          console.error('[Course Webhook] Unknown price ID:', priceId);
+          console.error('[Course Webhook] Available mappings:', COURSE_PRODUCT_MAPPING);
           continue;
         }
         
