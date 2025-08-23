@@ -141,22 +141,18 @@ export function CartClient({ availableCourses }: CartClientProps) {
     setIsCheckingOut(true);
     
     try {
-      // Create checkout session
-      const response = await fetch('/api/courses/checkout', {
+      // Create checkout session - use the training endpoint with fixed price IDs
+      const response = await fetch('/api/checkout/training', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          items: cartCourses.map(({ course, quantity }) => ({
-            product_id: course?.billing_product_id,
-            price: parseFloat(course?.price || '0'),
+          cartItems: cartCourses.map(({ course, quantity }) => ({
+            courseId: course?.slug || course?.id,  // Use slug as the courseId
             quantity,
-            name: course?.title || 'Course',
-            description: `Training seats for ${course?.title}`,
           })),
-          success_url: `${window.location.origin}/checkout/success`,
-          cancel_url: `${window.location.origin}/cart`,
+          accountType: 'personal',  // Default to personal, could be made dynamic
         }),
       });
 
@@ -164,11 +160,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
         throw new Error('Failed to create checkout session');
       }
 
-      const { sessionUrl } = await response.json();
+      const { url } = await response.json();  // The training endpoint returns 'url' not 'sessionUrl'
       
-      if (sessionUrl) {
+      if (url) {
         // Redirect to Stripe checkout
-        window.location.href = sessionUrl;
+        window.location.href = url;
       } else {
         throw new Error('No checkout URL received');
       }
