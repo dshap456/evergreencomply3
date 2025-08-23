@@ -100,36 +100,39 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Special handling for known courses that should be accessible
-    const knownCourseSlugs = ['dot-hazmat', 'advanced-hazmat', 'epa-rcra'];
-    
-    for (const slug of knownCourseSlugs) {
-      const course = courses?.find(c => c.slug === slug);
-      if (!course) continue;
+    // Special handling - if user is support@evergreencomply.com, enroll in all courses
+    if (user.email === 'support@evergreencomply.com') {
+      console.log('[Fix Enrollments] Support user detected - enrolling in all courses');
       
-      if (!enrolledCourseIds.has(course.id) && results.enrollmentsCreated.every(e => e.courseSlug !== slug)) {
-        // Force create enrollment for testing
-        console.log(`[Fix Enrollments] Force creating enrollment for ${course.title}`);
-        
-        const { data: forceEnrollment, error: forceError } = await adminClient
-          .from('course_enrollments')
-          .insert({
-            user_id: user.id,
-            course_id: course.id,
-            enrolled_at: new Date().toISOString(),
-            progress_percentage: 0
-          })
-          .select()
-          .single();
-        
-        if (!forceError) {
-          results.enrollmentsCreated.push({
-            courseTitle: course.title,
-            courseSlug: course.slug,
-            courseId: course.id,
-            enrollmentId: forceEnrollment.id,
-            forced: true
-          });
+      for (const course of courses || []) {
+        if (!enrolledCourseIds.has(course.id) && results.enrollmentsCreated.every(e => e.courseId !== course.id)) {
+          console.log(`[Fix Enrollments] Enrolling support user in ${course.title}`);
+          
+          const { data: forceEnrollment, error: forceError } = await adminClient
+            .from('course_enrollments')
+            .insert({
+              user_id: user.id,
+              course_id: course.id,
+              enrolled_at: new Date().toISOString(),
+              progress_percentage: 0
+            })
+            .select()
+            .single();
+          
+          if (!forceError) {
+            results.enrollmentsCreated.push({
+              courseTitle: course.title,
+              courseSlug: course.slug,
+              courseId: course.id,
+              enrollmentId: forceEnrollment.id,
+              forced: true
+            });
+          } else {
+            results.errors.push({
+              course: course.title,
+              error: `Failed to force enrollment: ${forceError.message}`
+            });
+          }
         }
       }
     }
