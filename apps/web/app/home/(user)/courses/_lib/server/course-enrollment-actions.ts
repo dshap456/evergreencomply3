@@ -44,24 +44,13 @@ export const enrollInCourseAction = enhanceAction(
       throw new Error('Already enrolled in this course');
     }
 
-    // Check if user has access to the course (handles both free and paid courses)
-    const { data: hasAccess, error: accessError } = await client
-      .rpc('has_course_access', {
-        p_user_id: user.id,
-        p_course_id: data.courseId,
-      });
-
-    if (accessError) {
-      throw accessError;
-    }
-
-    if (!hasAccess) {
-      // Course requires purchase
-      if (course.price && course.price > 0) {
-        throw new Error('This course requires purchase. Please complete the checkout process to gain access.');
-      } else {
-        throw new Error('You do not have access to this course.');
-      }
+    // For paid courses, check if user should have access
+    // In this system, if they can enroll, they've already purchased (enrollment created by webhook)
+    // So we just need to check if the course requires purchase
+    if (course.requires_purchase && course.price && course.price > 0) {
+      // The enrollment would have been created by the purchase webhook
+      // If we're here and there's no enrollment, they haven't purchased
+      throw new Error('This course requires purchase. Please complete the checkout process to gain access.');
     }
 
     // Create enrollment record
