@@ -49,7 +49,10 @@ async function CartPage() {
       'DOT HAZMAT - 3': 'dot-hazmat',
       'Advanced HAZMAT': 'advanced-hazmat',
       'Advanced Awareness': 'advanced-hazmat',
+      'DOT HAZMAT - Advanced Awareness': 'advanced-hazmat',
       'DOT HAZMAT - General Awareness': 'dot-hazmat-general',
+      'DOT HAZMAT - General Awareness ': 'dot-hazmat-general', // With trailing space
+      'EPA RCRA': 'epa-rcra',
       'EPA - RCRA': 'epa-rcra'
     };
     
@@ -57,16 +60,20 @@ async function CartPage() {
     const priceMapping: Record<string, string> = {
       'DOT HAZMAT - 3': '79',
       'DOT HAZMAT - General Awareness': '79',
+      'DOT HAZMAT - General Awareness ': '79', // With trailing space
+      'DOT HAZMAT - Advanced Awareness': '1',
       'Advanced HAZMAT': '179',
       'Advanced Awareness': '179',
+      'EPA RCRA': '129',
       'EPA - RCRA': '129'
     };
     
     // If the course has a slug mapping, add it as an alias
-    const expectedSlug = slugMapping[course.title];
+    // Trim whitespace from title to handle database inconsistencies
+    const expectedSlug = slugMapping[course.title.trim()];
     
     // Use mapped price if database price is null or 0
-    const mappedPrice = priceMapping[course.title];
+    const mappedPrice = priceMapping[course.title.trim()];
     const price = (course.price && parseFloat(course.price) > 0) 
       ? course.price 
       : (mappedPrice || '0');
