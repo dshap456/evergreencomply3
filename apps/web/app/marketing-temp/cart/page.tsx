@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Loader2 } from 'lucide-react';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../_components/custom-icons';
 
@@ -40,8 +41,10 @@ interface CartItem {
 }
 
 function CartPage() {
+  const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -102,6 +105,24 @@ function CartPage() {
 
   const getTotalSeats = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) {
+      return;
+    }
+
+    setIsCheckingOut(true);
+    
+    try {
+      // For unauthenticated users, redirect to sign-in first
+      // They need to sign in to determine if it's a personal or team purchase
+      // The cart will be preserved in localStorage
+      router.push(pathsConfig.auth.signIn + '?next=/cart');
+    } catch (error) {
+      console.error('Checkout redirect error:', error);
+      setIsCheckingOut(false);
+    }
   };
 
   if (isLoading) {
@@ -265,10 +286,20 @@ function CartPage() {
 
                   <Button 
                     className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] h-9 md:h-10" 
-                    disabled={cartItems.length === 0}
+                    disabled={cartItems.length === 0 || isCheckingOut}
+                    onClick={handleCheckout}
                   >
-                    <ShoppingCart className="h-4 w-4 mr-1" />
-                    Checkout
+                    {isCheckingOut ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        Redirecting...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-4 w-4 mr-1" />
+                        Checkout
+                      </>
+                    )}
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">

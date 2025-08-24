@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown, User, Users } from 'lucide-react';
 import { Badge } from '@kit/ui/badge';
 import { toast } from '@kit/ui/sonner';
 import {
@@ -15,8 +15,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@kit/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@kit/ui/select';
+import { RadioGroup, RadioGroupItem } from '@kit/ui/radio-group';
+import { Label } from '@kit/ui/label';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
+import { useSupabase } from '@kit/supabase/hooks/use-supabase';
+import { createAccountsApi } from '@kit/accounts/api';
 
 interface Course {
   id: string;
@@ -36,11 +47,17 @@ interface CartClientProps {
 
 export function CartClient({ availableCourses }: CartClientProps) {
   const router = useRouter();
+  const supabase = useSupabase();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [purchaseType, setPurchaseType] = useState<'personal' | 'team'>('personal');
+  const [teamAccounts, setTeamAccounts] = useState<any[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Load initial quantities from localStorage
+  // Load initial quantities from localStorage and check auth
   useEffect(() => {
     const savedCart = localStorage.getItem('training-cart');
     if (savedCart) {
@@ -68,8 +85,44 @@ export function CartClient({ availableCourses }: CartClientProps) {
         console.error('Error loading cart:', e);
       }
     }
+    
+    // Check if user is authenticated
+    checkAuth();
+    
     setIsLoading(false);
   }, [availableCourses]);
+  
+  // Check authentication and load team accounts
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      setIsAuthenticated(true);
+      await loadTeamAccounts();
+    }
+  };
+  
+  // Load team accounts for the current user
+  const loadTeamAccounts = async () => {
+    setIsLoadingAccounts(true);
+    try {
+      const api = createAccountsApi(supabase);
+      const accounts = await api.loadUserAccounts();
+      
+      // Filter to only show team accounts (not personal)
+      const teams = accounts.filter(acc => !acc.is_personal_account);
+      setTeamAccounts(teams);
+      
+      // If user has teams and no selection yet, default to first team
+      if (teams.length > 0 && !selectedTeamId) {
+        setSelectedTeamId(teams[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading team accounts:', error);
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  };
 
   // Save to localStorage whenever quantities change
   useEffect(() => {
@@ -152,7 +205,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
             courseId: course?.slug || course?.id,  // Use slug as the courseId
             quantity,
           })),
-          accountType: 'personal',  // Default to personal, could be made dynamic
+          accountType: purchaseType,
+          ...(purchaseType === 'team' && selectedTeamId ? { accountId: selectedTeamId } : {}),
         }),
       });
 
@@ -368,11 +422,73 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         </div>
                       </div>
                       
+                      {/* Purchase Type Selection - Only show if authenticated and has teams */}
+                      {isAuthenticated && teamAccounts.length > 0 && (
+                        <div className="space-y-3 border-t pt-3">
+                          <div className="space-y-2">
+                            <Label className="text-xs font-medium">Purchase Type</Label>
+                            <RadioGroup 
+                              value={purchaseType} 
+                              onValueChange={(value: 'personal' | 'team') => setPurchaseType(value)}
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="personal" id="personal" />
+                                <Label htmlFor="personal" className="text-xs flex items-center gap-1 cursor-pointer">
+                                  <User className="h-3 w-3" />
+                                  Personal (for yourself)
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="team" id="team" />
+                                <Label htmlFor="team" className="text-xs flex items-center gap-1 cursor-pointer">
+                                  <Users className="h-3 w-3" />
+                                  Team (assign to members)
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </div>
+                          
+                          {/* Team Selection Dropdown */}
+                          {purchaseType === 'team' && (
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Select Team</Label>
+                              {isLoadingAccounts ? (
+                                <div className="flex items-center justify-center py-2">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                </div>
+                              ) : (
+                                <Select 
+                                  value={selectedTeamId || ''} 
+                                  onValueChange={setSelectedTeamId}
+                                >
+                                  <SelectTrigger className="w-full h-8 text-xs">
+                                    <SelectValue placeholder="Choose a team account" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {teamAccounts.map((team) => (
+                                      <SelectItem key={team.id} value={team.id} className="text-xs">
+                                        {team.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          )}
+                          
+                          {purchaseType === 'team' && totalItems > 1 && (
+                            <p className="text-xs text-muted-foreground">
+                              You're purchasing {totalItems} seats that can be assigned to team members
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      
                       <Button 
                         className="w-full" 
                         size="sm"
                         onClick={handleCheckout}
-                        disabled={isCheckingOut || totalItems === 0}
+                        disabled={isCheckingOut || totalItems === 0 || (purchaseType === 'team' && !selectedTeamId)}
                       >
                         {isCheckingOut ? (
                           <>
