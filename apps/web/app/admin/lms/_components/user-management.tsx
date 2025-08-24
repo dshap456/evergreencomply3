@@ -255,42 +255,7 @@ export function UserManagement() {
                       <h4 className="font-medium">{user.name}</h4>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      <div className="flex items-center gap-4">
-                        <span>{user.email}</span>
-                        <span>•</span>
-                        <span>{user.account}</span>
-                      </div>
-                      {/* Current Enrollments */}
-                      {user.currentEnrollments && user.currentEnrollments.length > 0 && (
-                        <div className="mt-2">
-                          <span className="text-xs font-medium text-blue-600">Currently enrolled:</span>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {user.currentEnrollments.map((enrollment, index) => (
-                              <div key={index} className="flex items-center gap-1 text-xs bg-blue-50 px-2 py-1 rounded">
-                                <span className="font-medium">{enrollment.courseName}</span>
-                                <span className="text-blue-700">({enrollment.progress}%)</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Final Quiz Scores */}
-                      {user.finalQuizScores && user.finalQuizScores.length > 0 && (
-                        <div className="mt-2">
-                          <span className="text-xs font-medium text-green-600">Completed courses:</span>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {user.finalQuizScores.map((quiz, index) => (
-                              <div key={index} className="flex items-center gap-1 text-xs bg-green-50 px-2 py-1 rounded">
-                                <span className="font-medium">{quiz.courseName}:</span>
-                                <span className={quiz.passed ? "text-green-700" : "text-red-600"}>
-                                  {quiz.score}%
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      <span>{user.email}</span>
                     </div>
                   </div>
 
