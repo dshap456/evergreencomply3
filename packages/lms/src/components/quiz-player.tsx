@@ -155,11 +155,10 @@ export function QuizPlayer({
       if (attemptsData) {
         setAttempts(attemptsData);
         
-        // Check if user can retake based on quiz settings and attempts
-        const maxAttempts = quizData.max_attempts || 3;
+        // Always allow retakes unless they've passed
         const passedAttempt = attemptsData.find(attempt => attempt.passed);
         
-        if (passedAttempt || attemptsData.length >= maxAttempts) {
+        if (passedAttempt) {
           setCanRetake(false);
         }
       }
@@ -290,7 +289,7 @@ export function QuizPlayer({
         totalQuestions: questions.length,
         detailedResults,
         attemptNumber,
-        canRetake: !passed && attemptNumber < (quiz.max_attempts || 3)
+        canRetake: !passed // Always allow retake if not passed
       });
 
       // If passed, mark lesson as complete
@@ -591,7 +590,7 @@ export function QuizPlayer({
       {/* Quiz Info */}
       <div className="text-xs text-gray-500 space-y-1">
         <p>• You need {quiz?.passing_score || 80}% to pass this quiz</p>
-        <p>• You have {quiz?.max_attempts || 3} attempts maximum</p>
+        <p>• You can retake this quiz until you pass</p>
         {isFinalQuiz && <p>• This is a final quiz - it must be completed to finish the course</p>}
         {timeRemaining !== null && <p>• Time limit: {quiz.time_limit_minutes} minutes</p>}
       </div>

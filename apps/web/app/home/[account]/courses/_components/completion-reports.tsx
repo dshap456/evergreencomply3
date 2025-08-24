@@ -69,6 +69,7 @@ export function CompletionReports({ account, courses }: CompletionReportsProps) 
     try {
       setLoading(true);
       
+      // First try to get from course_completions (proper completion records)
       let query = supabase
         .from('course_completions')
         .select(`
@@ -86,10 +87,60 @@ export function CompletionReports({ account, courses }: CompletionReportsProps) 
         .order('completed_at', { ascending: false });
 
       if (error) {
-        throw error;
+        console.error('Error loading completions:', error);
       }
 
-      setCompletions(data || []);
+      let allCompletions = data || [];
+
+      // If no completions found, also check enrollments with 100% progress as fallback
+      if (allCompletions.length === 0) {
+        const { data: enrollmentData, error: enrollmentError } = await supabase
+          .from('course_enrollments')
+          .select(`
+            id,
+            user_id,
+            course_id,
+            final_score,
+            completed_at,
+            progress_percentage,
+            courses!inner(
+              title,
+              account_id
+            )
+          `)
+          .eq('progress_percentage', 100)
+          .in('course_id', courseIds);
+
+        if (!enrollmentError && enrollmentData) {
+          // Get user details for these enrollments
+          const userIds = [...new Set(enrollmentData.map(e => e.user_id))];
+          const { data: users } = await supabase
+            .from('accounts')
+            .select('primary_owner_user_id, name, email')
+            .in('primary_owner_user_id', userIds);
+
+          const userMap = new Map(users?.map(u => [u.primary_owner_user_id, u]) || []);
+
+          // Transform enrollment data to match completion format
+          allCompletions = enrollmentData.map(enrollment => {
+            const user = userMap.get(enrollment.user_id);
+            return {
+              id: enrollment.id,
+              user_id: enrollment.user_id,
+              course_id: enrollment.course_id,
+              student_name: user?.name || 'Unknown',
+              student_email: user?.email || 'unknown@email.com',
+              course_name: enrollment.courses.title,
+              final_quiz_score: enrollment.final_score,
+              final_quiz_passed: enrollment.final_score ? enrollment.final_score >= 80 : false,
+              completion_percentage: enrollment.progress_percentage,
+              completed_at: enrollment.completed_at || new Date().toISOString()
+            };
+          });
+        }
+      }
+
+      setCompletions(allCompletions);
     } catch (error) {
       console.error('Error loading completions:', error);
     } finally {
@@ -264,9 +315,9 @@ export function CompletionReports({ account, courses }: CompletionReportsProps) 
                       <TableCell>{completion.student_email}</TableCell>
                       <TableCell>{completion.course_name}</TableCell>
                       <TableCell>
-                        {completion.final_quiz_score !== null ? (
+                        {completion.final_quiz_score !== null && completion.final_quiz_score !== undefined ? (
                           <div className="flex items-center space-x-2">
-                            <span>{completion.final_quiz_score}%</span>
+                            <span>{Math.round(completion.final_quiz_score)}%</span>
                             <Badge
                               variant={completion.final_quiz_passed ? 'default' : 'destructive'}
                             >
@@ -274,7 +325,7 @@ export function CompletionReports({ account, courses }: CompletionReportsProps) 
                             </Badge>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground">No final quiz</span>
+                          <span className="text-muted-foreground">No score</span>
                         )}
                       </TableCell>
                       <TableCell>

@@ -63,6 +63,7 @@ export const loadUsersAction = enhanceAction(
           user_id,
           progress_percentage,
           enrolled_at,
+          completed_at,
           final_score,
           course_id,
           courses(
@@ -130,8 +131,8 @@ export const loadUsersAction = enhanceAction(
           
           userEnrollmentStats[enrollment.user_id].enrollments++;
           
-          // Consider completed if progress is 100%
-          if (enrollment.progress_percentage && enrollment.progress_percentage >= 100) {
+          // Consider completed if progress is 100% or has completed_at
+          if ((enrollment.progress_percentage && enrollment.progress_percentage >= 100) || enrollment.completed_at) {
             userEnrollmentStats[enrollment.user_id].completions++;
             
             // If there's a final score, add it to the quiz scores
@@ -140,7 +141,7 @@ export const loadUsersAction = enhanceAction(
                 courseName: enrollment.courses?.title || 'Unknown Course',
                 score: Number(enrollment.final_score),
                 passed: Number(enrollment.final_score) >= 80,
-                completedAt: enrollment.enrolled_at
+                completedAt: enrollment.completed_at || enrollment.enrolled_at
               });
             }
           }

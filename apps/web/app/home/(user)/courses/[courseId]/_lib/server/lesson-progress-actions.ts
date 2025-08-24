@@ -202,6 +202,24 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
       console.error('Error updating course progress:', updateError);
     } else {
       console.log('✅ Debug - Course progress updated successfully');
+      
+      // If course is completed, trigger the completion function
+      if (isCompleted) {
+        console.log('🎉 Course completed! Creating completion record...');
+        
+        // Call the complete_course function to create proper completion record
+        const { data: completionData, error: completionError } = await client
+          .rpc('complete_course', {
+            p_user_id: userId,
+            p_course_id: courseId
+          });
+        
+        if (completionError) {
+          console.error('Error creating course completion record:', completionError);
+        } else {
+          console.log('✅ Course completion record created:', completionData);
+        }
+      }
     }
 
   } catch (error) {

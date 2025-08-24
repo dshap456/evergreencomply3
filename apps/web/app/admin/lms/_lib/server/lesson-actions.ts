@@ -152,7 +152,6 @@ const SaveQuizDataSchema = z.object({
     description: z.string(),
     passing_score: z.number().min(0).max(100),
     time_limit_minutes: z.number().optional().nullable(),
-    max_attempts: z.number().min(1),
     questions: z.array(z.object({
       id: z.string(),
       question_text: z.string().min(1),
@@ -262,7 +261,6 @@ export const saveQuizDataAction = enhanceAction(
         description: data.quizData.description,
         passing_score: data.quizData.passing_score,
         time_limit_minutes: data.quizData.time_limit_minutes,
-        max_attempts: data.quizData.max_attempts,
         questionsCount: data.quizData.questions?.length || 0,
         firstQuestion: data.quizData.questions?.[0] || null
       }

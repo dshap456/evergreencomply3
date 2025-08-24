@@ -86,7 +86,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
               description: 'Test your understanding of this lesson',
               passing_score: 80,
               time_limit_minutes: undefined,
-              max_attempts: 3,
               questions: transformedQuestions
             };
             

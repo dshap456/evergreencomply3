@@ -40,7 +40,6 @@ interface Quiz {
   description: string;
   passing_score: number;
   time_limit_minutes?: number;
-  max_attempts: number;
   questions: QuizQuestion[];
 }
 
@@ -62,7 +61,6 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
     description: 'Test your understanding of this lesson',
     passing_score: 80,
     time_limit_minutes: undefined,
-    max_attempts: 3,
     questions: []
   });
   
@@ -267,27 +265,6 @@ export const QuizEditor = forwardRef<QuizEditorRef, QuizEditorProps>(function Qu
                 }}
                 placeholder="No time limit"
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Maximum Attempts</label>
-              <Select
-                value={quiz.max_attempts.toString()}
-                onValueChange={(value) => {
-                  setQuiz(prev => ({ ...prev, max_attempts: parseInt(value) }));
-                  onQuizChange();
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 attempt</SelectItem>
-                  <SelectItem value="2">2 attempts</SelectItem>
-                  <SelectItem value="3">3 attempts</SelectItem>
-                  <SelectItem value="5">5 attempts</SelectItem>
-                  <SelectItem value="-1">Unlimited</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>
