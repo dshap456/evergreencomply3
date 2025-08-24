@@ -113,7 +113,11 @@ export async function POST(request: Request) {
     
     try {
       const mailer = await getMailer();
+      // Use test domain if production domain not configured or verified
       const emailSender = process.env.EMAIL_SENDER || 'Evergreen Comply <onboarding@resend.dev>';
+      
+      // If using production domain that might not be verified, provide fallback
+      const fallbackSender = 'Evergreen Comply <onboarding@resend.dev>';
       
       const subject = `You're invited to join "${course.title}" by ${account.name}`;
       
@@ -174,12 +178,46 @@ Accept your invitation here: ${inviteUrl}
 
 This invitation will expire in 30 days.`;
 
-      await mailer.sendEmail({
-        from: emailSender,
-        to: email,
-        subject,
-        html,
-      });
+      // Try with configured sender first
+      let emailSent = false;
+      let lastError = null;
+      
+      try {
+        await mailer.sendEmail({
+          from: emailSender,
+          to: email,
+          subject,
+          html,
+        });
+        emailSent = true;
+      } catch (firstError) {
+        console.log('Primary sender failed:', firstError);
+        lastError = firstError;
+        
+        // If domain not verified, try with fallback
+        if (emailSender !== fallbackSender && 
+            firstError instanceof Error && 
+            firstError.message.includes('domain is not verified')) {
+          console.log('Trying fallback sender:', fallbackSender);
+          
+          try {
+            await mailer.sendEmail({
+              from: fallbackSender,
+              to: email,
+              subject,
+              html,
+            });
+            emailSent = true;
+            console.log('✅ Email sent with fallback sender');
+          } catch (fallbackError) {
+            lastError = fallbackError;
+          }
+        }
+      }
+      
+      if (!emailSent) {
+        throw lastError;
+      }
       
       console.log('✅ Invitation email sent successfully to:', email);
     } catch (emailError) {
