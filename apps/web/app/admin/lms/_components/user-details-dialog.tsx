@@ -24,10 +24,17 @@ interface UserCourseCompletion {
   finalQuizScore: number | null;
 }
 
+interface UserCourseEnrollment {
+  courseName: string;
+  enrolledAt: string;
+  progress: number;
+}
+
 interface UserDetails {
   id: string;
   name: string;
   email: string;
+  currentEnrollments?: UserCourseEnrollment[];
   courseCompletions: UserCourseCompletion[];
 }
 
@@ -130,6 +137,51 @@ export function UserDetailsDialog({ userId, userName, children }: UserDetailsDia
               </CardContent>
             </Card>
 
+            {/* Current Enrollments */}
+            {userDetails.currentEnrollments && userDetails.currentEnrollments.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Current Enrollments ({userDetails.currentEnrollments.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {userDetails.currentEnrollments.map((enrollment, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-lg mb-1">
+                            {enrollment.courseName}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            Enrolled on {formatDate(enrollment.enrolledAt)}
+                          </p>
+                        </div>
+                        
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-muted-foreground mb-1">
+                            Progress
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full" 
+                                style={{ width: `${enrollment.progress}%` }}
+                              />
+                            </div>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              {enrollment.progress}%
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Course Completions */}
             <Card>
               <CardHeader>
@@ -179,42 +231,34 @@ export function UserDetailsDialog({ userId, userName, children }: UserDetailsDia
             </Card>
 
             {/* Summary Stats */}
-            {userDetails.courseCompletions.length > 0 && (
+            {(userDetails.courseCompletions.length > 0 || (userDetails.currentEnrollments && userDetails.currentEnrollments.length > 0)) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Summary Statistics</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {(userDetails.currentEnrollments?.length || 0) + userDetails.courseCompletions.length}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Total Enrollments</p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {userDetails.currentEnrollments?.length || 0}
+                      </div>
+                      <p className="text-sm text-muted-foreground">In Progress</p>
+                    </div>
+                    
                     <div className="text-center">
                       <div className="text-2xl font-bold">
                         {userDetails.courseCompletions.length}
                       </div>
-                      <p className="text-sm text-muted-foreground">Courses Completed</p>
+                      <p className="text-sm text-muted-foreground">Completed</p>
                     </div>
                     
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {userDetails.courseCompletions.filter(c => 
-                          c.finalQuizScore !== null && c.finalQuizScore >= 80
-                        ).length}
-                      </div>
-                      <p className="text-sm text-muted-foreground">Passed Final Quizzes</p>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {userDetails.courseCompletions.length > 0 
-                          ? Math.round(
-                              userDetails.courseCompletions
-                                .filter(c => c.finalQuizScore !== null)
-                                .reduce((sum, c) => sum + (c.finalQuizScore || 0), 0) /
-                              userDetails.courseCompletions.filter(c => c.finalQuizScore !== null).length
-                            )
-                          : 0}%
-                      </div>
-                      <p className="text-sm text-muted-foreground">Average Quiz Score</p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

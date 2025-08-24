@@ -14,10 +14,17 @@ interface UserCourseCompletion {
   finalQuizScore: number | null;
 }
 
+interface UserCourseEnrollment {
+  courseName: string;
+  enrolledAt: string;
+  progress: number;
+}
+
 interface UserDetails {
   id: string;
   name: string;
   email: string;
+  currentEnrollments: UserCourseEnrollment[];
   courseCompletions: UserCourseCompletion[];
 }
 
@@ -36,6 +43,13 @@ export const getUserDetailsAction = enhanceAction(
           id: data.userId,
           name: 'Mock User ' + data.userId,
           email: `user${data.userId}@example.com`,
+          currentEnrollments: [
+            {
+              courseName: 'Mock Course In Progress',
+              enrolledAt: '2024-02-01T10:00:00Z',
+              progress: 45,
+            },
+          ],
           courseCompletions: [
             {
               courseName: 'Safety Compliance Fundamentals',
@@ -80,12 +94,13 @@ export const getUserDetailsAction = enhanceAction(
 
       console.log('✅ GetUserDetailsAction: Found user:', user);
 
-      // Get course completions with quiz scores - try both tables
-      // First, get enrollments
-      const { data: enrollments, error: enrollmentsError } = await client
+      // Get ALL enrollments (both current and completed)
+      const { data: allEnrollments, error: allEnrollmentsError } = await client
         .from('course_enrollments')
         .select(`
+          enrolled_at,
           completed_at,
+          progress_percentage,
           final_score,
           course_id,
           courses!inner (
@@ -93,11 +108,10 @@ export const getUserDetailsAction = enhanceAction(
           )
         `)
         .eq('user_id', data.userId)
-        .not('completed_at', 'is', null)
-        .order('completed_at', { ascending: false });
+        .order('enrolled_at', { ascending: false });
 
-      if (enrollmentsError) {
-        console.error('❌ GetUserDetailsAction: Error fetching enrollments:', enrollmentsError);
+      if (allEnrollmentsError) {
+        console.error('❌ GetUserDetailsAction: Error fetching enrollments:', allEnrollmentsError);
       }
 
       // Also get completions from course_completions table
@@ -117,17 +131,30 @@ export const getUserDetailsAction = enhanceAction(
         console.error('❌ GetUserDetailsAction: Error fetching completions:', completionsError);
       }
 
-      // Create a map to combine data from both sources
+      // Separate current enrollments from completed courses
+      const currentEnrollments: UserCourseEnrollment[] = [];
       const courseScoresMap = new Map<string, UserCourseCompletion>();
 
-      // Process enrollments first
-      (enrollments || []).forEach(enrollment => {
+      // Process all enrollments
+      (allEnrollments || []).forEach(enrollment => {
         const courseId = enrollment.course_id;
-        courseScoresMap.set(courseId, {
-          courseName: enrollment.courses?.title || 'Unknown Course',
-          completionDate: enrollment.completed_at,
-          finalQuizScore: enrollment.final_score ? Number(enrollment.final_score) : null,
-        });
+        
+        // Check if it's completed
+        if (enrollment.completed_at || enrollment.progress_percentage >= 100) {
+          // It's a completed course
+          courseScoresMap.set(courseId, {
+            courseName: enrollment.courses?.title || 'Unknown Course',
+            completionDate: enrollment.completed_at || enrollment.enrolled_at,
+            finalQuizScore: enrollment.final_score ? Number(enrollment.final_score) : null,
+          });
+        } else {
+          // It's a current enrollment
+          currentEnrollments.push({
+            courseName: enrollment.courses?.title || 'Unknown Course',
+            enrolledAt: enrollment.enrolled_at,
+            progress: enrollment.progress_percentage || 0,
+          });
+        }
       });
 
       // Then update with completion data (which may have more accurate quiz scores)
@@ -150,11 +177,9 @@ export const getUserDetailsAction = enhanceAction(
       const courseCompletions: UserCourseCompletion[] = Array.from(courseScoresMap.values());
 
       console.log('✅ GetUserDetailsAction: Found enrollments:', {
-        count: enrollments?.length || 0,
-        enrollments: enrollments?.map(e => ({ 
-          course: e.courses?.title, 
-          finalScore: e.final_score
-        }))
+        total: allEnrollments?.length || 0,
+        current: currentEnrollments.length,
+        completed: courseCompletions.length
       });
       
       console.log('✅ GetUserDetailsAction: Found completions:', {
@@ -178,6 +203,7 @@ export const getUserDetailsAction = enhanceAction(
         id: user.id,
         name: user.name,
         email: user.email,
+        currentEnrollments,
         courseCompletions,
       };
 
