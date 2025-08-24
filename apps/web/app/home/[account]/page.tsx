@@ -8,6 +8,6 @@ interface TeamAccountHomePageProps {
 export default function TeamAccountHomePage({ params }: TeamAccountHomePageProps) {
   const account = use(params).account;
   
-  // Redirect to My Learning as the default page
-  redirect(`/home/${account}/my-learning`);
+  // Redirect to Seat Management as the default page for team accounts
+  redirect(`/home/${account}/courses/seats`);
 }
