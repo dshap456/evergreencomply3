@@ -104,7 +104,13 @@ export async function POST(request: Request) {
       });
 
     // Send invitation email with name
-    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com'}/auth/sign-in?invitation_token=${invitation.invite_token}`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const inviteUrl = `${baseUrl}/auth/sign-in?invitation_token=${invitation.invite_token}`;
+    
+    console.log('=== Course Invitation Email Debug ===');
+    console.log('Attempting to send email to:', email);
+    console.log('Invite URL:', inviteUrl);
+    console.log('RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY);
     
     try {
       await sendCourseInvitationEmail({
@@ -114,10 +120,21 @@ export async function POST(request: Request) {
         teamName: account.name,
         inviteUrl,
       });
-      console.log('Invitation email sent to:', email);
+      console.log('✅ Invitation email sent successfully to:', email);
     } catch (emailError) {
-      console.error('Failed to send invitation email:', emailError);
-      // Don't fail the invitation if email fails - invitation is still created
+      console.error('❌ Failed to send invitation email:', emailError);
+      console.error('Email error details:', {
+        message: emailError instanceof Error ? emailError.message : 'Unknown error',
+        stack: emailError instanceof Error ? emailError.stack : undefined,
+      });
+      // Return error to client so they know email failed
+      return NextResponse.json({ 
+        success: true, // Invitation was created
+        invitation,
+        availableSeats: availableSeats - 1,
+        warning: 'Invitation created but email could not be sent. Please check email configuration.',
+        emailError: emailError instanceof Error ? emailError.message : 'Email sending failed'
+      });
     }
 
     return NextResponse.json({ 
