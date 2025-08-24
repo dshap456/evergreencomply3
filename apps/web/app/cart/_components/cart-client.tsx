@@ -17,6 +17,7 @@ import {
 } from '@kit/ui/dropdown-menu';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
+import { CartDebug } from './cart-debug';
 
 interface Course {
   id: string;
@@ -256,6 +257,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
               Select the courses and number of seats you need for your team
             </p>
           </div>
+
+          {/* Debug Component - Remove in production */}
+          <CartDebug availableCourses={availableCourses} />
 
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Course Selection */}
