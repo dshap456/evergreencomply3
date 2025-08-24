@@ -8,12 +8,12 @@ import { Badge } from '@kit/ui/badge';
 import { Input } from '@kit/ui/input';
 import { Spinner } from '@kit/ui/spinner';
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@kit/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from '@kit/ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,7 +48,17 @@ export function CourseManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilters, setStatusFilters] = useState<Set<string>>(() => {
+    // Load from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('courseStatusFilters');
+      if (saved) {
+        return new Set(JSON.parse(saved));
+      }
+    }
+    // Default to showing all statuses
+    return new Set(['published', 'draft', 'archived']);
+  });
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
@@ -77,6 +87,25 @@ export function CourseManagement() {
   useEffect(() => {
     loadCourses();
   }, []);
+
+  // Save status filters to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('courseStatusFilters', JSON.stringify(Array.from(statusFilters)));
+    }
+  }, [statusFilters]);
+
+  const handleStatusFilterToggle = (status: string) => {
+    setStatusFilters(prev => {
+      const newFilters = new Set(prev);
+      if (newFilters.has(status)) {
+        newFilters.delete(status);
+      } else {
+        newFilters.add(status);
+      }
+      return newFilters;
+    });
+  };
 
   const handleBackFromEditor = () => {
     setSelectedCourse(null);
@@ -113,7 +142,7 @@ export function CourseManagement() {
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
+    const matchesStatus = statusFilters.size === 0 || statusFilters.has(course.status);
     return matchesSearch && matchesStatus;
   });
 
@@ -181,17 +210,46 @@ export function CourseManagement() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="published">Published</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="archived">Archived</SelectItem>
-          </SelectContent>
-        </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-[200px] justify-between">
+              <span>
+                {statusFilters.size === 0 
+                  ? 'No statuses selected'
+                  : statusFilters.size === 3
+                  ? 'All Statuses'
+                  : `${statusFilters.size} status${statusFilters.size > 1 ? 'es' : ''} selected`}
+              </span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[200px]">
+            <DropdownMenuCheckboxItem
+              checked={statusFilters.has('published')}
+              onCheckedChange={() => handleStatusFilterToggle('published')}
+            >
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-100 text-green-800">Published</Badge>
+              </div>
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={statusFilters.has('draft')}
+              onCheckedChange={() => handleStatusFilterToggle('draft')}
+            >
+              <div className="flex items-center gap-2">
+                <Badge className="bg-yellow-100 text-yellow-800">Draft</Badge>
+              </div>
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={statusFilters.has('archived')}
+              onCheckedChange={() => handleStatusFilterToggle('archived')}
+            >
+              <div className="flex items-center gap-2">
+                <Badge className="bg-gray-100 text-gray-800">Archived</Badge>
+              </div>
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Courses Grid */}
@@ -276,12 +334,12 @@ export function CourseManagement() {
             <div>
               <h3 className="text-lg font-medium">No courses found</h3>
               <p className="text-muted-foreground">
-                {searchTerm || statusFilter !== 'all' 
+                {searchTerm || statusFilters.size < 3
                   ? 'Try adjusting your filters'
                   : 'Create your first course to get started'}
               </p>
             </div>
-            {!searchTerm && statusFilter === 'all' && (
+            {!searchTerm && statusFilters.size === 3 && (
               <Button onClick={() => setShowCreateDialog(true)}>
                 Create Course
               </Button>
