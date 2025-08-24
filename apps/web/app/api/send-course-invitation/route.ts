@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
-import { sendCourseInvitationEmail } from '~/lib/email/resend';
+import { getMailer } from '@kit/mailers';
 
 export async function POST(request: Request) {
   try {
@@ -103,23 +103,84 @@ export async function POST(request: Request) {
         invitation_type: 'course',
       });
 
-    // Send invitation email with name
+    // Send invitation email using the app's mailer system
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const inviteUrl = `${baseUrl}/auth/sign-in?invitation_token=${invitation.invite_token}`;
     
     console.log('=== Course Invitation Email Debug ===');
     console.log('Attempting to send email to:', email);
     console.log('Invite URL:', inviteUrl);
-    console.log('RESEND_API_KEY configured:', !!process.env.RESEND_API_KEY);
     
     try {
-      await sendCourseInvitationEmail({
+      const mailer = await getMailer();
+      const emailSender = process.env.EMAIL_SENDER || 'Evergreen Comply <onboarding@resend.dev>';
+      
+      const subject = `You're invited to join "${course.title}" by ${account.name}`;
+      
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Course Invitation</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background-color: #f9fafb; border-radius: 8px; padding: 32px; margin-bottom: 24px;">
+              <h1 style="color: #111827; font-size: 24px; font-weight: 600; margin: 0 0 8px 0;">Course Invitation</h1>
+              <p style="color: #6b7280; font-size: 16px; margin: 0;">You've been invited to join a course</p>
+            </div>
+            
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+              <p style="font-size: 16px; margin: 0 0 16px 0;">Hi ${name || 'there'},</p>
+              
+              <p style="font-size: 16px; margin: 0 0 16px 0;">
+                <strong>${account.name}</strong> has invited you to enroll in the course:
+              </p>
+              
+              <div style="background-color: #f3f4f6; border-radius: 6px; padding: 16px; margin: 0 0 24px 0;">
+                <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin: 0;">${course.title}</h2>
+              </div>
+              
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${inviteUrl}" style="display: inline-block; background-color: #3b82f6; color: white; font-size: 16px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
+                  Accept Invitation
+                </a>
+              </div>
+              
+              <p style="font-size: 14px; color: #6b7280; margin: 24px 0 0 0;">
+                Or copy and paste this link into your browser:
+              </p>
+              <p style="font-size: 14px; color: #3b82f6; word-break: break-all; margin: 8px 0 0 0;">
+                ${inviteUrl}
+              </p>
+            </div>
+            
+            <div style="text-align: center; padding: 24px 0;">
+              <p style="font-size: 14px; color: #6b7280; margin: 0;">
+                This invitation will expire in 30 days.
+              </p>
+              <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0;">
+                If you don't have an account yet, you'll be prompted to create one.
+              </p>
+            </div>
+          </body>
+        </html>
+      `;
+      
+      const text = `${account.name} has invited you to join the course "${course.title}".
+
+Accept your invitation here: ${inviteUrl}
+
+This invitation will expire in 30 days.`;
+
+      await mailer.sendEmail({
+        from: emailSender,
         to: email,
-        inviteeName: name,
-        courseName: course.title,
-        teamName: account.name,
-        inviteUrl,
+        subject,
+        html,
       });
+      
       console.log('✅ Invitation email sent successfully to:', email);
     } catch (emailError) {
       console.error('❌ Failed to send invitation email:', emailError);
@@ -132,7 +193,7 @@ export async function POST(request: Request) {
         success: true, // Invitation was created
         invitation,
         availableSeats: availableSeats - 1,
-        warning: 'Invitation created but email could not be sent. Please check email configuration.',
+        warning: 'Invitation created but email could not be sent. Please share the invitation link manually.',
         emailError: emailError instanceof Error ? emailError.message : 'Email sending failed'
       });
     }
