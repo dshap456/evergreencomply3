@@ -7,6 +7,7 @@ export interface LearnerCourse {
   title: string;
   description: string;
   price?: number;
+  billing_product_id?: string | null;
   thumbnail_url: string | null;
   duration_minutes: number | null;
   language: string;
@@ -56,6 +57,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
         id,
         title,
         description,
+        billing_product_id,
         status
       )
     `)
@@ -76,6 +78,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       title,
       description,
       price,
+      billing_product_id,
       status
     `)
     .eq('status', 'published');
@@ -148,6 +151,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       id: enrollment.course.id,
       title: enrollment.course.title,
       description: enrollment.course.description || '',
+      billing_product_id: enrollment.course.billing_product_id,
       thumbnail_url: null,
       duration_minutes: null,
       language: 'en',
@@ -175,6 +179,7 @@ export async function loadLearnerCoursesData(): Promise<LearnerCoursesData> {
       title: course.title,
       description: course.description || '',
       price: Number(course.price) || 0,
+      billing_product_id: course.billing_product_id,
       thumbnail_url: null,
       duration_minutes: null,
       language: 'en',

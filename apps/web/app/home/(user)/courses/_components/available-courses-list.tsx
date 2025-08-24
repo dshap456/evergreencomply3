@@ -10,6 +10,13 @@ import { Trans } from '@kit/ui/trans';
 
 import type { LearnerCourse } from '../_lib/server/learner-courses.loader';
 
+// Map database billing_product_id to cart course IDs
+const COURSE_ID_MAPPING: Record<string, string> = {
+  'dot-hazmat': 'dot-hazmat-general',
+  'advanced-hazmat': 'dot-hazmat-advanced',
+  'epa-rcra': 'epa-rcra',
+};
+
 interface AvailableCoursesListProps {
   courses: LearnerCourse[];
 }
@@ -30,8 +37,43 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
 
   const handlePurchase = () => {
     setIsProcessing(true);
-    // Redirect to the course-specific checkout page
-    router.push(`/home/courses/${course.id}/checkout`);
+    
+    // Map the billing_product_id to the cart course ID
+    const cartCourseId = course.billing_product_id && COURSE_ID_MAPPING[course.billing_product_id] 
+      ? COURSE_ID_MAPPING[course.billing_product_id]
+      : course.billing_product_id || course.id;
+    
+    // Add to cart in localStorage
+    const existingCartJson = localStorage.getItem('training-cart');
+    let cartItems = [];
+    
+    if (existingCartJson) {
+      try {
+        cartItems = JSON.parse(existingCartJson);
+      } catch (e) {
+        console.error('Error parsing existing cart:', e);
+      }
+    }
+    
+    // Check if course is already in cart
+    const existingItem = cartItems.find((item: any) => item.courseId === cartCourseId);
+    
+    if (existingItem) {
+      // Update quantity to 1 if it exists
+      existingItem.quantity = 1;
+    } else {
+      // Add new item with quantity 1
+      cartItems.push({
+        courseId: cartCourseId,
+        quantity: 1
+      });
+    }
+    
+    // Save updated cart
+    localStorage.setItem('training-cart', JSON.stringify(cartItems));
+    
+    // Redirect to cart page
+    router.push('/marketing-temp/cart');
   };
 
   return (
