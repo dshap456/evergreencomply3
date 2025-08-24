@@ -131,8 +131,8 @@ function DOTHazmatAdvancedPage() {
                 </div>
                 <div className="pt-4">
                   <AddToCartButton
-                    courseId="dot-hazmat-advanced"
-                    price={179}
+                    courseId="advanced-hazmat"
+                    price={1}
                     size="lg"
                     className="w-full sm:w-auto"
                   />
@@ -233,7 +233,7 @@ function DOTHazmatAdvancedPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="text-center">
-                      <div className="text-5xl font-bold text-primary">$179</div>
+                      <div className="text-5xl font-bold text-primary">$1</div>
                       <p className="text-muted-foreground">per employee / 3-year cert</p>
                     </div>
                     <div className="space-y-3 text-sm pt-2">
@@ -255,8 +255,8 @@ function DOTHazmatAdvancedPage() {
                       </div>
                     </div>
                     <AddToCartButton
-                      courseId="dot-hazmat-advanced"
-                      price={179}
+                      courseId="advanced-hazmat"
+                      price={1}
                       size="lg"
                       className="w-full mt-2"
                     >
