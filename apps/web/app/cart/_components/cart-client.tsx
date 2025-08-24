@@ -109,8 +109,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
       const api = createAccountsApi(supabase);
       const accounts = await api.loadUserAccounts();
       
+      console.log('Loaded accounts from API:', accounts);
+      
       // Filter to only show team accounts (not personal)
       const teams = accounts.filter(acc => !acc.is_personal_account);
+      console.log('Filtered team accounts:', teams);
+      
       setTeamAccounts(teams);
       
       // If user has teams and no selection yet, default to first team
@@ -119,6 +123,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
       }
     } catch (error) {
       console.error('Error loading team accounts:', error);
+      toast.error('Failed to load team accounts');
     } finally {
       setIsLoadingAccounts(false);
     }

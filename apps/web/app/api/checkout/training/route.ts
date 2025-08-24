@@ -101,12 +101,18 @@ export async function POST(request: NextRequest) {
     console.log('Creating Stripe checkout with line items:', lineItems);
     console.log('Purchase account ID:', purchaseAccountId);
 
+    // Determine success URL based on account type
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
+    const successPath = accountType === 'team' 
+      ? `/home/${purchaseAccountId}/courses/seats?purchase=success&session_id={CHECKOUT_SESSION_ID}`
+      : `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
+    
     // Create Stripe checkout session with proper account reference
     const session = await stripe.checkout.sessions.create({
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/cart`,
+      success_url: `${baseUrl}${successPath}`,
+      cancel_url: `${baseUrl}/cart`,
       customer_email: user.email,
       // CRITICAL: Set client_reference_id to the account making the purchase
       client_reference_id: purchaseAccountId,

@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     console.log('[Course Webhook] Session ID:', session.id);
     console.log('[Course Webhook] Client Reference ID:', session.client_reference_id);
     console.log('[Course Webhook] Customer Email:', session.customer_email);
+    console.log('[Course Webhook] Metadata:', session.metadata);
     
     // Process the purchase
     const adminClient = getSupabaseServerAdminClient();
@@ -89,9 +90,9 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
-        // Process the purchase
-        const { data, error } = await adminClient.rpc('process_course_purchase', {
-          p_product_id: courseSlug,
+        // Process the purchase using the by_slug function which expects slug not billing_product_id
+        const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
+          p_course_slug: courseSlug,
           p_account_id: accountId,
           p_payment_id: session.id,
           p_quantity: item.quantity || 1,
