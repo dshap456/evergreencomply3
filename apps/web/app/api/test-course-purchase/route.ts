@@ -1,78 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
-import { getSupabaseServerClient } from '@kit/supabase/server-client';
-import { requireUser } from '@kit/supabase/require-user';
 
-export async function GET(request: NextRequest) {
-  const client = getSupabaseServerClient();
-  const auth = await requireUser(client);
-  
-  if (!auth.data) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const adminClient = getSupabaseServerAdminClient();
-
-  // Get all courses with their billing info
-  const { data: courses, error: coursesError } = await adminClient
-    .from('courses')
-    .select('id, title, sku, price, billing_product_id')
-    .order('title');
-
-  if (coursesError) {
-    return NextResponse.json({ error: coursesError.message }, { status: 500 });
-  }
-
-  // Get user's enrollments
-  const { data: enrollments, error: enrollmentsError } = await client
-    .from('course_enrollments')
-    .select('course_id, enrolled_at, progress_percentage')
-    .eq('user_id', auth.data.id);
-
-  if (enrollmentsError) {
-    return NextResponse.json({ error: enrollmentsError.message }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    user_id: auth.data.id,
-    user_email: auth.data.email,
-    courses,
-    enrollments,
-    course_mapping: {
-      'dot-hazmat': 'price_1RsDQh97cNCBYOcXZBML0Cwf',
-      'advanced-hazmat': 'price_1RsDev97cNCBYOcX008NiFR8',
-      'epa-rcra': 'price_1RsDf697cNCBYOcXkMlo2mPt',
-    }
-  });
-}
-
-// Test enrollment creation
 export async function POST(request: NextRequest) {
-  const client = getSupabaseServerClient();
-  const auth = await requireUser(client);
-  
-  if (!auth.data) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const body = await request.json();
+    const { courseSlug, accountId, quantity = 1 } = body;
+    
+    if (!courseSlug || !accountId) {
+      return NextResponse.json({ 
+        error: 'Missing required fields: courseSlug, accountId' 
+      }, { status: 400 });
+    }
+    
+    const adminClient = getSupabaseServerAdminClient();
+    
+    // Test the function directly
+    const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
+      p_course_slug: courseSlug,
+      p_account_id: accountId,
+      p_payment_id: `test-${Date.now()}`,
+      p_quantity: quantity,
+    });
+    
+    if (error) {
+      console.error('Function error:', error);
+      return NextResponse.json({ 
+        error: error.message,
+        details: error
+      }, { status: 500 });
+    }
+    
+    // Also check what's in the database
+    const { data: courseSeats } = await adminClient
+      .from('course_seats')
+      .select('*')
+      .eq('account_id', accountId);
+    
+    const { data: enrollments } = await adminClient
+      .from('course_enrollments')
+      .select('*')
+      .eq('user_id', accountId);
+    
+    return NextResponse.json({
+      functionResult: data,
+      courseSeats,
+      enrollments,
+    });
+    
+  } catch (error) {
+    console.error('Test error:', error);
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
   }
-
-  const adminClient = getSupabaseServerAdminClient();
-  const { courseId } = await request.json();
-
-  // Simulate a course purchase
-  const { data, error } = await adminClient.rpc('process_course_purchase', {
-    p_product_id: courseId, // This should be billing_product_id like 'advanced-hazmat'
-    p_account_id: auth.data.id, // Personal account ID is same as user ID
-    p_payment_id: `test-${Date.now()}`,
-    p_quantity: 1,
-  });
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ 
-    success: true, 
-    result: data,
-    message: 'Test enrollment created'
-  });
 }

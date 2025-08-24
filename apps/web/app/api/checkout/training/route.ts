@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
 
     // Determine which account is making the purchase
     let purchaseAccountId: string;
+    let accountSlug: string | null = null;
     
     if (accountType === 'team' && accountId) {
       // Verify user has access to the team account
@@ -59,6 +60,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized for this team' }, { status: 403 });
       }
       
+      // Get the team account slug for redirect
+      const { data: teamAccount } = await client
+        .from('accounts')
+        .select('slug')
+        .eq('id', accountId)
+        .single();
+      
+      accountSlug = teamAccount?.slug || null;
       purchaseAccountId = accountId;
     } else {
       // Personal purchase - use user's personal account ID
@@ -103,8 +112,8 @@ export async function POST(request: NextRequest) {
 
     // Determine success URL based on account type
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
-    const successPath = accountType === 'team' 
-      ? `/home/${purchaseAccountId}/courses/seats?purchase=success&session_id={CHECKOUT_SESSION_ID}`
+    const successPath = accountType === 'team' && accountSlug
+      ? `/home/${accountSlug}/courses/seats?purchase=success&session_id={CHECKOUT_SESSION_ID}`
       : `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
     
     // Create Stripe checkout session with proper account reference

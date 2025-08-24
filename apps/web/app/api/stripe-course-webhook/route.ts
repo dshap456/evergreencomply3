@@ -5,10 +5,11 @@ import Stripe from 'stripe';
 // Completely standalone webhook for course purchases only
 // This doesn't use any of the kit's billing infrastructure
 
+// Map Stripe price IDs to actual course slugs in the database
 const COURSE_PRODUCT_MAPPING = {
-  'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat',
-  'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',
-  'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',
+  'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat-general',  // DOT HAZMAT General
+  'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',      // DOT HAZMAT Advanced  
+  'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',            // EPA RCRA
 } as const;
 
 export async function POST(request: NextRequest) {
