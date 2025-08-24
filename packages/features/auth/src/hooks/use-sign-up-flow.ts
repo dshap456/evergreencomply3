@@ -10,6 +10,7 @@ import { useSignUpWithEmailAndPassword } from '@kit/supabase/hooks/use-sign-up-w
 import { useLastAuthMethod } from './use-last-auth-method';
 
 type SignUpCredentials = {
+  name: string;
   email: string;
   password: string;
 };

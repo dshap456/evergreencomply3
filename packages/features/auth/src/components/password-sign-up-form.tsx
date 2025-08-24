@@ -30,6 +30,7 @@ interface PasswordSignUpFormProps {
   displayTermsCheckbox?: boolean;
 
   onSubmit: (params: {
+    name: string;
     email: string;
     password: string;
     repeatPassword: string;
@@ -48,6 +49,7 @@ export function PasswordSignUpForm({
   const form = useForm({
     resolver: zodResolver(PasswordSignUpSchema),
     defaultValues: {
+      name: '',
       email: defaultValues?.email ?? '',
       password: '',
       repeatPassword: '',
@@ -60,6 +62,30 @@ export function PasswordSignUpForm({
         className={'flex w-full flex-col gap-y-4'}
         onSubmit={form.handleSubmit(onSubmit)}
       >
+        <FormField
+          control={form.control}
+          name={'name'}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                <Trans i18nKey={'common:name'} />
+              </FormLabel>
+
+              <FormControl>
+                <Input
+                  data-test={'name-input'}
+                  required
+                  type="text"
+                  placeholder={'Enter your full name'}
+                  {...field}
+                />
+              </FormControl>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name={'email'}

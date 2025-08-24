@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useSupabase } from './use-supabase';
 
 interface Credentials {
+  name: string;
   email: string;
   password: string;
   emailRedirectTo: string;
@@ -14,13 +15,16 @@ export function useSignUpWithEmailAndPassword() {
   const mutationKey = ['auth', 'sign-up-with-email-password'];
 
   const mutationFn = async (params: Credentials) => {
-    const { emailRedirectTo, captchaToken, ...credentials } = params;
+    const { emailRedirectTo, captchaToken, name, ...credentials } = params;
 
     const response = await client.auth.signUp({
       ...credentials,
       options: {
         emailRedirectTo,
         captchaToken,
+        data: {
+          name: name,
+        },
       },
     });
 

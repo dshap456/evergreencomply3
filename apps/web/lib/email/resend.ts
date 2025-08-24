@@ -86,11 +86,13 @@ export async function sendEmail({
 // Specific function for course invitations
 export async function sendCourseInvitationEmail({
   to,
+  inviteeName,
   courseName,
   teamName,
   inviteUrl,
 }: {
   to: string;
+  inviteeName?: string;
   courseName: string;
   teamName: string;
   inviteUrl: string;
@@ -112,7 +114,7 @@ export async function sendCourseInvitationEmail({
         </div>
         
         <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
-          <p style="font-size: 16px; margin: 0 0 16px 0;">Hi there,</p>
+          <p style="font-size: 16px; margin: 0 0 16px 0;">Hi ${inviteeName || 'there'},</p>
           
           <p style="font-size: 16px; margin: 0 0 16px 0;">
             <strong>${teamName}</strong> has invited you to enroll in the course:

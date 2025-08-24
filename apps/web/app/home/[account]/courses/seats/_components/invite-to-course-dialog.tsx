@@ -28,6 +28,7 @@ import { toast } from '@kit/ui/sonner';
 import { inviteToCourseAction } from '../_lib/server/course-invitation-actions';
 
 const InviteSchema = z.object({
+  name: z.string().min(1, 'Please enter the team member\'s name'),
   email: z.string().email('Please enter a valid email address'),
 });
 
@@ -55,6 +56,7 @@ export function InviteToCourseDialog({
   const form = useForm<z.infer<typeof InviteSchema>>({
     resolver: zodResolver(InviteSchema),
     defaultValues: {
+      name: '',
       email: '',
     },
   });
@@ -67,6 +69,7 @@ export function InviteToCourseDialog({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            name: data.name,
             email: data.email,
             courseId: course.course_id,
             accountId: accountId,
@@ -110,6 +113,26 @@ export function InviteToCourseDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    <Trans i18nKey="common:name" />
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="John Smith"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <FormField
               control={form.control}
               name="email"

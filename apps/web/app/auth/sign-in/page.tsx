@@ -13,6 +13,7 @@ import { withI18n } from '~/lib/i18n/with-i18n';
 interface SignInPageProps {
   searchParams: Promise<{
     invite_token?: string;
+    invitation_token?: string;
     next?: string;
   }>;
 }
@@ -26,7 +27,8 @@ export const generateMetadata = async () => {
 };
 
 async function SignInPage({ searchParams }: SignInPageProps) {
-  const { invite_token: inviteToken, next } = await searchParams;
+  const { invite_token, invitation_token, next } = await searchParams;
+  const inviteToken = invitation_token || invite_token;
 
   const signUpPath =
     pathsConfig.auth.signUp +

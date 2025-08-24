@@ -4,7 +4,7 @@ import { sendCourseInvitationEmail } from '~/lib/email/resend';
 
 export async function POST(request: Request) {
   try {
-    const { email, courseId, accountId } = await request.json();
+    const { name, email, courseId, accountId } = await request.json();
     const client = getSupabaseServerClient();
     
     // Get current user
@@ -74,11 +74,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No available seats for this course' });
     }
 
-    // Create invitation
+    // Create invitation with name
     const { data: invitation, error: inviteError } = await client
       .from('course_invitations')
       .insert({
         email,
+        invitee_name: name,
         course_id: courseId,
         account_id: accountId,
         invited_by: user.id,
@@ -93,12 +94,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to create invitation' });
     }
 
-    // Send invitation email
-    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com'}/courses/invitation?token=${invitation.invite_token}`;
+    // Store invitation token for magic link resilience
+    await client
+      .from('pending_invitation_tokens')
+      .insert({
+        email,
+        invitation_token: invitation.invite_token,
+        invitation_type: 'course',
+      });
+
+    // Send invitation email with name
+    const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://yourdomain.com'}/auth/sign-in?invitation_token=${invitation.invite_token}`;
     
     try {
       await sendCourseInvitationEmail({
         to: email,
+        inviteeName: name,
         courseName: course.title,
         teamName: account.name,
         inviteUrl,
