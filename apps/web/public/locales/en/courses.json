@@ -91,6 +91,8 @@
     "inProgress": "In Progress",
     "completed": "Completed",
     "notStarted": "Not Started",
+    "purchaseCourse": "Purchase Course",
+    "processingPurchase": "Processing...",
     "enroll": "Enroll Now",
     "enrolling": "Enrolling...",
     "enrolled": "Enrolled",

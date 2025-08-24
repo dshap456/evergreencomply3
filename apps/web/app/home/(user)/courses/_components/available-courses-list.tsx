@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Spinner } from '@kit/ui/spinner';
 import { Trans } from '@kit/ui/trans';
-import { toast } from '@kit/ui/sonner';
 
 import type { LearnerCourse } from '../_lib/server/learner-courses.loader';
-import { enrollInCourseAction } from '../_lib/server/course-enrollment-actions';
 
 interface AvailableCoursesListProps {
   courses: LearnerCourse[];
@@ -26,27 +25,13 @@ export function AvailableCoursesList({ courses }: AvailableCoursesListProps) {
 }
 
 function AvailableCourseCard({ course }: { course: LearnerCourse }) {
-  const [isPending, startTransition] = useTransition();
-  const [isEnrolled, setIsEnrolled] = useState(false);
+  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleEnroll = () => {
-    startTransition(async () => {
-      try {
-        const result = await enrollInCourseAction({ courseId: course.id });
-        
-        if (result.success) {
-          setIsEnrolled(true);
-          toast.success('Successfully enrolled in course!');
-          // Optionally refresh the page or update the UI
-          window.location.reload();
-        } else {
-          toast.error(result.error || 'Failed to enroll in course');
-        }
-      } catch (error) {
-        console.error('Enrollment error:', error);
-        toast.error('An unexpected error occurred');
-      }
-    });
+  const handlePurchase = () => {
+    setIsProcessing(true);
+    // Redirect to the course-specific checkout page
+    router.push(`/home/courses/${course.id}/checkout`);
   };
 
   return (
@@ -78,21 +63,19 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
         {/* Spacer to push button to bottom */}
         <div className="flex-1" />
 
-        {/* Enrollment Button */}
+        {/* Purchase Button */}
         <Button 
           className="w-full"
-          onClick={handleEnroll}
-          disabled={isPending || isEnrolled}
+          onClick={handlePurchase}
+          disabled={isProcessing}
         >
-          {isPending ? (
+          {isProcessing ? (
             <>
               <Spinner className="mr-2 h-4 w-4" />
-              <Trans i18nKey="courses:learner.enrolling" />
+              <Trans i18nKey="courses:learner.processingPurchase" />
             </>
-          ) : isEnrolled ? (
-            <Trans i18nKey="courses:learner.enrolled" />
           ) : (
-            <Trans i18nKey="courses:learner.enroll" />
+            <Trans i18nKey="courses:learner.purchaseCourse" />
           )}
         </Button>
       </CardContent>
