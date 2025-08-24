@@ -53,17 +53,20 @@ class AccountsApi {
   async loadUserAccounts() {
     const { data: accounts, error } = await this.client
       .from('user_accounts')
-      .select(`name, slug, picture_url`);
+      .select(`id, name, slug, picture_url, is_personal_account`);
 
     if (error) {
       throw error;
     }
 
-    return accounts.map(({ name, slug, picture_url }) => {
+    return accounts.map(({ id, name, slug, picture_url, is_personal_account }) => {
       return {
+        id,
+        name,
         label: name,
         value: slug,
         image: picture_url,
+        is_personal_account,
       };
     });
   }
