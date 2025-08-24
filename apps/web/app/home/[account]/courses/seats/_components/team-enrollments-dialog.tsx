@@ -71,6 +71,7 @@ export function TeamEnrollmentsDialog({
   const supabase = useSupabase();
   const [isPending, startTransition] = useTransition();
   const [removingUserId, setRemovingUserId] = useState<string | null>(null);
+  const [removingInvitationId, setRemovingInvitationId] = useState<number | null>(null);
 
   const { data: enrollmentData, isLoading, refetch } = useQuery({
     queryKey: ['team-enrollments', course.course_id, accountId],
@@ -162,6 +163,39 @@ export function TeamEnrollmentsDialog({
         setRemovingUserId(null);
       }
     });
+  };
+
+  const handleCancelInvitation = async (invitationId: number, email: string) => {
+    if (!confirm(`Are you sure you want to cancel the invitation for ${email}?`)) {
+      return;
+    }
+
+    setRemovingInvitationId(invitationId);
+    try {
+      const response = await fetch('/api/cancel-course-invitation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          invitationId,
+          accountId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to cancel invitation');
+      }
+
+      toast.success('Invitation cancelled successfully');
+      refetch();
+      onUpdate();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to cancel invitation');
+    } finally {
+      setRemovingInvitationId(null);
+    }
   };
 
   return (
@@ -277,9 +311,14 @@ export function TeamEnrollmentsDialog({
                             <Button
                               size="sm"
                               variant="ghost"
-                              disabled
+                              onClick={() => handleCancelInvitation(invitation.id, invitation.email)}
+                              disabled={removingInvitationId === invitation.id}
                             >
-                              <Trans i18nKey="common:remove" />
+                              {removingInvitationId === invitation.id ? (
+                                <Spinner className="h-4 w-4" />
+                              ) : (
+                                <Trans i18nKey="common:remove" />
+                              )}
                             </Button>
                           </TableCell>
                         </TableRow>
