@@ -14,6 +14,11 @@ interface UserWithStats {
   last_active: string;
   status: 'active' | 'inactive' | 'suspended';
   created_at: string;
+  currentEnrollments?: Array<{
+    courseName: string;
+    progress: number;
+    enrolledAt: string;
+  }>;
   finalQuizScores?: Array<{
     courseName: string;
     score: number;
@@ -106,6 +111,11 @@ export const loadUsersAction = enhanceAction(
         enrollments: number; 
         completions: number; 
         lastActive: string;
+        currentEnrollments: Array<{
+          courseName: string;
+          progress: number;
+          enrolledAt: string;
+        }>;
         finalQuizScores: Array<{
           courseName: string;
           score: number;
@@ -125,6 +135,7 @@ export const loadUsersAction = enhanceAction(
               enrollments: 0,
               completions: 0,
               lastActive: enrollment.enrolled_at,
+              currentEnrollments: [],
               finalQuizScores: []
             };
           }
@@ -144,6 +155,13 @@ export const loadUsersAction = enhanceAction(
                 completedAt: enrollment.completed_at || enrollment.enrolled_at
               });
             }
+          } else {
+            // Add to current enrollments if not completed
+            userEnrollmentStats[enrollment.user_id].currentEnrollments.push({
+              courseName: enrollment.courses?.title || 'Unknown Course',
+              progress: enrollment.progress_percentage || 0,
+              enrolledAt: enrollment.enrolled_at
+            });
           }
 
           // Track most recent activity
@@ -162,6 +180,7 @@ export const loadUsersAction = enhanceAction(
                 enrollments: 0,
                 completions: 0,
                 lastActive: completion.completed_at,
+                currentEnrollments: [],
                 finalQuizScores: []
               };
             }
@@ -204,6 +223,7 @@ export const loadUsersAction = enhanceAction(
           enrollments: 0, 
           completions: 0, 
           lastActive: account.created_at,
+          currentEnrollments: [],
           finalQuizScores: []
         };
         
@@ -229,6 +249,7 @@ export const loadUsersAction = enhanceAction(
           last_active: stats.lastActive || account.created_at || new Date().toISOString(),
           status: 'active', // Default status
           created_at: account.created_at || new Date().toISOString(),
+          currentEnrollments: stats.currentEnrollments,
           finalQuizScores: stats.finalQuizScores
         };
       });
