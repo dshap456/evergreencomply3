@@ -8,6 +8,7 @@ import { getSupabaseServerClient } from '@kit/supabase/server-client';
 // Frontend sends these exact slugs from the course pages
 const COURSE_MAPPING = {
   'dot-hazmat': 'dot-hazmat',
+  'dot-hazmat-general': 'dot-hazmat', // Alternative slug for the same course
   'advanced-hazmat': 'advanced-hazmat',
   'epa-rcra': 'epa-rcra',
 } as const;
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
       let priceId: string;
       switch (courseId) {
         case 'dot-hazmat':
+        case 'dot-hazmat-general':  // Both map to the same DOT HAZMAT course
           priceId = 'price_1RsDQh97cNCBYOcXZBML0Cwf';
           break;
         case 'advanced-hazmat':
