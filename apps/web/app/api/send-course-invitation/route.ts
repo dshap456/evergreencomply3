@@ -105,7 +105,8 @@ export async function POST(request: Request) {
 
     // Send invitation email using the app's mailer system
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const inviteUrl = `${baseUrl}/auth/sign-in?invitation_token=${invitation.invite_token}`;
+    // Direct new users to sign-up page with the invitation token
+    const inviteUrl = `${baseUrl}/auth/sign-up?invite_token=${invitation.invite_token}`;
     
     console.log('=== Course Invitation Email Debug ===');
     console.log('Attempting to send email to:', email);
@@ -166,11 +167,20 @@ export async function POST(request: Request) {
             </div>
             
             <div style="text-align: center; padding: 24px 0;">
-              <p style="font-size: 14px; color: #6b7280; margin: 0;">
-                This invitation will expire in 30 days.
+              <p style="font-size: 14px; color: #111827; font-weight: 600; margin: 0 0 8px 0;">
+                New to Evergreen Comply?
               </p>
-              <p style="font-size: 14px; color: #6b7280; margin: 8px 0 0 0;">
-                If you don't have an account yet, you'll be prompted to create one.
+              <p style="font-size: 14px; color: #6b7280; margin: 0 0 16px 0;">
+                Click the link above to create your account and join the course.
+              </p>
+              <p style="font-size: 14px; color: #111827; font-weight: 600; margin: 16px 0 8px 0;">
+                Already have an account?
+              </p>
+              <p style="font-size: 14px; color: #6b7280; margin: 0;">
+                Sign in with your existing account to accept the invitation.
+              </p>
+              <p style="font-size: 12px; color: #9ca3af; margin: 16px 0 0 0;">
+                This invitation will expire in 30 days.
               </p>
             </div>
           </body>
