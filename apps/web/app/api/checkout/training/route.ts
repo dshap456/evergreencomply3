@@ -156,11 +156,11 @@ export async function POST(request: NextRequest) {
       sessionParams.client_reference_id = purchaseAccountId;
     }
     
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
 
-    console.log('Checkout session created:', session.id);
+    console.log('Checkout session created:', checkoutSession.id);
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error('Checkout error:', error);
     
