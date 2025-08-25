@@ -103,19 +103,23 @@ export function TeamEnrollmentsDialog({
 
       if (inviteError) throw inviteError;
 
-      // Get inviter details
+      // Get inviter details - for now just show the user ID or "Team Owner"
+      // Since we can't access auth.users from client side, we'll use a simplified approach
       const inviterIds = [...new Set(invitations?.map(inv => inv.invited_by) || [])];
       let inviterMap: Record<string, string> = {};
       
       if (inviterIds.length > 0) {
-        const { data: inviters } = await supabase
+        // Try to get personal accounts for these user IDs
+        const { data: personalAccounts } = await supabase
           .from('accounts')
-          .select('id, email')
+          .select('id, email, name')
           .in('id', inviterIds)
           .eq('is_personal_account', true);
         
-        inviterMap = (inviters || []).reduce((acc, inv) => {
-          acc[inv.id] = inv.email || 'Unknown';
+        // Map user IDs to their emails or names
+        inviterMap = inviterIds.reduce((acc, userId) => {
+          const account = personalAccounts?.find(a => a.id === userId);
+          acc[userId] = account?.email || account?.name || 'Team Admin';
           return acc;
         }, {} as Record<string, string>);
       }

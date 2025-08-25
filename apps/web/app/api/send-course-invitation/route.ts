@@ -113,11 +113,16 @@ export async function POST(request: Request) {
     
     try {
       const mailer = await getMailer();
-      // Use test domain if production domain not configured or verified
-      const emailSender = process.env.EMAIL_SENDER || 'Evergreen Comply <onboarding@resend.dev>';
-      
-      // If using production domain that might not be verified, provide fallback
+      // Use the verified domain sender - www.evergreencomply.com requires @www.evergreencomply.com
+      const primarySender = process.env.EMAIL_SENDER || 'Evergreen Comply <no-reply@www.evergreencomply.com>';
       const fallbackSender = 'Evergreen Comply <onboarding@resend.dev>';
+      
+      // We'll try the primary first, then fallback if it fails
+      let emailSender = primarySender;
+      
+      console.log('=== Email Sender Configuration ===');
+      console.log('EMAIL_SENDER env:', process.env.EMAIL_SENDER);
+      console.log('Using sender:', emailSender);
       
       const subject = `You're invited to join "${course.title}" by ${account.name}`;
       
