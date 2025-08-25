@@ -49,11 +49,38 @@ export async function loadSeatData(accountId: string) {
       return [];
     }
 
-    // Calculate used seats per course
-    const usedSeatsMap = enrollments?.reduce((acc, enrollment) => {
+    // Get pending invitation counts for each course
+    const { data: pendingInvitations, error: inviteError } = await client
+      .from('course_invitations')
+      .select('course_id')
+      .eq('account_id', accountId)
+      .in('course_id', courseIds)
+      .is('accepted_at', null);
+
+    if (inviteError) {
+      console.error('Error fetching pending invitations:', inviteError);
+      return [];
+    }
+
+    // Calculate enrolled seats per course
+    const enrolledSeatsMap = enrollments?.reduce((acc, enrollment) => {
       acc[enrollment.course_id] = (acc[enrollment.course_id] || 0) + 1;
       return acc;
     }, {} as Record<string, number>) || {};
+
+    // Calculate pending invitation seats per course
+    const pendingSeatsMap = pendingInvitations?.reduce((acc, invitation) => {
+      acc[invitation.course_id] = (acc[invitation.course_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    // Calculate total used seats (enrolled + pending)
+    const usedSeatsMap = courseIds.reduce((acc, courseId) => {
+      const enrolled = enrolledSeatsMap[courseId] || 0;
+      const pending = pendingSeatsMap[courseId] || 0;
+      acc[courseId] = enrolled + pending;
+      return acc;
+    }, {} as Record<string, number>);
 
     // Create a map of course data for easy lookup
     const courseMap = courses?.reduce((acc, course) => {
