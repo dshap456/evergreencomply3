@@ -75,10 +75,12 @@ export async function GET(request: NextRequest) {
   );
   
   if (shouldProcessCourseInvite && invitationToken) {
+    console.log('Processing course invitation...');
     // Process course invitation
     const { data: { user } } = await client.auth.getUser();
     
     if (user?.email) {
+      console.log('User email:', user.email);
       // First, ensure the invitation token is in the pending_invitation_tokens table
       // This is needed for password sign-ups where we don't create it during invitation sending
       const { data: invitation } = await client
@@ -86,6 +88,8 @@ export async function GET(request: NextRequest) {
         .select('*')
         .eq('invite_token', invitationToken)
         .single();
+      
+      console.log('Course invitation details:', invitation);
       
       if (invitation) {
         // Check if token already exists in pending_invitation_tokens
@@ -96,22 +100,62 @@ export async function GET(request: NextRequest) {
           .eq('invitation_token', invitationToken)
           .single();
         
+        console.log('Existing pending token:', existingToken);
+        
         if (!existingToken) {
           // Insert the token if it doesn't exist
-          await client
+          const { error: insertError } = await client
             .from('pending_invitation_tokens')
             .insert({
               email: user.email,
               invitation_token: invitationToken,
               invitation_type: 'course',
             });
+          
+          console.log('Insert pending token error:', insertError);
         }
       }
       
       // Process pending invitation
-      const { data: result } = await client.rpc('process_pending_course_invitation', {
+      console.log('Calling process_pending_course_invitation...');
+      const { data: result, error: rpcError } = await client.rpc('process_pending_course_invitation', {
         p_user_email: user.email
       });
+      
+      console.log('Process result:', result);
+      console.log('Process error:', rpcError);
+      
+      if (result?.success) {
+        // Redirect to courses page after successful invitation processing
+        return redirect(pathsConfig.app.personalAccountCourses);
+      }
+    }
+  }
+  
+  // ALSO check if user has any pending invitations even without a token in the URL
+  // This handles the case where the invitation was stored during sign-up
+  const { data: { user } } = await client.auth.getUser();
+  if (user?.email && !invitationToken) {
+    console.log('Checking for any pending invitations for user:', user.email);
+    
+    // Check if there are any pending invitations for this user
+    const { data: pendingInvite } = await client
+      .from('pending_invitation_tokens')
+      .select('*')
+      .eq('email', user.email)
+      .is('processed_at', null)
+      .single();
+    
+    if (pendingInvite) {
+      console.log('Found pending invitation:', pendingInvite);
+      
+      // Process the pending invitation
+      const { data: result, error: rpcError } = await client.rpc('process_pending_course_invitation', {
+        p_user_email: user.email
+      });
+      
+      console.log('Process pending result:', result);
+      console.log('Process pending error:', rpcError);
       
       if (result?.success) {
         // Redirect to courses page after successful invitation processing
