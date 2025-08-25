@@ -8,18 +8,47 @@ import pathsConfig from '~/config/paths.config';
 
 export async function GET(request: NextRequest) {
   const client = getSupabaseServerClient();
-  const service = createAuthCallbackService(client);
-
-  const { nextPath } = await service.exchangeCodeForSession(request, {
-    joinTeamPath: pathsConfig.app.joinTeam,
-    redirectPath: pathsConfig.app.home,
-  });
-
-  // Check for invitation token in URL params
+  
+  // Check for invitation token BEFORE processing with the service
   const searchParams = request.nextUrl.searchParams;
   const invitationToken = searchParams.get('invitation_token') || searchParams.get('invite_token');
   
+  // Check if this is a course invitation (not a team invitation)
+  let isCourseInvitation = false;
   if (invitationToken) {
+    const { data: courseInvite } = await client
+      .from('course_invitations')
+      .select('*')
+      .eq('invite_token', invitationToken)
+      .single();
+    
+    isCourseInvitation = !!courseInvite;
+  }
+  
+  // If it's a course invitation, remove the invite_token from the URL before processing
+  // to prevent the auth service from treating it as a team invite
+  let processRequest: Request = request;
+  if (isCourseInvitation) {
+    const url = new URL(request.url);
+    url.searchParams.delete('invite_token');
+    url.searchParams.delete('invitation_token');
+    // Create a new request with the modified URL
+    processRequest = new Request(url.toString(), {
+      method: request.method,
+      headers: request.headers,
+    });
+  }
+  
+  const service = createAuthCallbackService(client);
+  const { nextPath } = await service.exchangeCodeForSession(
+    processRequest, 
+    {
+      joinTeamPath: pathsConfig.app.joinTeam,
+      redirectPath: pathsConfig.app.home,
+    }
+  );
+  
+  if (isCourseInvitation && invitationToken) {
     // Process course invitation
     const { data: { user } } = await client.auth.getUser();
     
