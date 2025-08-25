@@ -14,10 +14,6 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const invitationToken = searchParams.get('invitation_token') || searchParams.get('invite_token');
   
-  console.log('=== Auth Callback Debug ===');
-  console.log('URL:', request.url);
-  console.log('Invitation token:', invitationToken);
-  console.log('All search params:', Object.fromEntries(searchParams.entries()));
   
   // Default behavior - no special invitation handling
   let shouldProcessCourseInvite = false;
@@ -32,7 +28,6 @@ export async function GET(request: NextRequest) {
       .single();
     
     if (courseInvite) {
-      console.log('Found course invitation');
       shouldProcessCourseInvite = true;
     } else {
       // Check if this is a team invitation
@@ -43,11 +38,9 @@ export async function GET(request: NextRequest) {
         .single();
       
       if (teamInvite) {
-        console.log('Found team invitation');
-        shouldPassToTeamFlow = true;
+          shouldPassToTeamFlow = true;
       } else {
-        console.log('Invalid/expired invitation token');
-        // Invalid token - just ignore it
+          // Invalid token - just ignore it
       }
     }
   }
@@ -75,12 +68,10 @@ export async function GET(request: NextRequest) {
   );
   
   if (shouldProcessCourseInvite && invitationToken) {
-    console.log('Processing course invitation...');
     // Process course invitation
     const { data: { user } } = await client.auth.getUser();
     
     if (user?.email) {
-      console.log('User email:', user.email);
       // First, ensure the invitation token is in the pending_invitation_tokens table
       // This is needed for password sign-ups where we don't create it during invitation sending
       const { data: invitation } = await client
@@ -89,7 +80,6 @@ export async function GET(request: NextRequest) {
         .eq('invite_token', invitationToken)
         .single();
       
-      console.log('Course invitation details:', invitation);
       
       if (invitation) {
         // Check if token already exists in pending_invitation_tokens
@@ -100,7 +90,6 @@ export async function GET(request: NextRequest) {
           .eq('invitation_token', invitationToken)
           .single();
         
-        console.log('Existing pending token:', existingToken);
         
         if (!existingToken) {
           // Insert the token if it doesn't exist
@@ -112,18 +101,14 @@ export async function GET(request: NextRequest) {
               invitation_type: 'course',
             });
           
-          console.log('Insert pending token error:', insertError);
         }
       }
       
       // Process pending invitation
-      console.log('Calling process_pending_course_invitation...');
       const { data: result, error: rpcError } = await client.rpc('process_pending_course_invitation', {
         p_user_email: user.email
       });
       
-      console.log('Process result:', result);
-      console.log('Process error:', rpcError);
       
       if (result?.success) {
         // Redirect to courses page after successful invitation processing
@@ -136,7 +121,6 @@ export async function GET(request: NextRequest) {
   // This handles the case where the invitation was stored during sign-up
   const { data: { user } } = await client.auth.getUser();
   if (user?.email && !invitationToken) {
-    console.log('Checking for any pending invitations for user:', user.email);
     
     // Check if there are any pending invitations for this user
     const { data: pendingInvite } = await client
@@ -147,15 +131,12 @@ export async function GET(request: NextRequest) {
       .single();
     
     if (pendingInvite) {
-      console.log('Found pending invitation:', pendingInvite);
       
       // Process the pending invitation
       const { data: result, error: rpcError } = await client.rpc('process_pending_course_invitation', {
         p_user_email: user.email
       });
       
-      console.log('Process pending result:', result);
-      console.log('Process pending error:', rpcError);
       
       if (result?.success) {
         // Redirect to courses page after successful invitation processing
