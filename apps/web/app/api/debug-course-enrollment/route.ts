@@ -1,48 +1,94 @@
 import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const client = getSupabaseServerClient();
+  const adminClient = getSupabaseServerAdminClient();
   
-  const { data: { user } } = await client.auth.getUser();
+  // Try to get user from regular client first
+  const { data: { user }, error: userError } = await client.auth.getUser();
   
-  if (!user) {
-    return NextResponse.json({ error: 'Not authenticated' });
+  // Also accept email as query param for debugging
+  const searchParams = request.nextUrl.searchParams;
+  const debugEmail = searchParams.get('email');
+  
+  if (!user && !debugEmail) {
+    return NextResponse.json({ 
+      error: 'Not authenticated', 
+      note: 'You can also pass ?email=user@example.com to debug a specific user'
+    });
   }
   
-  // Check course invitations
-  const { data: invitations } = await client
+  const userEmail = user?.email || debugEmail;
+  const userId = user?.id;
+  
+  // Check course invitations using admin client
+  const { data: invitations } = await adminClient
     .from('course_invitations')
     .select('*')
-    .eq('email', user.email);
+    .eq('email', userEmail);
   
   // Check pending invitation tokens
-  const { data: pendingTokens } = await client
+  const { data: pendingTokens } = await adminClient
     .from('pending_invitation_tokens')
     .select('*')
-    .eq('email', user.email);
+    .eq('email', userEmail);
   
   // Check course enrollments
-  const { data: enrollments } = await client
-    .from('course_enrollments')
-    .select(`
-      *,
-      courses (
-        title,
-        slug
-      )
-    `)
-    .eq('user_id', user.id);
+  let enrollments = null;
+  if (userId) {
+    const { data } = await adminClient
+      .from('course_enrollments')
+      .select(`
+        *,
+        courses (
+          title,
+          slug
+        )
+      `)
+      .eq('user_id', userId);
+    enrollments = data;
+  }
+  
+  // If we have a user ID, also look up by user ID
+  if (!enrollments && userEmail) {
+    // Try to find user by email
+    const { data: userData } = await adminClient
+      .from('accounts')
+      .select('id')
+      .eq('email', userEmail)
+      .single();
+    
+    if (userData) {
+      const { data } = await adminClient
+        .from('course_enrollments')
+        .select(`
+          *,
+          courses (
+            title,
+            slug
+          )
+        `)
+        .eq('user_id', userData.id);
+      enrollments = data;
+    }
+  }
   
   // Check course seats for any teams
-  const { data: accounts } = await client
-    .from('accounts')
-    .select('*')
-    .eq('primary_owner_user_id', user.id);
+  let accounts = null;
+  if (userId) {
+    const { data } = await adminClient
+      .from('accounts')
+      .select('*')
+      .eq('primary_owner_user_id', userId);
+    accounts = data;
+  }
   
   let teamSeats = null;
   if (accounts && accounts.length > 0) {
-    const { data: seats } = await client
+    const { data: seats } = await adminClient
       .from('course_seats')
       .select(`
         *,
@@ -58,13 +104,17 @@ export async function GET() {
   
   return NextResponse.json({
     user: {
-      id: user.id,
-      email: user.email,
+      id: userId || 'not found',
+      email: userEmail,
     },
     invitations,
     pendingTokens,
     enrollments,
     accounts,
     teamSeats,
+    debug: {
+      authenticated: !!user,
+      usingEmail: debugEmail || user?.email,
+    }
   }, { status: 200 });
 }
