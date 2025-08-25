@@ -32,17 +32,15 @@ export async function POST(request: NextRequest) {
   
   console.log('Found invitation:', invitation);
   
-  // Get the user by email
-  const { data: userData, error: userError } = await adminClient
-    .from('auth.users')
-    .select('id')
-    .eq('email', email)
-    .single();
+  // Get the user by email using Supabase Admin API
+  const { data: { users }, error: userError } = await adminClient.auth.admin.listUsers();
+  const userData = users?.find(u => u.email === email);
   
-  if (!userData || userError) {
+  if (!userData) {
     return NextResponse.json({ 
       error: 'User not found. User needs to sign up first.',
-      details: userError 
+      details: userError,
+      searchedEmail: email
     });
   }
   
