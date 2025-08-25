@@ -1,7 +1,11 @@
 -- Fix the team_course_enrollments view to properly join accounts table
 -- The issue: was joining users.id = accounts.id, but should be accounts.primary_owner_user_id = users.id
 
-CREATE OR REPLACE VIEW public.team_course_enrollments AS
+-- Drop the existing view first to avoid type conflicts
+DROP VIEW IF EXISTS public.team_course_enrollments;
+
+-- Recreate the view with the correct join
+CREATE VIEW public.team_course_enrollments AS
 SELECT 
     ce.id,
     ce.user_id,
