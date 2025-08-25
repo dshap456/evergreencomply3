@@ -89,4 +89,4 @@ async function CartPage() {
   return <CartClient availableCourses={coursesWithMapping || []} />;
 }
 
-export default withI18n(CartPage);# Redeploy to fix cart route
+export default withI18n(CartPage);
