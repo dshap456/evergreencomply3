@@ -19,7 +19,7 @@ const CheckoutSchema = z.object({
     courseId: z.string(),
     quantity: z.number().min(1),
   })).min(1),
-  customerName: z.string().min(1, 'Name is required'),  // Add customer name validation
+  customerName: z.string().optional(),  // Make customer name optional
   accountType: z.enum(['personal', 'team']).optional().default('personal'),
   accountId: z.string().uuid().optional(), // For team purchases
 });
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       },
       metadata: {
         type: 'training-purchase',
-        customerName: customerName,  // Add customer name to metadata
+        customerName: customerName || '',  // Add customer name to metadata (empty string if not provided)
         accountType: accountType,
         purchaseAccountId: purchaseAccountId || 'guest',
         userId: user?.id || 'guest',

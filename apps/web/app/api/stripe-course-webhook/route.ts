@@ -92,8 +92,10 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
-        // Get the customer name from metadata
-        const customerName = session.metadata?.customerName || null;
+        // Get the customer name from metadata (will be empty for multi-seat team purchases)
+        const customerName = session.metadata?.customerName && session.metadata.customerName.trim() 
+          ? session.metadata.customerName 
+          : null;
         console.log('[Course Webhook] Using customer name:', customerName);
         
         // Process the purchase using the by_slug function which expects slug not billing_product_id

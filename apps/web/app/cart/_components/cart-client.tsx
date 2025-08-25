@@ -209,8 +209,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
       return;
     }
     
-    // Validate name is provided
-    if (!customerName.trim()) {
+    // Validate name is provided (only for personal or single-seat purchases)
+    if ((purchaseType === 'personal' || totalItems === 1) && !customerName.trim()) {
       toast.error('Please enter your name for the certificate');
       return;
     }
@@ -447,24 +447,35 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         </div>
                       </div>
                       
-                      {/* Name Field - Show for everyone */}
-                      <div className="space-y-2 border-t pt-3">
-                        <Label htmlFor="customer-name" className="text-xs font-medium">
-                          Name for Certificate <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                          id="customer-name"
-                          type="text"
-                          placeholder="Enter your full legal name"
-                          value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                          className="h-8 text-xs"
-                          required
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          This name will appear on your completion certificate
-                        </p>
-                      </div>
+                      {/* Name Field - Show only for personal purchases or single-seat purchases */}
+                      {(purchaseType === 'personal' || totalItems === 1) && (
+                        <div className="space-y-2 border-t pt-3">
+                          <Label htmlFor="customer-name" className="text-xs font-medium">
+                            Name for Certificate <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="customer-name"
+                            type="text"
+                            placeholder="Enter your full legal name"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                            className="h-8 text-xs"
+                            required
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            This name will appear on your completion certificate
+                          </p>
+                        </div>
+                      )}
+                      
+                      {/* Multi-seat team purchase notice */}
+                      {purchaseType === 'team' && totalItems > 1 && (
+                        <div className="border-t pt-3">
+                          <p className="text-xs text-muted-foreground">
+                            You're purchasing {totalItems} seats for your team. You'll be able to assign these seats to team members after purchase, and each member will provide their name when they enroll.
+                          </p>
+                        </div>
+                      )}
                       
                       {/* Purchase Type Selection - Only show if authenticated and has teams */}
                       {isAuthenticated && teamAccounts.length > 0 && (
