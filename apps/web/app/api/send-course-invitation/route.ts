@@ -113,8 +113,8 @@ export async function POST(request: Request) {
     
     try {
       const mailer = await getMailer();
-      // Use the verified domain sender - www.evergreencomply.com requires @www.evergreencomply.com
-      const primarySender = process.env.EMAIL_SENDER || 'Evergreen Comply <no-reply@www.evergreencomply.com>';
+      // Now using the verified root domain evergreencomply.com
+      const primarySender = process.env.EMAIL_SENDER || 'Evergreen Comply <support@evergreencomply.com>';
       const fallbackSender = 'Evergreen Comply <onboarding@resend.dev>';
       
       // We'll try the primary first, then fallback if it fails
