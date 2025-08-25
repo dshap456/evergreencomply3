@@ -8,38 +8,64 @@ import pathsConfig from '~/config/paths.config';
 
 export async function GET(request: NextRequest) {
   const client = getSupabaseServerClient();
+  const service = createAuthCallbackService(client);
   
   // Check for invitation token BEFORE processing with the service
   const searchParams = request.nextUrl.searchParams;
   const invitationToken = searchParams.get('invitation_token') || searchParams.get('invite_token');
   
-  // Check if this is a course invitation (not a team invitation)
-  let isCourseInvitation = false;
+  console.log('=== Auth Callback Debug ===');
+  console.log('URL:', request.url);
+  console.log('Invitation token:', invitationToken);
+  console.log('All search params:', Object.fromEntries(searchParams.entries()));
+  
+  // Default behavior - no special invitation handling
+  let shouldProcessCourseInvite = false;
+  let shouldPassToTeamFlow = false;
+  
   if (invitationToken) {
+    // Check if this is a course invitation
     const { data: courseInvite } = await client
       .from('course_invitations')
       .select('*')
       .eq('invite_token', invitationToken)
       .single();
     
-    isCourseInvitation = !!courseInvite;
+    if (courseInvite) {
+      console.log('Found course invitation');
+      shouldProcessCourseInvite = true;
+    } else {
+      // Check if this is a team invitation
+      const { data: teamInvite } = await client
+        .from('invitations')
+        .select('*')
+        .eq('invite_token', invitationToken)
+        .single();
+      
+      if (teamInvite) {
+        console.log('Found team invitation');
+        shouldPassToTeamFlow = true;
+      } else {
+        console.log('Invalid/expired invitation token');
+        // Invalid token - just ignore it
+      }
+    }
   }
   
-  // If it's a course invitation, remove the invite_token from the URL before processing
-  // to prevent the auth service from treating it as a team invite
+  // Build the request to pass to the service
   let processRequest: Request = request;
-  if (isCourseInvitation) {
+  
+  // Only pass invite_token to service if it's a valid team invitation
+  if (invitationToken && !shouldPassToTeamFlow) {
     const url = new URL(request.url);
     url.searchParams.delete('invite_token');
     url.searchParams.delete('invitation_token');
-    // Create a new request with the modified URL
     processRequest = new Request(url.toString(), {
       method: request.method,
       headers: request.headers,
     });
   }
   
-  const service = createAuthCallbackService(client);
   const { nextPath } = await service.exchangeCodeForSession(
     processRequest, 
     {
@@ -48,7 +74,7 @@ export async function GET(request: NextRequest) {
     }
   );
   
-  if (isCourseInvitation && invitationToken) {
+  if (shouldProcessCourseInvite && invitationToken) {
     // Process course invitation
     const { data: { user } } = await client.auth.getUser();
     
