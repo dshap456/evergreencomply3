@@ -236,7 +236,6 @@ export function TeamEnrollmentsDialog({
                         <TableHead><Trans i18nKey="common:name" /></TableHead>
                         <TableHead><Trans i18nKey="common:email" /></TableHead>
                         <TableHead><Trans i18nKey="courses:enrolledAt" /></TableHead>
-                        <TableHead><Trans i18nKey="courses:progress" /></TableHead>
                         <TableHead><Trans i18nKey="courses:status" /></TableHead>
                         <TableHead><Trans i18nKey="courses:finalScore" /></TableHead>
                         <TableHead className="text-right"><Trans i18nKey="common:actions" /></TableHead>
@@ -250,14 +249,9 @@ export function TeamEnrollmentsDialog({
                           <TableCell>
                             {format(new Date(enrollment.enrolled_at), 'MMM d, yyyy')}
                           </TableCell>
-                          <TableCell>{enrollment.progress_percentage}%</TableCell>
                           <TableCell>
                             <Badge variant={enrollment.completed_at ? 'default' : 'secondary'}>
-                              {enrollment.completed_at ? (
-                                <Trans i18nKey="courses:completed" />
-                              ) : (
-                                <Trans i18nKey="courses:inProgress" />
-                              )}
+                              {enrollment.completed_at ? 'Completed' : 'In Progress'}
                             </Badge>
                           </TableCell>
                           <TableCell>
