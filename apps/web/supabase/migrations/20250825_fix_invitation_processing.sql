@@ -68,18 +68,20 @@ BEGIN
     );
   END IF;
   
-  -- Create enrollment
+  -- Create enrollment with invited_by field
   INSERT INTO public.course_enrollments (
     user_id,
     course_id,
     account_id,
     invitation_id,
+    invited_by,
     enrolled_at
   ) VALUES (
     v_user_id,
     v_invitation.course_id,
     v_invitation.account_id,
     v_invitation.id,
+    v_invitation.invited_by,
     NOW()
   );
   

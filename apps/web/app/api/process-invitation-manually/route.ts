@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     });
   }
   
-  // Create the enrollment
+  // Create the enrollment with invited_by field
   const { data: enrollment, error: enrollError } = await adminClient
     .from('course_enrollments')
     .insert({
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       course_id: invitation.course_id,
       account_id: invitation.account_id,
       invitation_id: invitation.id,
+      invited_by: invitation.invited_by,  // Important for team view
       enrolled_at: new Date().toISOString(),
     })
     .select()
