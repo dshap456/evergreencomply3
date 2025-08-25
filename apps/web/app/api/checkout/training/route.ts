@@ -19,6 +19,7 @@ const CheckoutSchema = z.object({
     courseId: z.string(),
     quantity: z.number().min(1),
   })).min(1),
+  customerName: z.string().min(1, 'Name is required'),  // Add customer name validation
   accountType: z.enum(['personal', 'team']).optional().default('personal'),
   accountId: z.string().uuid().optional(), // For team purchases
 });
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid cart data' }, { status: 400 });
     }
     
-    const { cartItems, accountType, accountId } = result.data;
+    const { cartItems, customerName, accountType, accountId } = result.data;
 
     // Get authenticated user (optional for guest checkout)
     const client = getSupabaseServerClient();
@@ -143,6 +144,7 @@ export async function POST(request: NextRequest) {
       },
       metadata: {
         type: 'training-purchase',
+        customerName: customerName,  // Add customer name to metadata
         accountType: accountType,
         purchaseAccountId: purchaseAccountId || 'guest',
         userId: user?.id || 'guest',

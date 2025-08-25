@@ -56,6 +56,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [customerName, setCustomerName] = useState('');
 
   // Load initial quantities from localStorage and check auth
   useEffect(() => {
@@ -99,6 +100,18 @@ export function CartClient({ availableCourses }: CartClientProps) {
     if (session) {
       setIsAuthenticated(true);
       await loadTeamAccounts();
+      
+      // Try to load user's name from their account
+      const { data: account } = await supabase
+        .from('accounts')
+        .select('name')
+        .eq('id', session.user.id)
+        .eq('is_personal_account', true)
+        .single();
+      
+      if (account?.name) {
+        setCustomerName(account.name);
+      }
     }
   };
   
@@ -195,6 +208,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
       toast.error('Please add at least one course to your cart');
       return;
     }
+    
+    // Validate name is provided
+    if (!customerName.trim()) {
+      toast.error('Please enter your name for the certificate');
+      return;
+    }
 
     setIsCheckingOut(true);
     
@@ -210,6 +229,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
             courseId: course?.slug || course?.id,  // Use slug as the courseId
             quantity,
           })),
+          customerName: customerName.trim(),  // Add customer name
           accountType: purchaseType,
           ...(purchaseType === 'team' && selectedTeamId ? { accountId: selectedTeamId } : {}),
         }),
@@ -425,6 +445,25 @@ export function CartClient({ availableCourses }: CartClientProps) {
                             <span className="text-base">${total.toFixed(2)}</span>
                           </div>
                         </div>
+                      </div>
+                      
+                      {/* Name Field - Show for everyone */}
+                      <div className="space-y-2 border-t pt-3">
+                        <Label htmlFor="customer-name" className="text-xs font-medium">
+                          Name for Certificate <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="customer-name"
+                          type="text"
+                          placeholder="Enter your full legal name"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          className="h-8 text-xs"
+                          required
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          This name will appear on your completion certificate
+                        </p>
                       </div>
                       
                       {/* Purchase Type Selection - Only show if authenticated and has teams */}
