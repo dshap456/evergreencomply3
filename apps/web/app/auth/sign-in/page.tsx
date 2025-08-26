@@ -15,6 +15,7 @@ interface SignInPageProps {
     invite_token?: string;
     invitation_token?: string;
     next?: string;
+    redirect?: string;
   }>;
 }
 
@@ -27,16 +28,26 @@ export const generateMetadata = async () => {
 };
 
 async function SignInPage({ searchParams }: SignInPageProps) {
-  const { invite_token, invitation_token, next } = await searchParams;
+  const { invite_token, invitation_token, next, redirect } = await searchParams;
   const inviteToken = invitation_token || invite_token;
+  const redirectTo = redirect || next;
 
-  const signUpPath =
-    pathsConfig.auth.signUp +
-    (inviteToken ? `?invite_token=${inviteToken}` : '');
+  // Build query params for sign-up link
+  const queryParams = new URLSearchParams();
+  if (inviteToken) queryParams.append('invite_token', inviteToken);
+  if (redirect) queryParams.append('redirect', redirect);
+  
+  const signUpPath = pathsConfig.auth.signUp + 
+    (queryParams.toString() ? `?${queryParams.toString()}` : '');
+
+  // Build callback path with redirect
+  const callbackPath = redirect 
+    ? `${pathsConfig.auth.callback}?redirect=${encodeURIComponent(redirect)}`
+    : pathsConfig.auth.callback;
 
   const paths = {
-    callback: pathsConfig.auth.callback,
-    returnPath: next || pathsConfig.app.home,
+    callback: callbackPath,
+    returnPath: redirectTo || pathsConfig.app.home,
     joinTeam: pathsConfig.app.joinTeam,
   };
 

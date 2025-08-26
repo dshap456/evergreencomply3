@@ -73,6 +73,9 @@ export async function POST(request: NextRequest) {
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       console.log('[Course Webhook] Line items:', lineItems.data.length);
       
+      // Calculate total quantity across all items
+      let totalQuantity = 0;
+      
       for (const item of lineItems.data) {
         const priceId = item.price?.id;
         if (!priceId) continue;
@@ -92,6 +95,9 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
+        const quantity = item.quantity || 1;
+        totalQuantity += quantity;
+        
         // Get the customer name from metadata (will be empty for multi-seat team purchases)
         const customerName = session.metadata?.customerName && session.metadata.customerName.trim() 
           ? session.metadata.customerName 
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
           p_course_slug: courseSlug,
           p_account_id: accountId,
           p_payment_id: session.id,
-          p_quantity: item.quantity || 1,
+          p_quantity: quantity,
           p_customer_name: customerName,  // Pass the customer name
         });
         
@@ -113,6 +119,53 @@ export async function POST(request: NextRequest) {
         }
         
         console.log('[Course Webhook] Success:', data);
+      }
+      
+      // If total quantity > 1, upgrade user to team_manager role
+      if (totalQuantity > 1 && session.client_reference_id) {
+        console.log('[Course Webhook] Multi-seat purchase detected, upgrading to team_manager');
+        
+        // First check if user already has a team account
+        const { data: existingAccounts } = await adminClient
+          .from('accounts_memberships')
+          .select('account_id, account_role')
+          .eq('user_id', session.client_reference_id)
+          .eq('account_role', 'team-admin');
+        
+        if (!existingAccounts || existingAccounts.length === 0) {
+          // Create a team account and make user team_manager
+          const { data: teamAccount, error: teamError } = await adminClient
+            .from('accounts')
+            .insert({
+              primary_owner_user_id: session.client_reference_id,
+              name: `${session.customer_email?.split('@')[0] || 'Team'}'s Team`,
+              is_personal_account: false,
+              email: session.customer_email || null,
+            })
+            .select()
+            .single();
+          
+          if (teamError) {
+            console.error('[Course Webhook] Failed to create team account:', teamError);
+          } else if (teamAccount) {
+            // Add user as team-admin of the new team account
+            const { error: membershipError } = await adminClient
+              .from('accounts_memberships')
+              .insert({
+                user_id: session.client_reference_id,
+                account_id: teamAccount.id,
+                account_role: 'team-admin',
+              });
+            
+            if (membershipError) {
+              console.error('[Course Webhook] Failed to add team membership:', membershipError);
+            } else {
+              console.log('[Course Webhook] Created team account and upgraded user to team_manager');
+            }
+          }
+        } else {
+          console.log('[Course Webhook] User already has team_manager role');
+        }
       }
       
       return NextResponse.json({ received: true });

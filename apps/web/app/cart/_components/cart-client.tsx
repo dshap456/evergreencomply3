@@ -423,7 +423,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                               <Button 
                                 className="w-full" 
                                 size="sm"
-                                onClick={() => router.push(pathsConfig.auth.signUp)}
+                                onClick={() => router.push(`${pathsConfig.auth.signUp}?redirect=/cart`)}
                               >
                                 Create Account
                               </Button>
@@ -431,7 +431,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                 className="w-full" 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => router.push(pathsConfig.auth.signIn)}
+                                onClick={() => router.push(`${pathsConfig.auth.signIn}?redirect=/cart`)}
                               >
                                 Sign In
                               </Button>

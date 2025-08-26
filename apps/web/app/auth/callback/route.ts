@@ -12,9 +12,10 @@ export async function GET(request: NextRequest) {
   const adminClient = getSupabaseServerAdminClient();
   const service = createAuthCallbackService(client);
   
-  // Check for invitation token BEFORE processing with the service
+  // Check for invitation token and redirect parameter BEFORE processing with the service
   const searchParams = request.nextUrl.searchParams;
   const invitationToken = searchParams.get('invitation_token') || searchParams.get('invite_token');
+  const redirectTo = searchParams.get('redirect');
   
   
   // Default behavior - no special invitation handling
@@ -198,7 +199,13 @@ export async function GET(request: NextRequest) {
   }
 
   // For magic links, ensure we're going to the right place
-  const finalPath = nextPath === '/' ? pathsConfig.app.home : nextPath;
+  // Check if we have a redirect parameter from the original sign-up/sign-in
+  let finalPath = nextPath === '/' ? pathsConfig.app.home : nextPath;
+  
+  // If we have a redirect parameter (like /cart), use that instead
+  if (redirectTo && redirectTo.startsWith('/')) {
+    finalPath = redirectTo;
+  }
 
   return redirect(finalPath);
 }

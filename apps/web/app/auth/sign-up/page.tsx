@@ -21,20 +21,33 @@ export const generateMetadata = async () => {
 interface Props {
   searchParams: Promise<{
     invite_token?: string;
+    redirect?: string;
   }>;
 }
 
-const paths = {
-  callback: pathsConfig.auth.callback,
-  appHome: pathsConfig.app.home,
-};
 
 async function SignUpPage({ searchParams }: Props) {
-  const inviteToken = (await searchParams).invite_token;
+  const params = await searchParams;
+  const inviteToken = params.invite_token;
+  const redirectTo = params.redirect;
 
-  const signInPath =
-    pathsConfig.auth.signIn +
-    (inviteToken ? `?invite_token=${inviteToken}` : '');
+  // Build query params for sign-in link
+  const queryParams = new URLSearchParams();
+  if (inviteToken) queryParams.append('invite_token', inviteToken);
+  if (redirectTo) queryParams.append('redirect', redirectTo);
+  
+  const signInPath = pathsConfig.auth.signIn + 
+    (queryParams.toString() ? `?${queryParams.toString()}` : '');
+  
+  // Build callback path with redirect
+  const callbackPath = redirectTo 
+    ? `${pathsConfig.auth.callback}?redirect=${encodeURIComponent(redirectTo)}`
+    : pathsConfig.auth.callback;
+  
+  const paths = {
+    callback: callbackPath,
+    appHome: pathsConfig.app.home,
+  };
 
   return (
     <>
