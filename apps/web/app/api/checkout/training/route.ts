@@ -36,49 +36,19 @@ export async function POST(request: NextRequest) {
     
     const { cartItems, customerName, accountType, accountId } = result.data;
 
-    // Get authenticated user (optional for guest checkout)
+    // Get authenticated user (required now)
     const client = getSupabaseServerClient();
-    
-    // Try to get the session but don't require it
     const { data: { session } } = await client.auth.getSession();
-    const user = session?.user || null;
-
-    // Determine which account is making the purchase
-    let purchaseAccountId: string = '';
-    let accountSlug: string | null = null;
     
-    if (accountType === 'team' && accountId) {
-      // Team purchases require authentication
-      if (!user) {
-        return NextResponse.json({ error: 'Authentication required for team purchases' }, { status: 401 });
-      }
-      
-      // Verify user has access to the team account
-      const { data: hasAccess } = await client
-        .rpc('has_role_on_account', {
-          account_id: accountId,
-        });
-      
-      if (!hasAccess) {
-        return NextResponse.json({ error: 'Unauthorized for this team' }, { status: 403 });
-      }
-      
-      // Get the team account slug for redirect
-      const { data: teamAccount } = await client
-        .from('accounts')
-        .select('slug')
-        .eq('id', accountId)
-        .single();
-      
-      accountSlug = teamAccount?.slug || null;
-      purchaseAccountId = accountId;
-    } else if (user) {
-      // Personal purchase with authenticated user
-      purchaseAccountId = user.id;
-    } else {
-      // Guest purchase - no account ID yet
-      purchaseAccountId = '';
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+    
+    const user = session.user;
+
+    // Always use the user's ID as the purchase account
+    // The webhook will handle team account creation if needed
+    const purchaseAccountId = user.id;
 
     // Initialize Stripe
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -117,18 +87,11 @@ export async function POST(request: NextRequest) {
     console.log('Creating Stripe checkout with line items:', lineItems);
     console.log('Purchase account ID:', purchaseAccountId);
 
-    // Determine success URL based on account type
+    // Determine success URL based on purchase type (determined by quantity)
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
-    let successPath: string;
-    
-    if (accountType === 'team' && accountSlug) {
-      successPath = `/home/${accountSlug}/courses/seats?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
-    } else if (user) {
-      successPath = `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
-    } else {
-      // Guest checkout - redirect to sign-up after payment
-      successPath = `/auth/sign-up?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
-    }
+    const successPath = accountType === 'team' 
+      ? `/home/courses/seats?purchase=success&session_id={CHECKOUT_SESSION_ID}`  // Multi-seat: go to seat management
+      : `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;  // Single seat: go to courses
     
     // Create Stripe checkout session with proper account reference
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -144,21 +107,17 @@ export async function POST(request: NextRequest) {
       },
       metadata: {
         type: 'training-purchase',
-        customerName: customerName || '',  // Add customer name to metadata (empty string if not provided)
+        customerName: customerName || '',  // Empty for multi-seat purchases
         accountType: accountType,
-        purchaseAccountId: purchaseAccountId || 'guest',
-        userId: user?.id || 'guest',
+        purchaseAccountId: purchaseAccountId,
+        userId: user.id,
         items: JSON.stringify(cartItems),
       },
     };
     
-    // Only add email and client_reference_id if we have them
-    if (user?.email) {
-      sessionParams.customer_email = user.email;
-    }
-    if (purchaseAccountId) {
-      sessionParams.client_reference_id = purchaseAccountId;
-    }
+    // Add user email and account ID
+    sessionParams.customer_email = user.email;
+    sessionParams.client_reference_id = purchaseAccountId;
     
     const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
 

@@ -15,19 +15,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@kit/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@kit/ui/select';
-import { RadioGroup, RadioGroupItem } from '@kit/ui/radio-group';
 import { Label } from '@kit/ui/label';
 import pathsConfig from '~/config/paths.config';
 import { CustomShieldIcon } from '../../_components/custom-icons';
 import { useSupabase } from '@kit/supabase/hooks/use-supabase';
-import { createAccountsApi } from '@kit/accounts/api';
 
 interface Course {
   id: string;
@@ -51,10 +42,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [purchaseType, setPurchaseType] = useState<'personal' | 'team'>('personal');
-  const [teamAccounts, setTeamAccounts] = useState<any[]>([]);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  // Purchase type is now determined by quantity, not user selection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [customerName, setCustomerName] = useState('');
 
@@ -99,7 +87,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
     
     if (session) {
       setIsAuthenticated(true);
-      await loadTeamAccounts();
       
       // Try to load user's name from their account
       const { data: account } = await supabase
@@ -112,33 +99,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
       if (account?.name) {
         setCustomerName(account.name);
       }
-    }
-  };
-  
-  // Load team accounts for the current user
-  const loadTeamAccounts = async () => {
-    setIsLoadingAccounts(true);
-    try {
-      const api = createAccountsApi(supabase);
-      const accounts = await api.loadUserAccounts();
-      
-      console.log('Loaded accounts from API:', accounts);
-      
-      // Filter to only show team accounts (not personal)
-      const teams = accounts.filter(acc => !acc.is_personal_account);
-      console.log('Filtered team accounts:', teams);
-      
-      setTeamAccounts(teams);
-      
-      // If user has teams and no selection yet, default to first team
-      if (teams.length > 0 && !selectedTeamId) {
-        setSelectedTeamId(teams[0].id);
-      }
-    } catch (error) {
-      console.error('Error loading team accounts:', error);
-      toast.error('Failed to load team accounts');
-    } finally {
-      setIsLoadingAccounts(false);
     }
   };
 
@@ -187,9 +147,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
     }, 0);
   };
 
-  const getTotalItems = () => {
-    return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
-  };
+  const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
   const getCartCourses = () => {
     return Object.entries(quantities)
@@ -209,8 +167,15 @@ export function CartClient({ availableCourses }: CartClientProps) {
       return;
     }
     
-    // Validate name is provided (only for personal or single-seat purchases)
-    if ((purchaseType === 'personal' || totalItems === 1) && !customerName.trim()) {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error('Please sign in to complete your purchase');
+      router.push(pathsConfig.auth.signIn);
+      return;
+    }
+    
+    // Validate name is provided (only for single-seat purchases)
+    if (totalItems === 1 && !customerName.trim()) {
       toast.error('Please enter your name for the certificate');
       return;
     }
@@ -229,9 +194,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
             courseId: course?.slug || course?.id,  // Use slug as the courseId
             quantity,
           })),
-          customerName: customerName.trim(),  // Add customer name
-          accountType: purchaseType,
-          ...(purchaseType === 'team' && selectedTeamId ? { accountId: selectedTeamId } : {}),
+          customerName: totalItems === 1 ? customerName.trim() : '',  // Only send name for single seat
+          accountType: totalItems > 1 ? 'team' : 'personal',  // Determine by quantity
         }),
       });
 
@@ -266,7 +230,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const subtotal = calculateSubtotal();
   const tax = 0; // No tax for digital products
   const total = subtotal + tax;
-  const totalItems = getTotalItems();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -447,109 +410,90 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         </div>
                       </div>
                       
-                      {/* Name Field - Show only for personal purchases or single-seat purchases */}
-                      {(purchaseType === 'personal' || totalItems === 1) && (
-                        <div className="space-y-2 border-t pt-3">
-                          <Label htmlFor="customer-name" className="text-xs font-medium">
-                            Name for Certificate <span className="text-red-500">*</span>
-                          </Label>
-                          <Input
-                            id="customer-name"
-                            type="text"
-                            placeholder="Enter your full legal name"
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            className="h-8 text-xs"
-                            required
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            This name will appear on your completion certificate
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Multi-seat team purchase notice */}
-                      {purchaseType === 'team' && totalItems > 1 && (
-                        <div className="border-t pt-3">
-                          <p className="text-xs text-muted-foreground">
-                            You're purchasing {totalItems} seats for your team. You'll be able to assign these seats to team members after purchase, and each member will provide their name when they enroll.
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Purchase Type Selection - Only show if authenticated and has teams */}
-                      {isAuthenticated && teamAccounts.length > 0 && (
-                        <div className="space-y-3 border-t pt-3">
-                          <div className="space-y-2">
-                            <Label className="text-xs font-medium">Purchase Type</Label>
-                            <RadioGroup 
-                              value={purchaseType} 
-                              onValueChange={(value: 'personal' | 'team') => setPurchaseType(value)}
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="personal" id="personal" />
-                                <Label htmlFor="personal" className="text-xs flex items-center gap-1 cursor-pointer">
-                                  <User className="h-3 w-3" />
-                                  Personal (for yourself)
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="team" id="team" />
-                                <Label htmlFor="team" className="text-xs flex items-center gap-1 cursor-pointer">
-                                  <Users className="h-3 w-3" />
-                                  Team (assign to members)
-                                </Label>
-                              </div>
-                            </RadioGroup>
+                      {/* Authentication Check */}
+                      {!isAuthenticated ? (
+                        <div className="border-t pt-3 space-y-3">
+                          <div className="text-center py-4">
+                            <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                            <h3 className="text-sm font-medium mb-1">Sign in to Purchase</h3>
+                            <p className="text-xs text-muted-foreground mb-4">
+                              Create a free account to complete your purchase
+                            </p>
+                            <div className="space-y-2">
+                              <Button 
+                                className="w-full" 
+                                size="sm"
+                                onClick={() => router.push(pathsConfig.auth.signUp)}
+                              >
+                                Create Account
+                              </Button>
+                              <Button 
+                                className="w-full" 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => router.push(pathsConfig.auth.signIn)}
+                              >
+                                Sign In
+                              </Button>
+                            </div>
                           </div>
-                          
-                          {/* Team Selection Dropdown */}
-                          {purchaseType === 'team' && (
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">Select Team</Label>
-                              {isLoadingAccounts ? (
-                                <div className="flex items-center justify-center py-2">
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                </div>
-                              ) : (
-                                <Select 
-                                  value={selectedTeamId || ''} 
-                                  onValueChange={setSelectedTeamId}
-                                >
-                                  <SelectTrigger className="w-full h-8 text-xs">
-                                    <SelectValue placeholder="Choose a team account" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {teamAccounts.map((team) => (
-                                      <SelectItem key={team.id} value={team.id} className="text-xs">
-                                        {team.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
+                        </div>
+                      ) : (
+                        <>
+                          {/* Name Field - Show only for single-seat purchases */}
+                          {totalItems === 1 && (
+                            <div className="space-y-2 border-t pt-3">
+                              <Label htmlFor="customer-name" className="text-xs font-medium">
+                                Name for Certificate <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="customer-name"
+                                type="text"
+                                placeholder="Enter your full legal name"
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                                className="h-8 text-xs"
+                                required
+                              />
+                              <p className="text-xs text-muted-foreground">
+                                This name will appear on your completion certificate
+                              </p>
                             </div>
                           )}
                           
-                          {purchaseType === 'team' && totalItems > 1 && (
-                            <p className="text-xs text-muted-foreground">
-                              You're purchasing {totalItems} seats that can be assigned to team members
-                            </p>
+                          {/* Multi-seat purchase notice */}
+                          {totalItems > 1 && (
+                            <div className="border-t pt-3 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-xs font-medium">Team Purchase</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                You're purchasing {totalItems} seats. After checkout, you'll be able to:
+                              </p>
+                              <ul className="text-xs text-muted-foreground ml-4 space-y-1">
+                                <li>• Assign seats to team members</li>
+                                <li>• Self-assign seats for your own training</li>
+                                <li>• Track progress and completions</li>
+                              </ul>
+                            </div>
                           )}
-                        </div>
+                        </>
                       )}
                       
                       <Button 
                         className="w-full" 
                         size="sm"
                         onClick={handleCheckout}
-                        disabled={isCheckingOut || totalItems === 0 || (purchaseType === 'team' && !selectedTeamId)}
+                        disabled={isCheckingOut || totalItems === 0 || !isAuthenticated}
                       >
                         {isCheckingOut ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Processing...
                           </>
+                        ) : !isAuthenticated ? (
+                          'Sign in to Checkout'
                         ) : (
                           `Checkout (${totalItems} ${totalItems === 1 ? 'seat' : 'seats'})`
                         )}
