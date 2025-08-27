@@ -104,13 +104,14 @@ export async function POST(request: NextRequest) {
         
         if (!existingAccounts || existingAccounts.length === 0) {
           // Create a team account and make user team_manager
+          // NOTE: Don't use the user's email for team account - it conflicts with personal account
           const { data: teamAccount, error: teamError } = await adminClient
             .from('accounts')
             .insert({
               primary_owner_user_id: session.client_reference_id,
               name: `${session.customer_email?.split('@')[0] || 'Team'}'s Team`,
               is_personal_account: false,
-              email: session.customer_email || null,
+              email: null,  // Team accounts don't need an email - the owner has their own email
             })
             .select()
             .single();
