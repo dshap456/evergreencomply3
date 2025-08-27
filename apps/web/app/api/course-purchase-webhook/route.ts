@@ -12,9 +12,13 @@ const PRICE_TO_COURSE_SLUG_MAP = {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  console.log('[COURSE-WEBHOOK] ============================================');
-  console.log('[COURSE-WEBHOOK] WEBHOOK CALLED at:', new Date().toISOString());
-  console.log('[COURSE-WEBHOOK] ============================================');
+  const webhookTimestamp = new Date().toISOString();
+  
+  // CRITICAL: Log immediately to prove webhook is being called
+  console.error('🔴🔴🔴 COURSE WEBHOOK ACTUALLY CALLED 🔴🔴🔴');
+  console.error('🔴 Timestamp:', webhookTimestamp);
+  console.error('🔴 URL:', request.url);
+  console.error('🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴');
   
   try {
     // 1. Verify signature

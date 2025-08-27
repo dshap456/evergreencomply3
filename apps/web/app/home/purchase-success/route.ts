@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import Stripe from 'stripe';
 
 // Redirect handler after successful purchase
@@ -51,9 +52,39 @@ export async function GET(request: NextRequest) {
         console.log('[Purchase Success] User ID:', user.id);
         console.log('[Purchase Success] Session client_reference_id:', session.client_reference_id);
         
+        // First check if purchase was processed by checking course_seats
+        console.log('[Purchase Success] Checking if purchase was processed...');
+        const { data: purchaseCheck } = await adminClient
+          .from('course_seats')
+          .select('id, account_id, seats_purchased')
+          .eq('payment_id', sessionId)
+          .single();
+        
+        if (!purchaseCheck) {
+          console.error('[Purchase Success] ⚠️ Purchase not found after checkout! Calling failsafe...');
+          
+          // Call failsafe endpoint to process the purchase
+          try {
+            const response = await fetch(new URL('/api/ensure-purchase-processed', request.url).toString(), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sessionId })
+            });
+            
+            const result = await response.json();
+            console.log('[Purchase Success] Failsafe result:', result);
+          } catch (error) {
+            console.error('[Purchase Success] Failsafe failed:', error);
+          }
+        } else {
+          console.log('[Purchase Success] ✅ Purchase was processed:', purchaseCheck);
+        }
+        
         // Wait a bit for webhook to process (max 5 seconds with retries)
         let teamAccount = null;
         let attemptCount = 0;
+        const adminClient = getSupabaseServerAdminClient();
+        
         for (let i = 0; i < 10; i++) {
           attemptCount++;
           console.log(`[Purchase Success] Attempt ${attemptCount}: Checking for team membership...`);
