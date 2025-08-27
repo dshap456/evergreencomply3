@@ -285,6 +285,7 @@ export async function POST(request: NextRequest) {
         p_account_id: finalAccountId,
         p_payment_id: session.id,
         p_quantity: item.quantity || 1,
+        p_customer_name: session.customer_details?.name || session.customer_email || null,
       });
       
       if (error) {

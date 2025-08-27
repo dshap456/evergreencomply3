@@ -120,6 +120,7 @@ export async function POST(request: NextRequest) {
         p_account_id: purchaseAccountId!,
         p_payment_id: sessionId,
         p_quantity: item.quantity || 1,
+        p_customer_name: session.customer_details?.name || session.customer_email || null,
       });
       
       results.push({
