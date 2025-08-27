@@ -12,12 +12,17 @@ const PRICE_TO_COURSE_SLUG_MAP = {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  console.log('[COURSE-WEBHOOK] Started at:', new Date().toISOString());
+  console.log('[COURSE-WEBHOOK] ============================================');
+  console.log('[COURSE-WEBHOOK] WEBHOOK CALLED at:', new Date().toISOString());
+  console.log('[COURSE-WEBHOOK] ============================================');
   
   try {
     // 1. Verify signature
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
+    
+    console.log('[COURSE-WEBHOOK] Body received, length:', body.length);
+    console.log('[COURSE-WEBHOOK] Signature present:', !!signature);
     
     if (!signature) {
       console.log('[COURSE-WEBHOOK] No signature provided');
@@ -80,8 +85,73 @@ export async function POST(request: NextRequest) {
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
     console.log('[COURSE-WEBHOOK] Found', lineItems.data.length, 'line items');
     
-    // 7. Process each item
+    // Calculate total quantity to determine if this is a team purchase
+    let totalQuantity = 0;
+    for (const item of lineItems.data) {
+      totalQuantity += item.quantity || 1;
+    }
+    console.log('[COURSE-WEBHOOK] Total quantity across all items:', totalQuantity);
+    
+    // 7. Get admin client for database operations
     const adminClient = getSupabaseServerAdminClient();
+    
+    // 8. For multi-seat purchases (2+), create or get team account
+    let purchaseAccountId = session.client_reference_id;
+    
+    if (totalQuantity >= 2 && purchaseAccountId) {
+      console.log('[COURSE-WEBHOOK] Multi-seat purchase detected, creating/finding team account...');
+      
+      // Check if user already has a team account
+      const { data: existingTeam } = await adminClient
+        .from('accounts_memberships')
+        .select('account_id')
+        .eq('user_id', purchaseAccountId)
+        .eq('account_role', 'team_manager')
+        .limit(1)
+        .single();
+      
+      if (existingTeam) {
+        purchaseAccountId = existingTeam.account_id;
+        console.log('[COURSE-WEBHOOK] Using existing team account:', purchaseAccountId);
+      } else {
+        // Create new team account
+        const emailPrefix = session.customer_email?.split('@')[0] || 'team';
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        
+        const { data: newTeam, error: teamError } = await adminClient
+          .from('accounts')
+          .insert({
+            primary_owner_user_id: purchaseAccountId,
+            name: `${emailPrefix}'s Team`,
+            slug: `${emailPrefix}-team-${randomSuffix}`.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+            is_personal_account: false,
+          })
+          .select()
+          .single();
+        
+        if (teamError || !newTeam) {
+          console.error('[COURSE-WEBHOOK] Failed to create team account:', teamError);
+        } else {
+          // Add user as team_manager
+          const { error: memberError } = await adminClient
+            .from('accounts_memberships')
+            .insert({
+              user_id: session.client_reference_id!,
+              account_id: newTeam.id,
+              account_role: 'team_manager',
+            });
+          
+          if (memberError) {
+            console.error('[COURSE-WEBHOOK] Failed to add team membership:', memberError);
+          } else {
+            purchaseAccountId = newTeam.id;
+            console.log('[COURSE-WEBHOOK] Created new team account:', purchaseAccountId);
+          }
+        }
+      }
+    }
+    
+    // 9. Process each item with the determined account
     
     for (const item of lineItems.data) {
       const priceId = item.price?.id;
@@ -146,16 +216,17 @@ export async function POST(request: NextRequest) {
         continue;
       }
       
-      // Process the purchase
+      // Process the purchase with the correct account (team or personal)
       console.log('[COURSE-WEBHOOK] Calling process_course_purchase_by_slug:', {
         courseSlug,
-        accountId,
+        accountId: purchaseAccountId, // Use the determined account (team or personal)
         sessionId: session.id,
+        isTeamPurchase: totalQuantity >= 2,
       });
       
       const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
         p_course_slug: courseSlug,
-        p_account_id: accountId,
+        p_account_id: purchaseAccountId, // Use the determined account (team or personal)
         p_payment_id: session.id,
         p_quantity: item.quantity || 1,
       });
