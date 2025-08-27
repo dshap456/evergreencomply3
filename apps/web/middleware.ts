@@ -12,8 +12,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
   
-  // Allow all auth routes to pass through without modification
-  if (url.pathname.startsWith('/auth/') || url.pathname.startsWith('/update-password') || url.pathname.startsWith('/debug-route')) {
+  // Allow all auth routes and webhooks to pass through without modification
+  if (
+    url.pathname.startsWith('/auth/') || 
+    url.pathname.startsWith('/update-password') || 
+    url.pathname.startsWith('/debug-route') ||
+    url.pathname.startsWith('/api/billing/webhook') ||
+    url.pathname.startsWith('/api/stripe-course-webhook') ||
+    url.pathname.startsWith('/api/course-purchase-webhook') ||
+    url.pathname.startsWith('/api/webhook')
+  ) {
     return NextResponse.next();
   }
 
