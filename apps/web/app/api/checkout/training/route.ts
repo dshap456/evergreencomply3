@@ -89,9 +89,8 @@ export async function POST(request: NextRequest) {
 
     // Determine success URL based on purchase type (determined by quantity)
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
-    const successPath = accountType === 'team' 
-      ? `/home/courses/seats?purchase=success&session_id={CHECKOUT_SESSION_ID}`  // Multi-seat: go to seat management
-      : `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;  // Single seat: go to courses
+    // For now, always redirect to personal courses page - they can navigate to seat management from there
+    const successPath = `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
     
     // Create Stripe checkout session with proper account reference
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
