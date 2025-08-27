@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
           .from('accounts_memberships')
           .select('account_id, account_role')
           .eq('user_id', session.client_reference_id)
-          .eq('account_role', 'team-admin');
+          .eq('account_role', 'team_manager');  // Use correct role name
         
         if (!existingAccounts || existingAccounts.length === 0) {
           // Create a team account and make user team_manager
@@ -112,6 +112,8 @@ export async function POST(request: NextRequest) {
               name: `${session.customer_email?.split('@')[0] || 'Team'}'s Team`,
               is_personal_account: false,
               email: null,  // Team accounts don't need an email - the owner has their own email
+              created_at: new Date().toISOString(), // Explicitly set created_at
+              updated_at: new Date().toISOString(), // Explicitly set updated_at
             })
             .select()
             .single();
@@ -119,21 +121,60 @@ export async function POST(request: NextRequest) {
           if (teamError) {
             console.error('[Course Webhook] Failed to create team account:', teamError);
           } else if (teamAccount) {
-            // Add user as team-admin of the new team account
-            const { error: membershipError } = await adminClient
+            console.log('[Course Webhook] Team account created:', teamAccount.id);
+            
+            // Add user as team_manager of the new team account
+            const { data: membership, error: membershipError } = await adminClient
               .from('accounts_memberships')
               .insert({
                 user_id: session.client_reference_id,
                 account_id: teamAccount.id,
-                account_role: 'team-admin',
-              });
+                account_role: 'team_manager',  // Use correct role name from roles table
+                created_at: new Date().toISOString(), // Explicitly set created_at
+              })
+              .select()
+              .single();
             
             if (membershipError) {
-              console.error('[Course Webhook] Failed to add team membership:', membershipError);
+              console.error('[Course Webhook] ❌ Failed to add team membership:', {
+                error: membershipError,
+                errorCode: membershipError.code,
+                errorMessage: membershipError.message,
+                errorDetails: membershipError.details,
+                userId: session.client_reference_id,
+                accountId: teamAccount.id,
+              });
+              
+              // Try to diagnose why membership creation failed
+              const { data: existingMembership } = await adminClient
+                .from('accounts_memberships')
+                .select('*')
+                .eq('user_id', session.client_reference_id)
+                .eq('account_id', teamAccount.id);
+              
+              console.log('[Course Webhook] Existing membership check:', existingMembership);
+              
+              // Don't use team account if membership failed
             } else {
-              console.log('[Course Webhook] Created team account:', teamAccount.id);
-              // Use the team account for purchase processing
-              purchaseAccountId = teamAccount.id;
+              console.log('[Course Webhook] ✅ Team membership created:', membership);
+              
+              // Verify the membership was actually created
+              const { data: verifyMembership } = await adminClient
+                .from('accounts_memberships')
+                .select('*')
+                .eq('user_id', session.client_reference_id)
+                .eq('account_id', teamAccount.id)
+                .single();
+              
+              console.log('[Course Webhook] Membership verification:', verifyMembership);
+              
+              if (verifyMembership) {
+                // Use the team account for purchase processing
+                purchaseAccountId = teamAccount.id;
+                console.log('[Course Webhook] ✅ Using team account for purchase:', purchaseAccountId);
+              } else {
+                console.error('[Course Webhook] ❌ Membership not found after creation!');
+              }
             }
           }
         } else {
@@ -174,6 +215,15 @@ export async function POST(request: NextRequest) {
         console.log('[Course Webhook] Using customer name:', customerName);
         
         const adminClient = getSupabaseServerAdminClient();
+        
+        console.log('[Course Webhook] Calling process_course_purchase_by_slug with:', {
+          p_course_slug: courseSlug,
+          p_account_id: purchaseAccountId,
+          p_payment_id: session.id,
+          p_quantity: item.quantity || 1,
+          p_customer_name: customerName,
+        });
+        
         const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
           p_course_slug: courseSlug,
           p_account_id: purchaseAccountId,  // Use the determined account (team or personal)

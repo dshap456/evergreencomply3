@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
           )
         `)
         .eq('user_id', user.id)
-        .eq('account_role', 'team-admin')
+        .eq('account_role', 'team_manager')  // Use correct role name from roles table
         .eq('accounts.is_personal_account', false);
       
       debugInfo.teamMemberships = teamMemberships;

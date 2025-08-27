@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
           .from('accounts_memberships')
           .select('account_id, account_role')
           .eq('user_id', session.client_reference_id)
-          .eq('account_role', 'team-admin');
+          .eq('account_role', 'team_manager');  // Use correct role name
         
         if (!existingAccounts || existingAccounts.length === 0) {
           // Create a team account and make user team_manager
@@ -148,13 +148,13 @@ export async function POST(request: NextRequest) {
           if (teamError) {
             console.error('[Course Webhook] Failed to create team account:', teamError);
           } else if (teamAccount) {
-            // Add user as team-admin of the new team account
+            // Add user as team_manager of the new team account
             const { error: membershipError } = await adminClient
               .from('accounts_memberships')
               .insert({
                 user_id: session.client_reference_id,
                 account_id: teamAccount.id,
-                account_role: 'team-admin',
+                account_role: 'team_manager',  // Use correct role name from roles table
               });
             
             if (membershipError) {
