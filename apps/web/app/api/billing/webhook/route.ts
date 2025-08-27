@@ -63,64 +63,19 @@ export async function POST(request: NextRequest) {
       
       console.log('[Course Webhook] Processing training purchase...');
       
-      // Get line items
+      // Get line items and calculate total quantity FIRST
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-      
-      for (const item of lineItems.data) {
-        const priceId = item.price?.id;
-        if (!priceId) continue;
-        
-        const courseSlug = COURSE_PRODUCT_MAPPING[priceId as keyof typeof COURSE_PRODUCT_MAPPING];
-        if (!courseSlug) {
-          console.error('[Course Webhook] Unknown price ID:', priceId);
-          console.error('[Course Webhook] Available mappings:', COURSE_PRODUCT_MAPPING);
-          continue;
-        }
-        
-        const accountId = session.client_reference_id;
-        if (!accountId) {
-          console.error('[Course Webhook] NO CLIENT_REFERENCE_ID!');
-          continue;
-        }
-        
-        console.log('[Course Webhook] Creating enrollment for:', {
-          courseSlug,
-          accountId,
-          quantity: item.quantity,
-        });
-        
-        // Get the customer name from metadata (will be empty for multi-seat team purchases)
-        const customerName = session.metadata?.customerName && session.metadata.customerName.trim() 
-          ? session.metadata.customerName 
-          : null;
-        console.log('[Course Webhook] Using customer name:', customerName);
-        
-        const adminClient = getSupabaseServerAdminClient();
-        const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
-          p_course_slug: courseSlug,
-          p_account_id: accountId,
-          p_payment_id: session.id,
-          p_quantity: item.quantity || 1,
-          p_customer_name: customerName,  // Pass the customer name
-        });
-        
-        if (error) {
-          console.error('[Course Webhook] Database error:', error);
-          throw error;
-        }
-        
-        console.log('[Course Webhook] Enrollment created:', data);
-      }
-      
-      // After processing all line items, check if this is a multi-seat purchase
-      // and upgrade user to team_manager role if needed
       let totalQuantity = 0;
       for (const item of lineItems.data) {
         totalQuantity += item.quantity || 1;
       }
       
+      // Determine the account to use for purchase processing
+      let purchaseAccountId = session.client_reference_id;
+      
+      // If this is a multi-seat purchase, create team account FIRST
       if (totalQuantity > 1 && session.client_reference_id) {
-        console.log('[Course Webhook] Multi-seat purchase detected, upgrading to team_manager');
+        console.log('[Course Webhook] Multi-seat purchase detected, creating team account first');
         
         const adminClient = getSupabaseServerAdminClient();
         
@@ -159,12 +114,63 @@ export async function POST(request: NextRequest) {
             if (membershipError) {
               console.error('[Course Webhook] Failed to add team membership:', membershipError);
             } else {
-              console.log('[Course Webhook] Created team account and upgraded user to team_manager');
+              console.log('[Course Webhook] Created team account:', teamAccount.id);
+              // Use the team account for purchase processing
+              purchaseAccountId = teamAccount.id;
             }
           }
         } else {
-          console.log('[Course Webhook] User already has team_manager role');
+          // Use existing team account
+          purchaseAccountId = existingAccounts[0].account_id;
+          console.log('[Course Webhook] Using existing team account:', purchaseAccountId);
         }
+      }
+      
+      // Now process each line item with the correct account (team or personal)
+      for (const item of lineItems.data) {
+        const priceId = item.price?.id;
+        if (!priceId) continue;
+        
+        const courseSlug = COURSE_PRODUCT_MAPPING[priceId as keyof typeof COURSE_PRODUCT_MAPPING];
+        if (!courseSlug) {
+          console.error('[Course Webhook] Unknown price ID:', priceId);
+          console.error('[Course Webhook] Available mappings:', COURSE_PRODUCT_MAPPING);
+          continue;
+        }
+        
+        if (!purchaseAccountId) {
+          console.error('[Course Webhook] NO ACCOUNT ID!');
+          continue;
+        }
+        
+        console.log('[Course Webhook] Processing purchase for:', {
+          courseSlug,
+          accountId: purchaseAccountId,
+          quantity: item.quantity,
+          isTeamPurchase: totalQuantity > 1,
+        });
+        
+        // Get the customer name from metadata (will be empty for multi-seat team purchases)
+        const customerName = session.metadata?.customerName && session.metadata.customerName.trim() 
+          ? session.metadata.customerName 
+          : null;
+        console.log('[Course Webhook] Using customer name:', customerName);
+        
+        const adminClient = getSupabaseServerAdminClient();
+        const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
+          p_course_slug: courseSlug,
+          p_account_id: purchaseAccountId,  // Use the determined account (team or personal)
+          p_payment_id: session.id,
+          p_quantity: item.quantity || 1,
+          p_customer_name: customerName,  // Pass the customer name
+        });
+        
+        if (error) {
+          console.error('[Course Webhook] Database error:', error);
+          throw error;
+        }
+        
+        console.log('[Course Webhook] Purchase processed:', data);
       }
     }
     
