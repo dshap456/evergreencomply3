@@ -87,10 +87,10 @@ export async function POST(request: NextRequest) {
     console.log('Creating Stripe checkout with line items:', lineItems);
     console.log('Purchase account ID:', purchaseAccountId);
 
-    // Determine success URL based on purchase type (determined by quantity)
+    // Determine success URL - use smart redirect that checks user's account type
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
-    // For now, always redirect to personal courses page - they can navigate to seat management from there
-    const successPath = `/home/courses?purchase=success&session_id={CHECKOUT_SESSION_ID}`;
+    // Redirect to handler that determines personal vs team routing
+    const successPath = `/home/purchase-success?session_id={CHECKOUT_SESSION_ID}`;
     
     // Create Stripe checkout session with proper account reference
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
