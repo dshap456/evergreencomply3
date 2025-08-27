@@ -72,6 +72,7 @@
     "react-i18next": "^15.6.0",
     "recharts": "2.15.3",
     "resend": "^4.7.0",
+    "stripe": "^18.3.0",
     "tailwind-merge": "^3.3.1",
     "task-master-ai": "^0.21.0",
     "video.js": "^8.23.3",
