@@ -32,7 +32,14 @@ export async function GET(request: NextRequest) {
       console.log('[Purchase Success] Session retrieved:', {
         sessionId: session.id,
         customerEmail: session.customer_email,
+        lineItems: session.line_items?.data.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          priceId: item.price?.id,
+        })),
         totalQuantity: session.line_items?.data.reduce((sum, item) => sum + (item.quantity || 0), 0),
+        metadata: session.metadata,
+        clientReferenceId: session.client_reference_id,
       });
       
       // Calculate total quantity across all line items
