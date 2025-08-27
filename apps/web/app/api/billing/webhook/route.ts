@@ -16,12 +16,21 @@ export async function POST(request: NextRequest) {
   console.log('[Course Webhook] Starting fresh webhook handler...');
   console.log('[Course Webhook] Webhook hit at:', new Date().toISOString());
   
+  // Log immediately to see if webhook is being called at all
+  console.log('[Course Webhook] REQUEST RECEIVED - Headers:', {
+    'stripe-signature': request.headers.get('stripe-signature')?.substring(0, 20) + '...',
+    'content-type': request.headers.get('content-type'),
+    'user-agent': request.headers.get('user-agent'),
+  });
+  
   try {
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
     
     console.log('[Course Webhook] Body length:', body.length);
     console.log('[Course Webhook] Has signature:', !!signature);
+    console.log('[Course Webhook] Webhook secret configured:', !!process.env.STRIPE_WEBHOOK_SECRET);
+    console.log('[Course Webhook] Webhook secret prefix:', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 10));
     
     if (!signature) {
       return NextResponse.json({ error: 'No signature' }, { status: 400 });
@@ -38,12 +47,19 @@ export async function POST(request: NextRequest) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
-    } catch (err) {
-      console.error('[Course Webhook] Signature failed:', err);
+      console.log('[Course Webhook] ✅ Signature verified successfully!');
+    } catch (err: any) {
+      console.error('[Course Webhook] ❌ Signature verification failed:', {
+        error: err.message,
+        type: err.type,
+        signatureHeader: signature?.substring(0, 50),
+        webhookSecret: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 15),
+      });
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
     
     console.log('[Course Webhook] Event type:', event.type);
+    console.log('[Course Webhook] Event ID:', event.id);
     
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
