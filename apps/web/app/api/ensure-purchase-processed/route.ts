@@ -14,33 +14,46 @@ export async function POST(request: NextRequest) {
     
     const adminClient = getSupabaseServerAdminClient();
     
-    // Check if already processed
+    // Check if already processed CORRECTLY (team account for multi-seat)
     const { data: existing } = await adminClient
       .from('course_seats')
-      .select('id')
+      .select('id, account_id, seats_purchased')
       .eq('payment_id', sessionId)
       .single();
     
-    if (existing) {
-      console.log('[ENSURE-PROCESSED] Already processed:', sessionId);
-      return NextResponse.json({ 
-        status: 'already_processed',
-        message: 'Purchase was already recorded'
-      });
-    }
-    
-    // Not processed - do it now
-    console.error('⚠️ WEBHOOK FAILED - PROCESSING MANUALLY for session:', sessionId);
-    
+    // Get the session to check quantity
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: '2025-06-30.basil',
     });
     
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const lineItems = await stripe.checkout.sessions.listLineItems(sessionId);
-    
-    // Calculate total quantity
     const totalQuantity = lineItems.data.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    
+    if (existing) {
+      // Check if it was processed to the RIGHT account
+      const { data: existingAccount } = await adminClient
+        .from('accounts')
+        .select('is_personal_account')
+        .eq('id', existing.account_id)
+        .single();
+      
+      // If multi-seat purchase is in personal account, that's wrong - reprocess
+      if (totalQuantity >= 2 && existingAccount?.is_personal_account) {
+        console.error('[ENSURE-PROCESSED] ❌ Multi-seat purchase in personal account! Needs reprocessing');
+        // Continue to reprocess below
+      } else {
+        console.log('[ENSURE-PROCESSED] Already processed correctly:', sessionId);
+        return NextResponse.json({ 
+          status: 'already_processed',
+          message: 'Purchase was already recorded correctly',
+          accountType: existingAccount?.is_personal_account ? 'personal' : 'team'
+        });
+      }
+    }
+    
+    // Not processed correctly - process it now
+    console.error('⚠️ PROCESSING for session:', sessionId, 'Total quantity:', totalQuantity);
     
     // Determine account to use
     let purchaseAccountId = session.client_reference_id;
