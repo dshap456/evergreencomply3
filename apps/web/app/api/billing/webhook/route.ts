@@ -105,11 +105,17 @@ export async function POST(request: NextRequest) {
         if (!existingAccounts || existingAccounts.length === 0) {
           // Create a team account and make user team_manager
           // NOTE: Don't use the user's email for team account - it conflicts with personal account
+          // Generate a slug from the email or a random suffix
+          const emailPrefix = session.customer_email?.split('@')[0] || 'team';
+          const randomSuffix = Math.random().toString(36).substring(2, 8);
+          const slug = `${emailPrefix}-team-${randomSuffix}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+          
           const { data: teamAccount, error: teamError } = await adminClient
             .from('accounts')
             .insert({
               primary_owner_user_id: session.client_reference_id,
               name: `${session.customer_email?.split('@')[0] || 'Team'}'s Team`,
+              slug: slug,  // Add slug for proper URL routing
               is_personal_account: false,
               email: null,  // Team accounts don't need an email - the owner has their own email
               created_at: new Date().toISOString(), // Explicitly set created_at
