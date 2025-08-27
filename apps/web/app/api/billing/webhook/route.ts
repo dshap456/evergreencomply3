@@ -114,7 +114,6 @@ export async function POST(request: NextRequest) {
       
       // After processing all line items, check if this is a multi-seat purchase
       // and upgrade user to team_manager role if needed
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       let totalQuantity = 0;
       for (const item of lineItems.data) {
         totalQuantity += item.quantity || 1;
