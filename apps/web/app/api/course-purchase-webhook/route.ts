@@ -18,18 +18,23 @@ export async function POST(request: NextRequest) {
   console.error('🔴🔴🔴 COURSE WEBHOOK ACTUALLY CALLED 🔴🔴🔴');
   console.error('🔴 Timestamp:', webhookTimestamp);
   console.error('🔴 URL:', request.url);
+  console.error('🔴 Headers:', Object.fromEntries(request.headers.entries()));
   console.error('🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴');
+  
+  // Return early with detailed response for debugging
+  const debugMode = request.headers.get('x-debug-mode') === 'true';
   
   try {
     // 1. Verify signature
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
     
-    console.log('[COURSE-WEBHOOK] Body received, length:', body.length);
-    console.log('[COURSE-WEBHOOK] Signature present:', !!signature);
+    console.error('[COURSE-WEBHOOK] Body received, length:', body.length);
+    console.error('[COURSE-WEBHOOK] Signature present:', !!signature);
+    console.error('[COURSE-WEBHOOK] Webhook secret configured:', !!process.env.STRIPE_WEBHOOK_SECRET);
     
     if (!signature) {
-      console.log('[COURSE-WEBHOOK] No signature provided');
+      console.error('[COURSE-WEBHOOK] ❌ No signature provided - returning error');
       return NextResponse.json({ error: 'No signature' }, { status: 400 });
     }
     
@@ -44,24 +49,34 @@ export async function POST(request: NextRequest) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
-      console.log('[COURSE-WEBHOOK] Signature verified');
-    } catch (err) {
-      console.error('[COURSE-WEBHOOK] Signature verification failed:', err);
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+      console.error('[COURSE-WEBHOOK] ✅ Signature verified successfully');
+    } catch (err: any) {
+      console.error('[COURSE-WEBHOOK] ❌ Signature verification failed:', err.message);
+      console.error('[COURSE-WEBHOOK] Error type:', err.type);
+      console.error('[COURSE-WEBHOOK] Webhook secret:', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 20) + '...');
+      
+      // For now, return success to prevent Stripe from retrying
+      // This helps us debug without causing issues
+      return NextResponse.json({ 
+        received: true,
+        error: 'signature_verification_failed',
+        message: err.message 
+      });
     }
     
     // 2. Only process checkout.session.completed
-    console.log('[COURSE-WEBHOOK] Event type:', event.type);
+    console.error('[COURSE-WEBHOOK] Event type:', event.type);
+    console.error('[COURSE-WEBHOOK] Event ID:', event.id);
     
     if (event.type !== 'checkout.session.completed') {
-      console.log('[COURSE-WEBHOOK] Not a checkout completion, ignoring');
+      console.error('[COURSE-WEBHOOK] Not a checkout completion, ignoring');
       return NextResponse.json({ received: true });
     }
     
     const session = event.data.object as Stripe.Checkout.Session;
     
     // 3. Log all session data
-    console.log('[COURSE-WEBHOOK] Session data:', {
+    console.error('[COURSE-WEBHOOK] Session data:', {
       id: session.id,
       client_reference_id: session.client_reference_id,
       customer_email: session.customer_email,
@@ -73,10 +88,15 @@ export async function POST(request: NextRequest) {
     const isCoursePurchase = session.metadata?.type === 'training-purchase' || 
                             session.metadata?.type === 'course_purchase';
                             
+    console.error('[COURSE-WEBHOOK] Is course purchase?:', isCoursePurchase);
+    console.error('[COURSE-WEBHOOK] Metadata type:', session.metadata?.type);
+                            
     if (!isCoursePurchase) {
-      console.log('[COURSE-WEBHOOK] Not a course purchase, metadata:', session.metadata);
+      console.error('[COURSE-WEBHOOK] ❌ Not a course purchase, ignoring. Metadata:', session.metadata);
       return NextResponse.json({ received: true });
     }
+    
+    console.error('[COURSE-WEBHOOK] ✅ This IS a course purchase, processing...');
     
     // 5. Check client_reference_id
     if (!session.client_reference_id) {
@@ -103,10 +123,11 @@ export async function POST(request: NextRequest) {
     let purchaseAccountId = session.client_reference_id;
     
     if (totalQuantity >= 2 && purchaseAccountId) {
-      console.log('[COURSE-WEBHOOK] Multi-seat purchase detected, creating/finding team account...');
+      console.error('[COURSE-WEBHOOK] 🏢 Multi-seat purchase detected (qty:', totalQuantity, '), handling team account...');
+      console.error('[COURSE-WEBHOOK] User ID for team lookup:', purchaseAccountId);
       
       // Check if user already has a team account
-      const { data: existingTeam } = await adminClient
+      const { data: existingTeam, error: teamLookupError } = await adminClient
         .from('accounts_memberships')
         .select('account_id')
         .eq('user_id', purchaseAccountId)
@@ -114,28 +135,48 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .single();
       
+      if (teamLookupError && teamLookupError.code !== 'PGRST116') { // PGRST116 = no rows
+        console.error('[COURSE-WEBHOOK] Error looking up team:', teamLookupError);
+      }
+      
       if (existingTeam) {
         purchaseAccountId = existingTeam.account_id;
-        console.log('[COURSE-WEBHOOK] Using existing team account:', purchaseAccountId);
+        console.error('[COURSE-WEBHOOK] ✅ Using existing team account:', purchaseAccountId);
       } else {
+        console.error('[COURSE-WEBHOOK] No existing team, creating new one...');
+        
         // Create new team account
         const emailPrefix = session.customer_email?.split('@')[0] || 'team';
         const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const teamSlug = `${emailPrefix}-team-${randomSuffix}`.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        
+        console.error('[COURSE-WEBHOOK] Creating team with:', {
+          name: `${emailPrefix}'s Team`,
+          slug: teamSlug,
+          owner: purchaseAccountId,
+        });
         
         const { data: newTeam, error: teamError } = await adminClient
           .from('accounts')
           .insert({
             primary_owner_user_id: purchaseAccountId,
             name: `${emailPrefix}'s Team`,
-            slug: `${emailPrefix}-team-${randomSuffix}`.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+            slug: teamSlug,
             is_personal_account: false,
           })
           .select()
           .single();
         
         if (teamError || !newTeam) {
-          console.error('[COURSE-WEBHOOK] Failed to create team account:', teamError);
+          console.error('[COURSE-WEBHOOK] ❌ Failed to create team account:', teamError);
+          console.error('[COURSE-WEBHOOK] Team creation error details:', {
+            code: teamError?.code,
+            message: teamError?.message,
+            hint: teamError?.hint,
+          });
         } else {
+          console.error('[COURSE-WEBHOOK] ✅ Team account created:', newTeam.id);
+          
           // Add user as team_manager
           const { error: memberError } = await adminClient
             .from('accounts_memberships')
@@ -146,13 +187,15 @@ export async function POST(request: NextRequest) {
             });
           
           if (memberError) {
-            console.error('[COURSE-WEBHOOK] Failed to add team membership:', memberError);
+            console.error('[COURSE-WEBHOOK] ❌ Failed to add team membership:', memberError);
           } else {
             purchaseAccountId = newTeam.id;
-            console.log('[COURSE-WEBHOOK] Created new team account:', purchaseAccountId);
+            console.error('[COURSE-WEBHOOK] ✅ Team membership added, using team account:', purchaseAccountId);
           }
         }
       }
+    } else {
+      console.error('[COURSE-WEBHOOK] 👤 Single seat purchase or no user ID, using personal account');
     }
     
     // 9. Process each item with the determined account
@@ -221,16 +264,25 @@ export async function POST(request: NextRequest) {
       }
       
       // Process the purchase with the correct account (team or personal)
-      console.log('[COURSE-WEBHOOK] Calling process_course_purchase_by_slug:', {
+      // CRITICAL FIX: Use purchaseAccountId if it was set (team account), otherwise use accountId (personal)
+      const finalAccountId = purchaseAccountId || accountId;
+      
+      if (!finalAccountId) {
+        console.error('[COURSE-WEBHOOK] ❌ CRITICAL: No account ID available for purchase!');
+        continue;
+      }
+      
+      console.error('[COURSE-WEBHOOK] Calling process_course_purchase_by_slug:', {
         courseSlug,
-        accountId: purchaseAccountId, // Use the determined account (team or personal)
+        accountId: finalAccountId,
         sessionId: session.id,
         isTeamPurchase: totalQuantity >= 2,
+        originalUserId: session.client_reference_id,
       });
       
       const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
         p_course_slug: courseSlug,
-        p_account_id: purchaseAccountId, // Use the determined account (team or personal)
+        p_account_id: finalAccountId,
         p_payment_id: session.id,
         p_quantity: item.quantity || 1,
       });
