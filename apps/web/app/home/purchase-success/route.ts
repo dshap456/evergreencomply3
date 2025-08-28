@@ -52,6 +52,9 @@ export async function GET(request: NextRequest) {
         console.log('[Purchase Success] User ID:', user.id);
         console.log('[Purchase Success] Session client_reference_id:', session.client_reference_id);
         
+        // Get admin client for database operations
+        const adminClient = getSupabaseServerAdminClient();
+        
         // First check if purchase was processed by checking course_seats
         console.log('[Purchase Success] Checking if purchase was processed...');
         const { data: purchaseCheck } = await adminClient
@@ -83,7 +86,6 @@ export async function GET(request: NextRequest) {
         // Wait a bit for webhook to process (max 5 seconds with retries)
         let teamAccount = null;
         let attemptCount = 0;
-        const adminClient = getSupabaseServerAdminClient();
         
         for (let i = 0; i < 10; i++) {
           attemptCount++;
