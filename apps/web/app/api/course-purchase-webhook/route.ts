@@ -164,8 +164,7 @@ export async function POST(request: NextRequest) {
     }
     console.log('[COURSE-WEBHOOK] Total quantity across all items:', totalQuantity);
     
-    // 7. Get admin client for database operations
-    const adminClient = getSupabaseServerAdminClient();
+    // 7. Admin client already declared at top of function
     
     // 8. For multi-seat purchases (2+), create or get team account
     let purchaseAccountId = session.client_reference_id;
