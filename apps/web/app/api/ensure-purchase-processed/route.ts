@@ -60,13 +60,45 @@ export async function POST(request: NextRequest) {
     
     // For multi-seat purchases, create or find team account
     if (totalQuantity >= 2 && purchaseAccountId) {
-      const { data: existingTeam } = await adminClient
+      // Try to find existing team by membership
+      const { data: teamMemberships } = await adminClient
         .from('accounts_memberships')
         .select('account_id')
         .eq('user_id', purchaseAccountId)
-        .eq('account_role', 'team_manager')
-        .limit(1)
-        .single();
+        .eq('account_role', 'team_manager');
+      
+      let existingTeam = null;
+      
+      // Filter to only non-personal accounts
+      if (teamMemberships && teamMemberships.length > 0) {
+        for (const membership of teamMemberships) {
+          const { data: account } = await adminClient
+            .from('accounts')
+            .select('is_personal_account')
+            .eq('id', membership.account_id)
+            .single();
+          
+          if (account && !account.is_personal_account) {
+            existingTeam = membership;
+            break;
+          }
+        }
+      }
+      
+      // If no team found by membership, check owned accounts
+      if (!existingTeam) {
+        const { data: ownedTeam } = await adminClient
+          .from('accounts')
+          .select('id')
+          .eq('primary_owner_user_id', purchaseAccountId)
+          .eq('is_personal_account', false)
+          .limit(1)
+          .single();
+        
+        if (ownedTeam) {
+          existingTeam = { account_id: ownedTeam.id };
+        }
+      }
       
       if (existingTeam) {
         purchaseAccountId = existingTeam.account_id;

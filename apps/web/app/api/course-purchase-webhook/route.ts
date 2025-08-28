@@ -126,17 +126,53 @@ export async function POST(request: NextRequest) {
       console.error('[COURSE-WEBHOOK] 🏢 Multi-seat purchase detected (qty:', totalQuantity, '), handling team account...');
       console.error('[COURSE-WEBHOOK] User ID for team lookup:', purchaseAccountId);
       
-      // Check if user already has a team account
-      const { data: existingTeam, error: teamLookupError } = await adminClient
+      // Check if user already has a team account where they are the manager
+      // First, try to find by team_manager role
+      const { data: teamMemberships, error: teamLookupError } = await adminClient
         .from('accounts_memberships')
         .select('account_id')
         .eq('user_id', purchaseAccountId)
-        .eq('account_role', 'team_manager')
-        .limit(1)
-        .single();
+        .eq('account_role', 'team_manager');
       
-      if (teamLookupError && teamLookupError.code !== 'PGRST116') { // PGRST116 = no rows
-        console.error('[COURSE-WEBHOOK] Error looking up team:', teamLookupError);
+      if (teamLookupError) {
+        console.error('[COURSE-WEBHOOK] Error looking up team by role:', teamLookupError);
+      }
+      
+      console.error('[COURSE-WEBHOOK] Team memberships found:', teamMemberships);
+      
+      let existingTeam = null;
+      
+      // Filter to only non-personal accounts
+      if (teamMemberships && teamMemberships.length > 0) {
+        for (const membership of teamMemberships) {
+          const { data: account } = await adminClient
+            .from('accounts')
+            .select('is_personal_account')
+            .eq('id', membership.account_id)
+            .single();
+          
+          if (account && !account.is_personal_account) {
+            existingTeam = membership;
+            break;
+          }
+        }
+      }
+      
+      // If no team found by membership, check if user owns any team accounts directly
+      if (!existingTeam) {
+        console.error('[COURSE-WEBHOOK] No team found by membership, checking owned accounts...');
+        const { data: ownedTeam } = await adminClient
+          .from('accounts')
+          .select('id')
+          .eq('primary_owner_user_id', purchaseAccountId)
+          .eq('is_personal_account', false)
+          .limit(1)
+          .single();
+        
+        if (ownedTeam) {
+          existingTeam = { account_id: ownedTeam.id };
+          console.error('[COURSE-WEBHOOK] Found team by ownership:', ownedTeam.id);
+        }
       }
       
       if (existingTeam) {

@@ -89,7 +89,8 @@ export async function GET(request: NextRequest) {
           attemptCount++;
           console.log(`[Purchase Success] Attempt ${attemptCount}: Checking for team membership...`);
           
-          const { data: teamMemberships, error: membershipError } = await client
+          // Try multiple approaches to find the team account
+          const { data: teamMemberships, error: membershipError } = await adminClient
             .from('accounts_memberships')
             .select(`
               account_id,
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
               )
             `)
             .eq('user_id', user.id)
-            .eq('account_role', 'team_manager')  // Use correct role name from roles table
+            .eq('account_role', 'team_manager')
             .eq('accounts.is_personal_account', false)
             .limit(1);
           
