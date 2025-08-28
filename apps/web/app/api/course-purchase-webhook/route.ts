@@ -21,6 +21,19 @@ export async function POST(request: NextRequest) {
   console.error('🔴 Headers:', Object.fromEntries(request.headers.entries()));
   console.error('🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴');
   
+  // IMMEDIATELY write to database to prove webhook was called
+  const adminClient = getSupabaseServerAdminClient();
+  try {
+    await adminClient.from('webhook_logs').insert({
+      webhook_name: 'course-purchase-webhook',
+      called_at: webhookTimestamp,
+      url: request.url,
+      headers: JSON.stringify(Object.fromEntries(request.headers.entries())),
+    });
+  } catch (e) {
+    // Table might not exist, ignore
+  }
+  
   // Return early with detailed response for debugging
   const debugMode = request.headers.get('x-debug-mode') === 'true';
   

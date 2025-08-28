@@ -1,85 +1,81 @@
+// Direct test of team purchase logic
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 
-// Test endpoint to simulate a team purchase and check what happens
 export async function POST(request: NextRequest) {
+  const adminClient = getSupabaseServerAdminClient();
+  const userId = 'b6c5a2cb-d4d7-4ac4-9296-85a5ea0b55bd';
+  const teamAccountId = 'e13e2bef-1e19-45f1-95f8-53447322f0b4';
+  
+  console.error('🧪 TESTING DIRECT TEAM PURCHASE');
+  
   try {
-    const { teamAccountId, courseSlug, quantity, paymentId } = await request.json();
-    
-    if (!teamAccountId || !courseSlug) {
-      return NextResponse.json({ 
-        error: 'Missing required fields: teamAccountId and courseSlug' 
-      }, { status: 400 });
-    }
-    
-    const adminClient = getSupabaseServerAdminClient();
-    
-    // First, verify the team account exists and is not personal
-    const { data: account, error: accountError } = await adminClient
-      .from('accounts')
-      .select('id, name, slug, is_personal_account')
-      .eq('id', teamAccountId)
-      .single();
-      
-    if (accountError || !account) {
-      return NextResponse.json({ 
-        error: 'Account not found',
-        details: accountError
-      }, { status: 404 });
-    }
-    
-    if (account.is_personal_account) {
-      return NextResponse.json({ 
-        error: 'This is a personal account, not a team account',
-        account
-      }, { status: 400 });
-    }
-    
-    // Now try to process the purchase
-    const testPaymentId = paymentId || `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log('[TEST] Processing team purchase:', {
-      teamAccountId,
-      courseSlug,
-      quantity: quantity || 1,
-      paymentId: testPaymentId
-    });
-    
-    const { data, error } = await adminClient.rpc('process_course_purchase_by_slug', {
-      p_course_slug: courseSlug,
-      p_account_id: teamAccountId,
-      p_payment_id: testPaymentId,
-      p_quantity: quantity || 1,
-    });
-    
-    if (error) {
-      return NextResponse.json({ 
-        error: 'Failed to process purchase',
-        details: error,
-        hint: error.hint,
-        code: error.code
-      }, { status: 500 });
-    }
-    
-    // Check what was actually created
-    const { data: seats } = await adminClient
-      .from('course_seats')
+    // 1. Verify the team account exists and user has access
+    const { data: teamCheck } = await adminClient
+      .from('accounts_memberships')
       .select('*')
-      .eq('payment_id', testPaymentId)
+      .eq('user_id', userId)
+      .eq('account_id', teamAccountId)
       .single();
-      
+    
+    console.error('Team membership check:', teamCheck);
+    
+    if (!teamCheck) {
+      return NextResponse.json({
+        error: 'User does not have access to team account',
+        userId,
+        teamAccountId
+      });
+    }
+    
+    // 2. Process a test purchase directly to the team account
+    const paymentId = 'test_team_purchase_' + Date.now();
+    
+    const { data: purchaseResult, error: purchaseError } = await adminClient.rpc('process_course_purchase_by_slug', {
+      p_course_slug: 'advanced-hazmat',
+      p_account_id: teamAccountId, // Use the TEAM account ID directly
+      p_payment_id: paymentId,
+      p_quantity: 5, // Multi-seat purchase
+      p_customer_name: 'Team Purchase Test',
+    });
+    
+    if (purchaseError) {
+      console.error('Purchase error:', purchaseError);
+      return NextResponse.json({
+        error: 'Failed to process purchase',
+        details: purchaseError
+      });
+    }
+    
+    console.error('Purchase successful:', purchaseResult);
+    
+    // 3. Verify the purchase was recorded
+    const { data: verification } = await adminClient
+      .from('course_seats')
+      .select(\`
+        *,
+        accounts(name, is_personal_account)
+      \`)
+      .eq('payment_id', paymentId)
+      .single();
+    
     return NextResponse.json({
       success: true,
-      account,
-      purchase_result: data,
-      seats_created: seats,
-      test_payment_id: testPaymentId
+      test_summary: {
+        user_id: userId,
+        team_account_id: teamAccountId,
+        payment_id: paymentId,
+        purchase_result: purchaseResult,
+        verification: verification,
+        seats_went_to_team: verification?.account_id === teamAccountId,
+      }
     });
     
   } catch (error) {
-    return NextResponse.json({ 
-      error: 'Unexpected error',
+    console.error('Test error:', error);
+    return NextResponse.json({
+      error: 'Test failed',
       details: error instanceof Error ? error.message : error
-    }, { status: 500 });
+    });
   }
 }
