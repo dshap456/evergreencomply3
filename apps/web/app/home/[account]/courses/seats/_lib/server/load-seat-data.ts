@@ -10,7 +10,8 @@ export async function loadSeatData(accountId: string) {
       .select(`
         id,
         course_id,
-        total_seats
+        seats_purchased,
+        seats_used
       `)
       .eq('account_id', accountId);
 
@@ -92,9 +93,9 @@ export async function loadSeatData(accountId: string) {
     return seats?.map(seat => ({
       course_id: seat.course_id,
       course_title: courseMap[seat.course_id]?.title || 'Unknown Course',
-      total_seats: seat.total_seats,
-      used_seats: usedSeatsMap[seat.course_id] || 0,
-      available_seats: seat.total_seats - (usedSeatsMap[seat.course_id] || 0),
+      total_seats: seat.seats_purchased,
+      used_seats: seat.seats_used || 0,
+      available_seats: seat.seats_purchased - (seat.seats_used || 0),
     })) || [];
   } catch (error) {
     console.error('Error in loadSeatData:', error);
