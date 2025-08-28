@@ -1,111 +1,131 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
+import Stripe from 'stripe';
 
-// Diagnostic endpoint to check webhook configuration
+export const runtime = 'nodejs';
+
+// GET endpoint to test webhook signature verification with a known payload
 export async function GET(request: NextRequest) {
-  const adminClient = getSupabaseServerAdminClient();
-  
-  const diagnostics: any = {
-    timestamp: new Date().toISOString(),
-    environment: {
-      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
-      hasWebhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
-      webhookSecretPrefix: process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 10),
-      siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
-    },
-    webhookEndpoints: [
-      '/api/billing/webhook - RECOMMENDED (creates team accounts)',
-      '/api/stripe-course-webhook - OLD (has bugs)',
-      '/api/course-purchase-webhook - INCOMPLETE (no team accounts)',
-    ],
-    databaseFunctions: [],
-    recentPurchases: [],
-  };
-  
-  try {
-    // Check which database functions exist
-    const { data: functions } = await adminClient.rpc('get_function_info', {}).catch(() => ({ data: null }));
-    
-    // Alternative: Check function signatures
-    const { data: funcData } = await adminClient
-      .from('pg_proc')
-      .select('proname')
-      .eq('proname', 'process_course_purchase_by_slug')
-      .catch(() => ({ data: [] }));
-    
-    diagnostics.databaseFunctions = funcData || [];
-    
-    // Check recent course_seats entries
-    const { data: recentSeats } = await adminClient
-      .from('course_seats')
-      .select('*, accounts(name, is_personal_account)')
-      .order('created_at', { ascending: false })
-      .limit(5);
-    
-    diagnostics.recentSeats = recentSeats;
-    
-    // Check recent enrollments
-    const { data: recentEnrollments } = await adminClient
-      .from('course_enrollments')
-      .select('*, courses(title)')
-      .order('enrolled_at', { ascending: false })
-      .limit(5);
-    
-    diagnostics.recentEnrollments = recentEnrollments;
-    
-    // Check team accounts created recently
-    const { data: recentTeams } = await adminClient
-      .from('accounts')
-      .select('*')
-      .eq('is_personal_account', false)
-      .order('created_at', { ascending: false })
-      .limit(5);
-    
-    diagnostics.recentTeamAccounts = recentTeams;
-    
-    // Check accounts_memberships with team_manager role
-    const { data: teamManagers } = await adminClient
-      .from('accounts_memberships')
-      .select('*, accounts(name, is_personal_account)')
-      .eq('account_role', 'team_manager')
-      .order('created_at', { ascending: false })
-      .limit(5);
-    
-    diagnostics.teamManagerMemberships = teamManagers;
-    
-  } catch (error: any) {
-    diagnostics.error = error.message;
-  }
-  
-  // Recommendations
-  diagnostics.recommendations = [
-    '1. Verify in Stripe Dashboard that webhook URL is: https://www.evergreencomply.com/api/billing/webhook',
-    '2. Ensure STRIPE_WEBHOOK_SECRET in Vercel matches the signing secret from Stripe',
-    '3. Check that you are using the CORRECT webhook endpoint (billing/webhook)',
-    '4. Run the database migration to fix process_course_purchase_by_slug function',
-  ];
-  
-  // Check for common issues
-  const issues = [];
-  
-  if (!diagnostics.environment.hasWebhookSecret) {
-    issues.push('❌ STRIPE_WEBHOOK_SECRET not configured');
-  }
-  
-  if (diagnostics.recentTeamAccounts?.some((a: any) => !a.created_at)) {
-    issues.push('⚠️ Team accounts with NULL created_at found');
-  }
-  
-  if (!diagnostics.teamManagerMemberships || diagnostics.teamManagerMemberships.length === 0) {
-    issues.push('⚠️ No team_manager memberships found');
-  }
-  
-  diagnostics.issues = issues;
-  
-  return NextResponse.json(diagnostics, {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
+  // Create a test payload
+  const testPayload = JSON.stringify({
+    id: 'evt_test',
+    object: 'event',
+    type: 'checkout.session.completed',
+    created: Math.floor(Date.now() / 1000),
+    data: {
+      object: {
+        id: 'cs_test',
+        object: 'checkout.session',
+        metadata: {
+          type: 'training-purchase'
+        }
+      }
     }
   });
+  
+  const timestamp = Math.floor(Date.now() / 1000);
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  
+  if (!webhookSecret) {
+    return NextResponse.json({
+      error: 'STRIPE_WEBHOOK_SECRET not configured',
+      env: {
+        hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+        hasWebhookSecret: false,
+        nodeEnv: process.env.NODE_ENV,
+      }
+    });
+  }
+  
+  // Generate a valid signature using the webhook secret
+  const crypto = require('crypto');
+  const signedPayload = `${timestamp}.${testPayload}`;
+  const expectedSig = crypto
+    .createHmac('sha256', webhookSecret.replace('whsec_', ''))
+    .update(signedPayload)
+    .digest('hex');
+  
+  const signature = `t=${timestamp},v1=${expectedSig}`;
+  
+  // Now try to verify it
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-06-30.basil',
+  });
+  
+  try {
+    const event = stripe.webhooks.constructEvent(
+      testPayload,
+      signature,
+      webhookSecret
+    );
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Webhook signature verification working!',
+      webhookSecret: webhookSecret.substring(0, 20) + '...',
+      testEvent: event.type,
+    });
+  } catch (err: any) {
+    return NextResponse.json({
+      error: 'Signature verification failed',
+      message: err.message,
+      webhookSecret: webhookSecret.substring(0, 20) + '...',
+      signature: signature.substring(0, 50) + '...',
+    });
+  }
+}
+
+// POST endpoint to test with actual Stripe webhooks
+export async function POST(request: NextRequest) {
+  const body = await request.text();
+  const signature = request.headers.get('stripe-signature');
+  
+  const result: any = {
+    timestamp: new Date().toISOString(),
+    bodyLength: body.length,
+    hasSignature: !!signature,
+    webhookSecretConfigured: !!process.env.STRIPE_WEBHOOK_SECRET,
+  };
+  
+  if (!signature) {
+    return NextResponse.json({ ...result, error: 'No signature header' }, { status: 400 });
+  }
+  
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ ...result, error: 'STRIPE_WEBHOOK_SECRET not configured' }, { status: 500 });
+  }
+  
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2025-06-30.basil',
+  });
+  
+  try {
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+    
+    result.signatureValid = true;
+    result.eventType = event.type;
+    result.eventId = event.id;
+    result.livemode = event.livemode;
+    
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any;
+      result.session = {
+        id: session.id,
+        client_reference_id: session.client_reference_id,
+        metadata: session.metadata,
+      };
+    }
+    
+    return NextResponse.json(result);
+  } catch (err: any) {
+    result.signatureValid = false;
+    result.error = err.message;
+    result.webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 20) + '...';
+    
+    // Return 400 to trigger Stripe retry
+    return NextResponse.json(result, { status: 400 });
+  }
 }
