@@ -10,6 +10,19 @@ const PRICE_TO_COURSE_SLUG_MAP = {
   'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',
 } as const;
 
+// GET endpoint to verify the webhook is deployed
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    status: 'ready',
+    endpoint: 'course-purchase-webhook',
+    message: 'Webhook endpoint is deployed and ready to receive POST requests from Stripe',
+    timestamp: new Date().toISOString(),
+    accepts: 'POST requests with checkout.session.completed events',
+    webhook_secret_configured: !!process.env.STRIPE_WEBHOOK_SECRET,
+    stripe_key_configured: !!process.env.STRIPE_SECRET_KEY,
+  });
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const webhookTimestamp = new Date().toISOString();
