@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
   });
 }
 
+// CRITICAL: Disable body parsing for webhook signature verification
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const webhookTimestamp = new Date().toISOString();
@@ -36,28 +39,46 @@ export async function POST(request: NextRequest) {
   
   // IMMEDIATELY write to database to prove webhook was called
   const adminClient = getSupabaseServerAdminClient();
-  try {
-    await adminClient.from('webhook_logs').insert({
-      webhook_name: 'course-purchase-webhook',
-      called_at: webhookTimestamp,
-      url: request.url,
-      headers: JSON.stringify(Object.fromEntries(request.headers.entries())),
-    });
-  } catch (e) {
-    // Table might not exist, ignore
-  }
   
   // Return early with detailed response for debugging
   const debugMode = request.headers.get('x-debug-mode') === 'true';
   
   try {
-    // 1. Verify signature
+    // 1. Check if body was already read
+    if (request.bodyUsed) {
+      console.error('[COURSE-WEBHOOK] ⚠️ WARNING: Request body was already consumed!');
+      return NextResponse.json({ 
+        error: 'Body already consumed',
+        details: 'Request body was read before webhook handler'
+      }, { status: 500 });
+    }
+    
+    // 2. Read the raw body for signature verification
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
     
     console.error('[COURSE-WEBHOOK] Body received, length:', body.length);
+    console.error('[COURSE-WEBHOOK] First 100 chars of body:', body.substring(0, 100));
     console.error('[COURSE-WEBHOOK] Signature present:', !!signature);
+    console.error('[COURSE-WEBHOOK] Signature value:', signature);
     console.error('[COURSE-WEBHOOK] Webhook secret configured:', !!process.env.STRIPE_WEBHOOK_SECRET);
+    console.error('[COURSE-WEBHOOK] Webhook secret first 20 chars:', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 20));
+    
+    // Log this attempt to database for debugging
+    try {
+      await adminClient.from('webhook_logs').insert({
+        webhook_name: 'course-purchase-webhook-attempt',
+        called_at: new Date().toISOString(),
+        url: request.url,
+        headers: JSON.stringify({
+          'stripe-signature': signature,
+          'content-length': request.headers.get('content-length'),
+        }),
+        body: body ? body.substring(0, 1000) : 'EMPTY_BODY',
+      });
+    } catch (e) {
+      // Ignore logging errors
+    }
     
     if (!signature) {
       console.error('[COURSE-WEBHOOK] ❌ No signature provided - returning error');
@@ -81,13 +102,13 @@ export async function POST(request: NextRequest) {
       console.error('[COURSE-WEBHOOK] Error type:', err.type);
       console.error('[COURSE-WEBHOOK] Webhook secret:', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 20) + '...');
       
-      // For now, return success to prevent Stripe from retrying
-      // This helps us debug without causing issues
+      // CRITICAL: Return 400 so Stripe will retry!
+      // Never silently fail webhook processing
       return NextResponse.json({ 
-        received: true,
-        error: 'signature_verification_failed',
-        message: err.message 
-      });
+        error: 'Invalid webhook signature',
+        message: err.message,
+        details: 'Check STRIPE_WEBHOOK_SECRET environment variable'
+      }, { status: 400 });
     }
     
     // 2. Only process checkout.session.completed
