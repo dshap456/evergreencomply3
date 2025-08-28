@@ -150,9 +150,10 @@ export async function POST(request: NextRequest) {
       },
     };
     
-    // Add user email and account ID
+    // Add user email and ALWAYS use user ID as reference
+    // The webhook will determine the correct account based on quantity
     sessionParams.customer_email = user.email;
-    sessionParams.client_reference_id = purchaseAccountId;
+    sessionParams.client_reference_id = user.id;
     
     const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
 
