@@ -52,10 +52,10 @@ export async function POST(request: NextRequest) {
     // 3. Verify the purchase was recorded
     const { data: verification } = await adminClient
       .from('course_seats')
-      .select(\`
+      .select(`
         *,
         accounts(name, is_personal_account)
-      \`)
+      `)
       .eq('payment_id', paymentId)
       .single();
     
