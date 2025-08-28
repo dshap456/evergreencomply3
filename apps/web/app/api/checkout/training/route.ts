@@ -46,9 +46,45 @@ export async function POST(request: NextRequest) {
     
     const user = session.user;
 
-    // Always use the user's ID as the purchase account
-    // The webhook will handle team account creation if needed
-    const purchaseAccountId = user.id;
+    // Determine the purchase account based on account type
+    // For team purchases with explicit accountId, use that
+    // Otherwise use the user's personal account
+    let purchaseAccountId = user.id;
+    
+    if (accountType === 'team' && accountId) {
+      // Verify the user has access to this team account
+      const { data: membership } = await client
+        .from('accounts_memberships')
+        .select('account_id')
+        .eq('user_id', user.id)
+        .eq('account_id', accountId)
+        .single();
+      
+      if (membership) {
+        purchaseAccountId = accountId;
+        console.log('Using team account for purchase:', accountId);
+      } else {
+        console.warn('User does not have access to team account:', accountId);
+        // Fall back to personal account
+      }
+    } else if (accountType === 'team') {
+      // Team purchase but no specific account ID provided
+      // Try to find or create a team account for this user
+      const { data: teamAccounts } = await client
+        .from('accounts_memberships')
+        .select('account_id, accounts!inner(id, is_personal_account)')
+        .eq('user_id', user.id)
+        .eq('accounts.is_personal_account', false);
+      
+      if (teamAccounts && teamAccounts.length > 0) {
+        // Use the first team account found
+        purchaseAccountId = teamAccounts[0].account_id;
+        console.log('Using existing team account:', purchaseAccountId);
+      } else {
+        // No team account exists - webhook will handle creation
+        console.log('No team account found, will create during webhook processing');
+      }
+    }
 
     // Initialize Stripe
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
