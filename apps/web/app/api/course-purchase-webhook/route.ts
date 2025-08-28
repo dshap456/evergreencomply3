@@ -66,18 +66,19 @@ export async function POST(request: NextRequest) {
     
     // Log this attempt to database for debugging
     try {
-      await adminClient.from('webhook_logs').insert({
-        webhook_name: 'course-purchase-webhook-attempt',
+      const logResult = await adminClient.from('webhook_logs').insert({
+        webhook_name: 'course-purchase-webhook',
         called_at: new Date().toISOString(),
         url: request.url,
-        headers: JSON.stringify({
-          'stripe-signature': signature,
-          'content-length': request.headers.get('content-length'),
-        }),
-        body: body ? body.substring(0, 1000) : 'EMPTY_BODY',
+        headers: Object.fromEntries(request.headers.entries()),
+        body: body && body.length > 0 ? body.substring(0, 5000) : null,
       });
+      
+      if (logResult.error) {
+        console.error('[COURSE-WEBHOOK] Failed to log webhook:', logResult.error);
+      }
     } catch (e) {
-      // Ignore logging errors
+      console.error('[COURSE-WEBHOOK] Exception logging webhook:', e);
     }
     
     if (!signature) {
