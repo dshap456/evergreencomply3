@@ -208,10 +208,12 @@ export async function POST(request: NextRequest) {
       // If no team found by membership, check if user owns any team accounts directly
       if (!existingTeam) {
         console.error('[COURSE-WEBHOOK] No team found by membership, checking owned accounts...');
+        // CRITICAL: Use the actual user ID from metadata, not purchaseAccountId which might be wrong
+        const actualUserId = session.metadata?.userId || session.client_reference_id;
         const { data: ownedTeam } = await adminClient
           .from('accounts')
           .select('id')
-          .eq('primary_owner_user_id', purchaseAccountId)
+          .eq('primary_owner_user_id', actualUserId)
           .eq('is_personal_account', false)
           .limit(1)
           .single();
