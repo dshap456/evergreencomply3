@@ -78,7 +78,8 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
           .select(`
             id,
             course_id,
-            total_seats
+            seats_purchased,
+            seats_used
           `)
           .eq('account_id', account.id);
 
@@ -124,10 +125,8 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         // Map all courses with their seat information
         return allCourses.map(course => {
           const seatInfo = seatsMap[course.id];
-          const enrolledCount = enrollmentMap[course.id] || 0;
-          const invitedCount = invitationMap[course.id] || 0;
-          const usedSeats = enrolledCount + invitedCount;
-          const totalSeats = seatInfo?.total_seats || 0;
+          const totalSeats = seatInfo?.seats_purchased || 0;
+          const usedSeats = seatInfo?.seats_used || 0;
 
           return {
             course_id: course.id,
