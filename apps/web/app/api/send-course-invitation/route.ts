@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Check available seats (including pending invitations)
     const { data: seatInfo } = await client
       .from('course_seats')
-      .select('total_seats')
+      .select('seats_purchased')
       .eq('account_id', accountId)
       .eq('course_id', courseId)
       .single();
@@ -59,16 +59,17 @@ export async function POST(request: Request) {
       .eq('account_id', accountId)
       .eq('course_id', courseId);
 
-    // Count pending invitations
+    // Count pending invitations (only non-expired ones)
     const { count: pendingInvites } = await client
       .from('course_invitations')
       .select('*', { count: 'exact', head: true })
       .eq('account_id', accountId)
       .eq('course_id', courseId)
-      .is('accepted_at', null);
+      .is('accepted_at', null)
+      .gte('expires_at', new Date().toISOString());
 
     const totalUsed = (usedSeats || 0) + (pendingInvites || 0);
-    const availableSeats = seatInfo.total_seats - totalUsed;
+    const availableSeats = seatInfo.seats_purchased - totalUsed;
     
     if (availableSeats <= 0) {
       return NextResponse.json({ error: 'No available seats for this course' });
