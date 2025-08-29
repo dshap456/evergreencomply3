@@ -39,18 +39,9 @@ export async function GET(request: NextRequest) {
     if (courseInvite) {
       shouldProcessCourseInvite = true;
     } else {
-      // Check if this is a team invitation
-      const { data: teamInvite } = await client
-        .from('invitations')
-        .select('*')
-        .eq('invite_token', invitationToken)
-        .single();
-      
-      if (teamInvite) {
-          shouldPassToTeamFlow = true;
-      } else {
-          // Invalid token - just ignore it
-      }
+      // Since we don't have a team invitations table, this is an invalid token
+      // Don't pass it to the team flow
+      shouldPassToTeamFlow = false;
     }
   }
   

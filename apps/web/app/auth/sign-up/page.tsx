@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import { SignUpMethodsContainer } from '@kit/auth/sign-up';
 import { Button } from '@kit/ui/button';
 import { Heading } from '@kit/ui/heading';
 import { Trans } from '@kit/ui/trans';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 import authConfig from '~/config/auth.config';
 import pathsConfig from '~/config/paths.config';
@@ -32,6 +34,26 @@ async function SignUpPage({ searchParams }: Props) {
   const inviteToken = params.invite_token;
   const courseToken = params.course_token;
   const redirectTo = params.redirect;
+
+  // Check if user is already authenticated
+  const supabase = getSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // If user is authenticated and has an invite token, redirect to callback to process it
+  if (user && (inviteToken || courseToken)) {
+    const callbackParams = new URLSearchParams();
+    if (inviteToken) callbackParams.append('invite_token', inviteToken);
+    if (courseToken) callbackParams.append('course_token', courseToken);
+    if (redirectTo) callbackParams.append('redirect', redirectTo);
+    
+    const callbackUrl = `${pathsConfig.auth.callback}?${callbackParams.toString()}`;
+    redirect(callbackUrl);
+  }
+  
+  // If authenticated without invite token, redirect to home
+  if (user && !inviteToken && !courseToken) {
+    redirect(redirectTo || pathsConfig.app.home);
+  }
 
   // Build query params for sign-in link
   const queryParams = new URLSearchParams();
