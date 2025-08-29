@@ -44,41 +44,17 @@ export function CourseInvitationContent() {
 
   const loadInvitation = async () => {
     try {
-      const { data, error } = await supabase
-        .from('course_invitations')
-        .select(`
-          id,
-          course_id,
-          account_id,
-          email,
-          expires_at,
-          accepted_at,
-          courses!inner (
-            title
-          ),
-          accounts!inner (
-            name
-          )
-        `)
-        .eq('invite_token', token)
-        .single();
+      // Use API route to fetch invitation (bypasses RLS for anonymous users)
+      const response = await fetch(`/api/get-course-invitation?token=${token}`);
+      const result = await response.json();
 
-      if (error || !data) {
-        setError('Invalid or expired invitation');
+      if (!response.ok || !result.success) {
+        setError(result.error || 'Invalid or expired invitation');
         return;
       }
 
-      // Check if already accepted
-      if (data.accepted_at) {
-        setError('This invitation has already been accepted');
-        return;
-      }
-
-      // Check if expired
-      if (new Date(data.expires_at) < new Date()) {
-        setError('This invitation has expired');
-        return;
-      }
+      // Set the invitation data
+      const data = result.invitation;
 
       // Transform the data to match our interface
       setInvitation({

@@ -50,29 +50,16 @@ export default function JoinCoursePage() {
 
   const loadInvitation = async () => {
     try {
-      const { data, error } = await supabase
-        .from('course_invitations')
-        .select(`
-          id,
-          course_id,
-          account_id,
-          email,
-          courses!inner (
-            title
-          ),
-          accounts!inner (
-            name
-          )
-        `)
-        .eq('invite_token', token)
-        .is('accepted_at', null)
-        .gte('expires_at', new Date().toISOString())
-        .single();
+      // Use API route to fetch invitation (bypasses RLS for anonymous users)
+      const response = await fetch(`/api/get-course-invitation?token=${token}`);
+      const result = await response.json();
 
-      if (error || !data) {
-        setError('Invalid or expired invitation');
+      if (!response.ok || !result.success) {
+        setError(result.error || 'Invalid or expired invitation');
         return;
       }
+
+      const data = result.invitation;
 
       // Check if user email matches invitation email
       if (user?.email && user.email !== data.email) {
