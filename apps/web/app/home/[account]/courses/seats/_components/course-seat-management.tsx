@@ -126,7 +126,11 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         return allCourses.map(course => {
           const seatInfo = seatsMap[course.id];
           const totalSeats = seatInfo?.seats_purchased || 0;
-          const usedSeats = seatInfo?.seats_used || 0;
+          
+          // Calculate used seats from actual enrollments and pending invitations
+          const enrolledCount = enrollmentMap[course.id] || 0;
+          const pendingInviteCount = invitationMap[course.id] || 0;
+          const usedSeats = enrolledCount + pendingInviteCount;
 
           return {
             course_id: course.id,
