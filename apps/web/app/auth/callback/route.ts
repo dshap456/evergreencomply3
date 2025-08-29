@@ -15,15 +15,21 @@ export async function GET(request: NextRequest) {
   // Check for invitation token and redirect parameter BEFORE processing with the service
   const searchParams = request.nextUrl.searchParams;
   const invitationToken = searchParams.get('invitation_token') || searchParams.get('invite_token');
+  const courseToken = searchParams.get('course_token');
   const redirectTo = searchParams.get('redirect');
   
   
   // Default behavior - no special invitation handling
   let shouldProcessCourseInvite = false;
   let shouldPassToTeamFlow = false;
+  let effectiveToken = invitationToken;
   
-  if (invitationToken) {
-    // Check if this is a course invitation (use admin client to bypass RLS)
+  // If we have an explicit course_token, it's definitely a course invitation
+  if (courseToken) {
+    shouldProcessCourseInvite = true;
+    effectiveToken = courseToken;
+  } else if (invitationToken) {
+    // For backward compatibility, check if this is a course invitation (use admin client to bypass RLS)
     const { data: courseInvite } = await adminClient
       .from('course_invitations')
       .select('*')
@@ -52,10 +58,11 @@ export async function GET(request: NextRequest) {
   let processRequest: Request = request;
   
   // Only pass invite_token to service if it's a valid team invitation
-  if (invitationToken && !shouldPassToTeamFlow) {
+  if ((invitationToken || courseToken) && !shouldPassToTeamFlow) {
     const url = new URL(request.url);
     url.searchParams.delete('invite_token');
     url.searchParams.delete('invitation_token');
+    url.searchParams.delete('course_token');
     processRequest = new Request(url.toString(), {
       method: request.method,
       headers: request.headers,
@@ -70,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
   );
   
-  if (shouldProcessCourseInvite && invitationToken) {
+  if (shouldProcessCourseInvite && effectiveToken) {
     // Process course invitation
     const { data: { user } } = await client.auth.getUser();
     
@@ -80,7 +87,7 @@ export async function GET(request: NextRequest) {
       const { data: invitation } = await adminClient
         .from('course_invitations')
         .select('*')
-        .eq('invite_token', invitationToken)
+        .eq('invite_token', effectiveToken)
         .single();
       
       
@@ -92,7 +99,7 @@ export async function GET(request: NextRequest) {
           .from('pending_invitation_tokens')
           .select('*')
           .eq('email', invitation.email) // Use invitation email
-          .eq('invitation_token', invitationToken)
+          .eq('invitation_token', effectiveToken)
           .single();
         
         
@@ -102,7 +109,7 @@ export async function GET(request: NextRequest) {
             .from('pending_invitation_tokens')
             .insert({
               email: invitation.email, // Use invitation email, not user email
-              invitation_token: invitationToken,
+              invitation_token: effectiveToken,
               invitation_type: 'course',
             });
           
@@ -114,13 +121,13 @@ export async function GET(request: NextRequest) {
       console.log('🔥 Processing course invitation:', {
         userId: user.id,
         userEmail: user.email,
-        invitationToken,
+        invitationToken: effectiveToken,
         invitationEmail: invitation.email
       });
       
       const { data: result, error: rpcError } = await client.rpc('process_pending_course_invitation_by_token', {
         p_user_id: user.id,
-        p_invitation_token: invitationToken
+        p_invitation_token: effectiveToken
       });
       
       console.log('🔥 RPC Result:', { result, error: rpcError });
@@ -138,7 +145,7 @@ export async function GET(request: NextRequest) {
   // ALSO check if user has any pending invitations even without a token in the URL
   // This is CRITICAL for password signups where the email verification doesn't include the token
   const { data: { user } } = await client.auth.getUser();
-  if (user?.email && !invitationToken) {
+  if (user?.email && !invitationToken && !courseToken) {
     console.log('🔍 Checking for pending course invitations for:', user.email);
     
     // IMPORTANT: Use admin client to bypass RLS policies that block users from seeing invitations

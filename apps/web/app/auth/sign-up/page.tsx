@@ -21,6 +21,7 @@ export const generateMetadata = async () => {
 interface Props {
   searchParams: Promise<{
     invite_token?: string;
+    course_token?: string;
     redirect?: string;
   }>;
 }
@@ -29,11 +30,13 @@ interface Props {
 async function SignUpPage({ searchParams }: Props) {
   const params = await searchParams;
   const inviteToken = params.invite_token;
+  const courseToken = params.course_token;
   const redirectTo = params.redirect;
 
   // Build query params for sign-in link
   const queryParams = new URLSearchParams();
   if (inviteToken) queryParams.append('invite_token', inviteToken);
+  if (courseToken) queryParams.append('course_token', courseToken);
   if (redirectTo) queryParams.append('redirect', redirectTo);
   
   const signInPath = pathsConfig.auth.signIn + 
@@ -64,7 +67,7 @@ async function SignUpPage({ searchParams }: Props) {
       <SignUpMethodsContainer
         providers={authConfig.providers}
         displayTermsCheckbox={authConfig.displayTermsCheckbox}
-        inviteToken={inviteToken}
+        inviteToken={inviteToken || courseToken}
         paths={paths}
       />
 

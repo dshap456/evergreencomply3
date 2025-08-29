@@ -14,6 +14,7 @@ interface SignInPageProps {
   searchParams: Promise<{
     invite_token?: string;
     invitation_token?: string;
+    course_token?: string;
     next?: string;
     redirect?: string;
   }>;
@@ -28,13 +29,14 @@ export const generateMetadata = async () => {
 };
 
 async function SignInPage({ searchParams }: SignInPageProps) {
-  const { invite_token, invitation_token, next, redirect } = await searchParams;
+  const { invite_token, invitation_token, course_token, next, redirect } = await searchParams;
   const inviteToken = invitation_token || invite_token;
   const redirectTo = redirect || next;
 
   // Build query params for sign-up link
   const queryParams = new URLSearchParams();
   if (inviteToken) queryParams.append('invite_token', inviteToken);
+  if (course_token) queryParams.append('course_token', course_token);
   if (redirect) queryParams.append('redirect', redirect);
   
   const signUpPath = pathsConfig.auth.signUp + 
@@ -64,7 +66,7 @@ async function SignInPage({ searchParams }: SignInPageProps) {
       </div>
 
       <SignInMethodsContainer
-        inviteToken={inviteToken}
+        inviteToken={inviteToken || course_token}
         paths={paths}
         providers={authConfig.providers}
       />
