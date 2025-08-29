@@ -35,8 +35,23 @@ export async function GET(request: Request) {
       .single();
 
     if (error || !invitation) {
-      console.error('Invitation fetch error:', error);
-      return NextResponse.json({ error: 'Invalid or expired invitation' }, { status: 404 });
+      console.error('Invitation fetch error:', {
+        token,
+        error,
+        query: 'course_invitations with invite_token',
+      });
+      
+      // Try to provide more specific error message
+      if (error?.code === 'PGRST116') {
+        return NextResponse.json({ 
+          error: 'Invitation not found. The link may be invalid or the invitation may have been deleted.' 
+        }, { status: 404 });
+      }
+      
+      return NextResponse.json({ 
+        error: 'Invalid or expired invitation',
+        debug: process.env.NODE_ENV === 'development' ? { token, errorCode: error?.code } : undefined
+      }, { status: 404 });
     }
 
     // Check if already accepted

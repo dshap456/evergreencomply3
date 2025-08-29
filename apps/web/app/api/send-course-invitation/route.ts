@@ -75,27 +75,76 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No available seats for this course' });
     }
 
-    // Create invitation with name
-    const { data: invitation, error: inviteError } = await client
+    // Check if invitation already exists
+    const { data: existingInvite } = await client
       .from('course_invitations')
-      .insert({
-        email,
-        invitee_name: name,
-        course_id: courseId,
-        account_id: accountId,
-        invited_by: user.id,
-      })
-      .select()
+      .select('*')
+      .eq('email', email)
+      .eq('course_id', courseId)
+      .eq('account_id', accountId)
       .single();
 
-    if (inviteError) {
-      if (inviteError.code === '23505') {
-        return NextResponse.json({ error: 'An invitation for this email already exists' });
+    let invitation;
+    
+    if (existingInvite) {
+      // If invitation exists but not accepted, update it with new token and expiration
+      if (!existingInvite.accepted_at) {
+        const newToken = crypto.randomUUID();
+        const newExpiresAt = new Date();
+        newExpiresAt.setDate(newExpiresAt.getDate() + 30);
+        
+        const { data: updatedInvite, error: updateError } = await client
+          .from('course_invitations')
+          .update({
+            invite_token: newToken,
+            invitee_name: name, // Update name in case it changed
+            expires_at: newExpiresAt.toISOString(),
+            updated_at: new Date().toISOString(),
+            invited_by: user.id,
+          })
+          .eq('id', existingInvite.id)
+          .select()
+          .single();
+          
+        if (updateError) {
+          return NextResponse.json({ error: 'Failed to update existing invitation' });
+        }
+        
+        invitation = updatedInvite;
+        console.log('Updated existing invitation with new token:', newToken);
+      } else {
+        return NextResponse.json({ error: 'This user has already accepted the invitation' });
       }
-      return NextResponse.json({ error: 'Failed to create invitation' });
+    } else {
+      // Create new invitation
+      const { data: newInvitation, error: inviteError } = await client
+        .from('course_invitations')
+        .insert({
+          email,
+          invitee_name: name,
+          course_id: courseId,
+          account_id: accountId,
+          invited_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (inviteError) {
+        return NextResponse.json({ error: 'Failed to create invitation' });
+      }
+      
+      invitation = newInvitation;
     }
 
     // Store invitation token for magic link resilience
+    // First delete any existing pending tokens for this email and course
+    await client
+      .from('pending_invitation_tokens')
+      .delete()
+      .eq('email', email)
+      .eq('invitation_type', 'course');
+    
+    // Insert the new token
     await client
       .from('pending_invitation_tokens')
       .insert({
