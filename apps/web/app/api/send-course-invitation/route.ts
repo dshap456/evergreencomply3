@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { getMailer } from '@kit/mailers';
 
 export async function POST(request: Request) {
   try {
     const { name, email, courseId, accountId } = await request.json();
     const client = getSupabaseServerClient();
+    const adminClient = getSupabaseServerAdminClient();
     
     // Get current user
     const { data: { user }, error: userError } = await client.auth.getUser();
@@ -75,8 +77,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No available seats for this course' });
     }
 
-    // Check if invitation already exists
-    const { data: existingInvite } = await client
+    // Check if invitation already exists (use admin client to bypass RLS)
+    const { data: existingInvite } = await adminClient
       .from('course_invitations')
       .select('*')
       .eq('email', email)
@@ -93,21 +95,31 @@ export async function POST(request: Request) {
         const newExpiresAt = new Date();
         newExpiresAt.setDate(newExpiresAt.getDate() + 30);
         
-        const { data: updatedInvite, error: updateError } = await client
+        // Use admin client to bypass RLS for update
+        const { data: updatedInvite, error: updateError } = await adminClient
           .from('course_invitations')
           .update({
             invite_token: newToken,
             invitee_name: name, // Update name in case it changed
             expires_at: newExpiresAt.toISOString(),
-            updated_at: new Date().toISOString(),
             invited_by: user.id,
+            // Don't manually set updated_at - let the database handle it
           })
           .eq('id', existingInvite.id)
           .select()
           .single();
           
         if (updateError) {
-          return NextResponse.json({ error: 'Failed to update existing invitation' });
+          console.error('Failed to update invitation:', {
+            error: updateError,
+            inviteId: existingInvite.id,
+            accountId,
+            userId: user.id,
+          });
+          return NextResponse.json({ 
+            error: 'Failed to update existing invitation',
+            details: updateError.message 
+          });
         }
         
         invitation = updatedInvite;
