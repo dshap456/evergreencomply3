@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 
 import { UserDetailsDialog } from './user-details-dialog';
 import { loadUsersAction } from '../_lib/server/load-users-action';
-import { debugEnrollmentAction } from '../_lib/server/debug-enrollment-action';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -83,17 +82,6 @@ export function UserManagement() {
     }
   };
 
-  const runDebugTest = async () => {
-    try {
-      console.log('Running enrollment debug test...');
-      const debugResult = await debugEnrollmentAction();
-      console.log('Debug test results:', debugResult);
-      toast.success('Debug test completed - check console');
-    } catch (error) {
-      console.error('Debug test failed:', error);
-      toast.error('Debug test failed');
-    }
-  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
