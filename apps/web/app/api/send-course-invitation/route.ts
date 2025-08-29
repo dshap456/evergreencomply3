@@ -106,9 +106,9 @@ export async function POST(request: Request) {
 
     // Send invitation email using the app's mailer system
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    // Use course-specific parameter to avoid collision with team invites
-    // The auth callback will detect 'course_token' and handle it appropriately
-    const inviteUrl = `${baseUrl}/auth/sign-up?course_token=${invitation.invite_token}`;
+    // Use invite_token for backward compatibility with auth components
+    // The auth callback will detect if it's a course invitation by checking the database
+    const inviteUrl = `${baseUrl}/auth/sign-up?invite_token=${invitation.invite_token}`;
     
     console.log('=== Course Invitation Email Debug ===');
     console.log('Attempting to send email to:', email);

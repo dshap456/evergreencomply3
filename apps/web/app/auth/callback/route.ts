@@ -57,12 +57,19 @@ export async function GET(request: NextRequest) {
   // Build the request to pass to the service
   let processRequest: Request = request;
   
-  // Only pass invite_token to service if it's a valid team invitation
-  if ((invitationToken || courseToken) && !shouldPassToTeamFlow) {
+  // Remove invitation tokens from the request unless it's a valid team invitation
+  // This prevents the auth service from automatically redirecting to /join
+  if (invitationToken || courseToken) {
     const url = new URL(request.url);
-    url.searchParams.delete('invite_token');
-    url.searchParams.delete('invitation_token');
-    url.searchParams.delete('course_token');
+    
+    if (!shouldPassToTeamFlow) {
+      // Remove all token parameters to prevent incorrect routing
+      url.searchParams.delete('invite_token');
+      url.searchParams.delete('invitation_token');
+      url.searchParams.delete('course_token');
+    }
+    // If it IS a team flow, keep the invite_token for the service to handle
+    
     processRequest = new Request(url.toString(), {
       method: request.method,
       headers: request.headers,
