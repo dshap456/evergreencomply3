@@ -56,30 +56,44 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
   const handleSave = async () => {
     startTransition(async () => {
       try {
+        console.log('Starting save operation...');
+        console.log('Module data:', {
+          id: moduleData.id,
+          title: moduleData.title,
+          description: moduleData.description,
+          order_index: moduleData.order_index
+        });
+        
         // Save module metadata
-        await updateModuleAction({
+        console.log('Calling updateModuleAction...');
+        const moduleResult = await updateModuleAction({
           id: moduleData.id,
           title: moduleData.title,
           description: moduleData.description || '',
           order_index: moduleData.order_index,
         });
+        console.log('Module update result:', moduleResult);
         
         // Save lesson order if there are lessons
         if (moduleData.lessons.length > 0) {
-          await updateLessonOrderAction({
+          console.log('Calling updateLessonOrderAction...');
+          const lessonResult = await updateLessonOrderAction({
             moduleId: moduleData.id,
             lessons: moduleData.lessons.map(lesson => ({
               id: lesson.id,
               order_index: lesson.order_index,
             })),
           });
+          console.log('Lesson order update result:', lessonResult);
         }
         
         toast.success('Module and lesson order saved successfully');
         onSave(moduleData);
         setIsDirty(false);
       } catch (error) {
-        console.error('Failed to save module:', error);
+        console.error('Failed to save module - Full error:', error);
+        console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
         toast.error('Failed to save module');
         
         // Call debug endpoint for diagnostics
