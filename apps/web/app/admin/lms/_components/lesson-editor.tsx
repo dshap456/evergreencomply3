@@ -336,12 +336,32 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   courseId="f47ac10b-58cc-4372-a567-0e02b2c3d485" // TODO: Get actual course ID from context
                   accountId="c01c1f21-619e-4df0-9c0b-c8a3f296a2b7" // TODO: Get actual account ID from context
                   languageCode={lessonData.language}
-                  onUploadComplete={(videoMetadataId) => {
-                    console.log('Video uploaded, metadata ID:', videoMetadataId);
-                    // Mark the lesson as dirty so the save button is enabled
-                    setIsDirty(true);
-                    // Note: The VideoUpload component already updates the lesson's video_url
-                    // We don't need to update it here
+                  onUploadComplete={(videoMetadata) => {
+                    console.log('Video uploaded, metadata:', videoMetadata);
+                    // Update the lesson data with the new video URL
+                    // The RPC returns the video_metadata row which contains storage_path
+                    let storagePath = null;
+                    
+                    if (videoMetadata) {
+                      // Handle both object and string cases
+                      if (typeof videoMetadata === 'object' && videoMetadata.storage_path) {
+                        storagePath = videoMetadata.storage_path;
+                      } else if (typeof videoMetadata === 'string') {
+                        storagePath = videoMetadata;
+                      }
+                    }
+                    
+                    if (storagePath) {
+                      console.log('Updating lesson video_url to:', storagePath);
+                      setLessonData(prev => ({ 
+                        ...prev, 
+                        video_url: storagePath 
+                      }));
+                      // Mark the lesson as dirty so the save button is enabled
+                      setIsDirty(true);
+                    } else {
+                      console.error('Failed to extract storage path from video metadata:', videoMetadata);
+                    }
                   }}
                   onUploadError={(error) => {
                     console.error('Video upload failed:', error);

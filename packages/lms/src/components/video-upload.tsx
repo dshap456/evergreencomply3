@@ -13,7 +13,7 @@ interface VideoUploadProps {
   courseId: string;
   accountId: string;
   languageCode?: 'en' | 'es';
-  onUploadComplete?: (videoMetadataId: string) => void;
+  onUploadComplete?: (videoMetadata: any) => void;
   onUploadError?: (error: string) => void;
   className?: string;
 }
@@ -119,7 +119,12 @@ export function VideoUpload({
         }
       );
 
-      console.log('Video metadata response:', { metadataData, metadataError });
+      console.log('Video metadata RPC response:', { 
+        metadataData, 
+        metadataError,
+        storagePath,
+        type: typeof metadataData 
+      });
 
       if (metadataError) {
         throw new Error(`Failed to create metadata: ${metadataError.message}`);
@@ -131,19 +136,9 @@ export function VideoUpload({
         message: 'Video uploaded successfully! Finalizing...'
       });
 
-      // Update lesson with video URL
-      const { error: lessonUpdateError } = await supabase
-        .from('lessons')
-        .update({
-          video_url: storagePath,
-          content_type: 'video',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', lessonId);
-
-      if (lessonUpdateError) {
-        console.warn('Failed to update lesson video URL:', lessonUpdateError);
-      }
+      // Don't update the lesson directly here - let the parent component handle it
+      // This prevents race conditions and ensures the lesson editor maintains control
+      // over the lesson state
 
       // Update video metadata to ready status (since we're not actually processing)
       // We need to update it directly since the RPC might not return the ID
@@ -173,8 +168,9 @@ export function VideoUpload({
         message: 'Video upload complete!'
       });
 
-      // Notify parent component
-      onUploadComplete?.(metadataData);
+      // Notify parent component with the metadata object
+      // Pass the entire metadata object which includes storage_path
+      onUploadComplete?.(metadataData || { storage_path: storagePath });
 
       // Reset after delay
       setTimeout(() => {
