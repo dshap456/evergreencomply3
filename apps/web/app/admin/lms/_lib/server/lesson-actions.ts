@@ -9,7 +9,7 @@ const UpdateLessonSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional().nullable(),
   content_type: z.enum(['video', 'text', 'quiz']),
-  order_index: z.number().min(1),
+  order_index: z.number().min(0),
   is_final_quiz: z.boolean().optional(),
   video_url: z.string().optional().nullable(),
   language: z.enum(['en', 'es']).optional(),
@@ -75,7 +75,7 @@ const CreateLessonSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   content_type: z.enum(['video', 'text', 'quiz']),
-  order_index: z.number().min(1),
+  order_index: z.number().min(0),
   is_final_quiz: z.boolean().optional(),
   language: z.enum(['en', 'es']),
 });

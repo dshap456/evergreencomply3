@@ -8,7 +8,7 @@ const UpdateModuleSchema = z.object({
   id: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
-  order_index: z.number().min(1),
+  order_index: z.number().min(0),
   language: z.enum(['en', 'es']).optional(),
 });
 
@@ -47,7 +47,7 @@ const CreateModuleSchema = z.object({
   course_id: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
-  order_index: z.number().min(1),
+  order_index: z.number().min(0),
   language: z.enum(['en', 'es']),
 });
 
@@ -85,7 +85,7 @@ const UpdateLessonOrderSchema = z.object({
   moduleId: z.string().uuid(),
   lessons: z.array(z.object({
     id: z.string().uuid(),
-    order_index: z.number().min(1),
+    order_index: z.number().min(0),
   })),
 });
 
