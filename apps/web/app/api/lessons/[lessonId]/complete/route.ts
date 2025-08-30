@@ -119,8 +119,7 @@ export async function POST(
         const { error: enrollmentError } = await client
           .from('course_enrollments')
           .update({ 
-            final_score: quiz_score,
-            updated_at: new Date().toISOString()
+            final_score: quiz_score
           })
           .eq('user_id', user.id)
           .eq('course_id', courseId);
@@ -159,14 +158,56 @@ export async function POST(
             .from('course_enrollments')
             .update({
               completed_at: new Date().toISOString(),
-              completed_language: language,
-              updated_at: new Date().toISOString()
+              completed_language: language
             })
             .eq('user_id', user.id)
             .eq('course_id', courseId);
 
           if (completionError) {
             console.error('❌ Error completing course:', completionError);
+          }
+
+          // Create course_completions entry for reporting
+          const { data: userAccount } = await client
+            .from('accounts')
+            .select('name, email')
+            .eq('primary_owner_user_id', user.id)
+            .single();
+
+          const { data: courseData } = await client
+            .from('courses')
+            .select('title')
+            .eq('id', courseId)
+            .single();
+
+          const { data: enrollmentData } = await client
+            .from('course_enrollments')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('course_id', courseId)
+            .single();
+
+          if (userAccount && courseData && enrollmentData) {
+            const { error: completionRecordError } = await client
+              .from('course_completions')
+              .insert({
+                user_id: user.id,
+                course_id: courseId,
+                enrollment_id: enrollmentData.id,
+                student_name: userAccount.name || userAccount.email,
+                student_email: userAccount.email,
+                course_name: courseData.title,
+                final_quiz_score: quiz_score,
+                final_quiz_passed: true,
+                completion_percentage: 100,
+                completed_at: new Date().toISOString()
+              });
+
+            if (completionRecordError) {
+              console.error('❌ Error creating course completion record:', completionRecordError);
+            } else {
+              console.log('✅ Course completion record created successfully');
+            }
           }
         }
       }
