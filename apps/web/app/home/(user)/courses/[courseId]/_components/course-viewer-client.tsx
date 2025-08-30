@@ -441,7 +441,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                       }`}
                       title={`${lesson.title} (${module.title})${lesson.is_locked ? ' - Locked' : ''}`}
                     >
-                      {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : lesson.order_index}
+                      {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : ''}
                     </button>
                   ))
                 )}
@@ -476,7 +476,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                               ? 'bg-green-600 text-white' 
                               : 'bg-gray-200 text-gray-600'
                         }`}>
-                          {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : lesson.order_index}
+                          {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : ''}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1">
