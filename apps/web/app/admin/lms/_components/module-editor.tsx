@@ -95,9 +95,18 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
       setIsDirty(false);
     } catch (error) {
       console.error('Failed to save module - Full error:', error);
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error message:', errorMessage);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
-      toast.error('Failed to save module');
+      
+      // Show more specific error message to user
+      if (errorMessage.includes('do not belong to this module')) {
+        toast.error('Some lessons do not belong to this module. Please refresh and try again.');
+      } else if (errorMessage.includes('Unauthorized')) {
+        toast.error('You are not authorized to perform this action.');
+      } else {
+        toast.error(`Failed to save module: ${errorMessage}`);
+      }
       
       // Call debug endpoint for diagnostics
       try {
@@ -158,9 +167,9 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
     // Swap lessons
     [lessons[currentIndex], lessons[newIndex]] = [lessons[newIndex], lessons[currentIndex]];
     
-    // Update order indices
+    // Update order indices (0-based to match database)
     lessons.forEach((lesson, index) => {
-      lesson.order_index = index + 1;
+      lesson.order_index = index;
     });
 
     setModuleData({
@@ -303,9 +312,9 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
                     </Button>
                   </div>
 
-                  {/* Order Number */}
+                  {/* Order Number (display as 1-based for user) */}
                   <div className="flex items-center justify-center w-8 h-8 bg-muted rounded text-sm font-medium">
-                    {lesson.order_index}
+                    {lesson.order_index + 1}
                   </div>
 
                   {/* Content Type Icon */}
@@ -367,7 +376,7 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         open={showCreateLesson}
         onOpenChange={setShowCreateLesson}
         onLessonCreated={handleLessonCreated}
-        nextOrderIndex={moduleData.lessons.length + 1}
+        nextOrderIndex={moduleData.lessons.length}
         moduleId={moduleData.id}
         language={moduleData.language}
       />

@@ -105,7 +105,28 @@ export async function updateLessonOrderAction(data: z.infer<typeof UpdateLessonO
   console.log('Updating lesson order for module:', validated.moduleId);
   console.log('Lessons to update:', validated.lessons);
 
-  // Update each lesson's order_index in a transaction-like manner
+  // First, verify all lessons belong to the module
+  const { data: existingLessons, error: fetchError } = await adminClient
+    .from('lessons')
+    .select('id')
+    .eq('module_id', validated.moduleId)
+    .in('id', validated.lessons.map(l => l.id));
+
+  if (fetchError) {
+    console.error('Failed to fetch lessons:', fetchError);
+    throw new Error(`Failed to fetch lessons: ${fetchError.message}`);
+  }
+
+  const existingLessonIds = new Set(existingLessons?.map(l => l.id) || []);
+  const requestedLessonIds = validated.lessons.map(l => l.id);
+  const missingLessons = requestedLessonIds.filter(id => !existingLessonIds.has(id));
+
+  if (missingLessons.length > 0) {
+    console.error('Lessons not found in module:', missingLessons);
+    throw new Error(`Some lessons do not belong to this module or do not exist: ${missingLessons.join(', ')}`);
+  }
+
+  // Update each lesson's order_index with verification
   const updatePromises = validated.lessons.map((lesson) =>
     adminClient
       .from('lessons')
@@ -114,16 +135,37 @@ export async function updateLessonOrderAction(data: z.infer<typeof UpdateLessonO
         updated_at: new Date().toISOString(),
       })
       .eq('id', lesson.id)
-      .eq('module_id', validated.moduleId) // Extra safety check
+      .eq('module_id', validated.moduleId)
+      .select() // Add select to verify the update
   );
 
   const results = await Promise.all(updatePromises);
   
-  // Check if any updates failed
-  const errors = results.filter(result => result.error);
-  if (errors.length > 0) {
-    console.error('Lesson order update errors:', errors);
-    throw new Error(`Failed to update lesson order: ${errors[0].error.message}`);
+  // Check if any updates failed or returned no data
+  const failedUpdates = [];
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const lesson = validated.lessons[i];
+    
+    if (result.error) {
+      failedUpdates.push({
+        lessonId: lesson.id,
+        error: result.error.message
+      });
+    } else if (!result.data || result.data.length === 0) {
+      failedUpdates.push({
+        lessonId: lesson.id,
+        error: 'No rows updated - lesson may not exist or not belong to this module'
+      });
+    }
+  }
+
+  if (failedUpdates.length > 0) {
+    console.error('Lesson order update failures:', failedUpdates);
+    const errorMessage = failedUpdates
+      .map(f => `Lesson ${f.lessonId}: ${f.error}`)
+      .join('; ');
+    throw new Error(`Failed to update lesson order: ${errorMessage}`);
   }
 
   console.log('Successfully updated lesson order');
