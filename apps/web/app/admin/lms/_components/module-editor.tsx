@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -51,76 +51,80 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
   const [moduleData, setModuleData] = useState(module);
   const [showCreateLesson, setShowCreateLesson] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
-    startTransition(async () => {
+    console.log('handleSave called');
+    setIsSaving(true);
+    
+    try {
+      console.log('Starting save operation...');
+      console.log('Module data:', {
+        id: moduleData.id,
+        title: moduleData.title,
+        description: moduleData.description,
+        order_index: moduleData.order_index,
+        lessonCount: moduleData.lessons.length
+      });
+      
+      // Save module metadata
+      console.log('Calling updateModuleAction...');
+      const moduleResult = await updateModuleAction({
+        id: moduleData.id,
+        title: moduleData.title,
+        description: moduleData.description || '',
+        order_index: moduleData.order_index,
+      });
+      console.log('Module update result:', moduleResult);
+      
+      // Save lesson order if there are lessons
+      if (moduleData.lessons.length > 0) {
+        console.log('Calling updateLessonOrderAction with lessons:', moduleData.lessons.map(l => ({id: l.id, order: l.order_index})));
+        const lessonResult = await updateLessonOrderAction({
+          moduleId: moduleData.id,
+          lessons: moduleData.lessons.map(lesson => ({
+            id: lesson.id,
+            order_index: lesson.order_index,
+          })),
+        });
+        console.log('Lesson order update result:', lessonResult);
+      }
+      
+      toast.success('Module and lesson order saved successfully');
+      onSave(moduleData);
+      setIsDirty(false);
+    } catch (error) {
+      console.error('Failed to save module - Full error:', error);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      toast.error('Failed to save module');
+      
+      // Call debug endpoint for diagnostics
       try {
-        console.log('Starting save operation...');
-        console.log('Module data:', {
-          id: moduleData.id,
-          title: moduleData.title,
-          description: moduleData.description,
-          order_index: moduleData.order_index
-        });
-        
-        // Save module metadata
-        console.log('Calling updateModuleAction...');
-        const moduleResult = await updateModuleAction({
-          id: moduleData.id,
-          title: moduleData.title,
-          description: moduleData.description || '',
-          order_index: moduleData.order_index,
-        });
-        console.log('Module update result:', moduleResult);
-        
-        // Save lesson order if there are lessons
-        if (moduleData.lessons.length > 0) {
-          console.log('Calling updateLessonOrderAction...');
-          const lessonResult = await updateLessonOrderAction({
+        const debugResponse = await fetch('/api/debug-module-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             moduleId: moduleData.id,
             lessons: moduleData.lessons.map(lesson => ({
               id: lesson.id,
               order_index: lesson.order_index,
             })),
-          });
-          console.log('Lesson order update result:', lessonResult);
-        }
-        
-        toast.success('Module and lesson order saved successfully');
-        onSave(moduleData);
-        setIsDirty(false);
-      } catch (error) {
-        console.error('Failed to save module - Full error:', error);
-        console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
-        toast.error('Failed to save module');
-        
-        // Call debug endpoint for diagnostics
-        try {
-          const debugResponse = await fetch('/api/debug-module-save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              moduleId: moduleData.id,
-              lessons: moduleData.lessons.map(lesson => ({
-                id: lesson.id,
-                order_index: lesson.order_index,
-              })),
-              moduleData: {
-                title: moduleData.title,
-                description: moduleData.description,
-                order_index: moduleData.order_index,
-              }
-            })
-          });
-          const debugData = await debugResponse.json();
-          console.error('Debug info:', debugData);
-        } catch (debugError) {
-          console.error('Debug endpoint failed:', debugError);
-        }
+            moduleData: {
+              title: moduleData.title,
+              description: moduleData.description,
+              order_index: moduleData.order_index,
+            }
+          })
+        });
+        const debugData = await debugResponse.json();
+        console.error('Debug info:', debugData);
+      } catch (debugError) {
+        console.error('Debug endpoint failed:', debugError);
       }
-    });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLessonCreated = (newLesson: Lesson) => {
@@ -203,8 +207,8 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         </div>
         <div className="flex gap-2">
           <Button variant="outline">Preview</Button>
-          <Button onClick={handleSave} disabled={!isDirty || isPending}>
-            {isPending ? (
+          <Button onClick={handleSave} disabled={!isDirty || isSaving}>
+            {isSaving ? (
               <>
                 <Spinner className="mr-2 h-4 w-4" />
                 Saving...
