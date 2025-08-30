@@ -664,15 +664,7 @@ Download Asset
     <div className="h-full flex flex-col overflow-hidden">
       {/* Lesson Header - Mobile and Desktop */}
       <div className="bg-white p-2 sm:p-3 lg:p-4 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-lg lg:text-xl font-bold truncate">{lesson.title}</h1>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">{module.title}</p>
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {currentLessonCompleted && (
               <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs sm:text-sm px-2 py-0.5">
