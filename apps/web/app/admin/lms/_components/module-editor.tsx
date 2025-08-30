@@ -18,7 +18,7 @@ import { toast } from '@kit/ui/sonner';
 import { Spinner } from '@kit/ui/spinner';
 
 import { CreateLessonDialog } from './create-lesson-dialog';
-import { updateModuleAction } from '../_lib/server/module-actions';
+import { updateModuleAction, updateLessonOrderAction } from '../_lib/server/module-actions';
 
 interface Module {
   id: string;
@@ -56,6 +56,7 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
   const handleSave = async () => {
     startTransition(async () => {
       try {
+        // Save module metadata
         await updateModuleAction({
           id: moduleData.id,
           title: moduleData.title,
@@ -63,7 +64,18 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
           order_index: moduleData.order_index,
         });
         
-        toast.success('Module saved successfully');
+        // Save lesson order if there are lessons
+        if (moduleData.lessons.length > 0) {
+          await updateLessonOrderAction({
+            moduleId: moduleData.id,
+            lessons: moduleData.lessons.map(lesson => ({
+              id: lesson.id,
+              order_index: lesson.order_index,
+            })),
+          });
+        }
+        
+        toast.success('Module and lesson order saved successfully');
         onSave(moduleData);
         setIsDirty(false);
       } catch (error) {

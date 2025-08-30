@@ -74,6 +74,46 @@ export const createModuleAction = enhanceAction(
   }
 );
 
+const UpdateLessonOrderSchema = z.object({
+  moduleId: z.string().uuid(),
+  lessons: z.array(z.object({
+    id: z.string().uuid(),
+    order_index: z.number().min(1),
+  })),
+});
+
+export const updateLessonOrderAction = enhanceAction(
+  async function (data) {
+    const client = getSupabaseServerAdminClient();
+
+    // Update each lesson's order_index in a transaction-like manner
+    const updatePromises = data.lessons.map((lesson) =>
+      client
+        .from('lessons')
+        .update({
+          order_index: lesson.order_index,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', lesson.id)
+        .eq('module_id', data.moduleId) // Extra safety check
+    );
+
+    const results = await Promise.all(updatePromises);
+    
+    // Check if any updates failed
+    const errors = results.filter(result => result.error);
+    if (errors.length > 0) {
+      throw new Error(`Failed to update lesson order: ${errors[0].error.message}`);
+    }
+
+    return { success: true };
+  },
+  {
+    auth: true,
+    schema: UpdateLessonOrderSchema,
+  }
+);
+
 const DeleteModuleSchema = z.object({
   id: z.string().uuid(),
 });
