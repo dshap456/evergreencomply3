@@ -9,7 +9,7 @@ const VideoJSPlayer = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="w-full h-full flex items-center justify-center bg-black">
+      <div className="w-full h-full flex items-center justify-center bg-gray-900">
         <div className="text-center text-white">
           <Spinner className="mx-auto mb-4 h-8 w-8" />
           <p>Loading video player...</p>
@@ -44,7 +44,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-full bg-gray-900">
       <VideoJSPlayer 
         src={src}
         onProgress={onProgress}

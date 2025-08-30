@@ -223,7 +223,7 @@ export function VideoJSPlayer({
           width: 100%;
           height: 100%;
           position: relative;
-          background: #000;
+          background: rgb(17 24 39); /* gray-900 */
         }
         
         /* Mobile optimizations */

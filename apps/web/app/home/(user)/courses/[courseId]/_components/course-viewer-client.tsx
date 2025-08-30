@@ -581,7 +581,7 @@ function LessonPlayer({
     switch (lesson.content_type) {
       case 'video':
         return (
-          <div className="bg-black flex items-center justify-center w-full h-[25vh] sm:h-[35vh] md:h-[50vh] lg:h-[60vh] max-h-[200px] sm:max-h-[300px] md:max-h-[400px] lg:max-h-[500px]">
+          <div className="bg-gray-900 flex items-center justify-center w-full h-[25vh] sm:h-[35vh] md:h-[50vh] lg:h-[60vh] max-h-[200px] sm:max-h-[300px] md:max-h-[400px] lg:max-h-[500px]">
             <div className="w-full h-full relative flex items-center justify-center">
               <StorageVideoPlayer 
                 lessonId={lesson.id}
