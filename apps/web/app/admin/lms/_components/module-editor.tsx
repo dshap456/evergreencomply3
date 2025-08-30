@@ -81,6 +81,30 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
       } catch (error) {
         console.error('Failed to save module:', error);
         toast.error('Failed to save module');
+        
+        // Call debug endpoint for diagnostics
+        try {
+          const debugResponse = await fetch('/api/debug-module-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              moduleId: moduleData.id,
+              lessons: moduleData.lessons.map(lesson => ({
+                id: lesson.id,
+                order_index: lesson.order_index,
+              })),
+              moduleData: {
+                title: moduleData.title,
+                description: moduleData.description,
+                order_index: moduleData.order_index,
+              }
+            })
+          });
+          const debugData = await debugResponse.json();
+          console.error('Debug info:', debugData);
+        } catch (debugError) {
+          console.error('Debug endpoint failed:', debugError);
+        }
       }
     });
   };
