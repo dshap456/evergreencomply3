@@ -146,6 +146,7 @@ export const deleteLessonAction = enhanceAction(
 
 const SaveQuizDataSchema = z.object({
   lessonId: z.string().uuid(),
+  language: z.enum(['en', 'es']).optional(),
   quizData: z.object({
     id: z.string().optional(),
     title: z.string(),
@@ -256,6 +257,7 @@ export const saveQuizDataAction = enhanceAction(
 
     console.log('🔄 SaveQuizDataAction: Received data for validation:', {
       lessonId: data.lessonId,
+      language: data.language || 'en',
       quizData: {
         title: data.quizData.title,
         description: data.quizData.description,
@@ -302,7 +304,14 @@ export const saveQuizDataAction = enhanceAction(
             correct_answer: correct_answer || '',
             points: question.points,
             order_index: question.order_index,
+            language: data.language || 'en',
           };
+        });
+
+        console.log('🔄 SaveQuizDataAction: Inserting quiz questions with data:', {
+          count: questionsData.length,
+          firstQuestion: questionsData[0],
+          language: data.language || 'en'
         });
 
         const { error: insertError } = await client
@@ -311,6 +320,7 @@ export const saveQuizDataAction = enhanceAction(
 
         if (insertError) {
           console.error('❌ SaveQuizDataAction: Failed to insert quiz questions:', insertError);
+          console.error('❌ Full error details:', JSON.stringify(insertError, null, 2));
           throw new Error(`Failed to save quiz questions: ${insertError.message}`);
         }
       }

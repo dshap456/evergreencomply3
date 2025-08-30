@@ -158,6 +158,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
               await saveQuizDataAction({
                 lessonId: lessonData.id,
                 quizData,
+                language: lessonData.language || 'en',
               });
               
               console.log('LessonEditor: Quiz data saved successfully');
