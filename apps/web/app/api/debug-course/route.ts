@@ -109,13 +109,13 @@ export async function GET(request: NextRequest) {
         lesson_id, 
         status, 
         time_spent, 
-        video_progress,
+        progress_percentage,
         quiz_score,
         language
       `)
       .eq('user_id', user.id)
-      .eq('enrollment_id', enrollment.id)
-      .eq('language', language);
+      .eq('language', language)
+      .in('lesson_id', (lessons || []).map(l => l.id));
 
     if (progressError) {
       console.error('Progress error:', progressError);
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
       progressMap.set(progress.lesson_id, {
         completed: progress.status === 'completed',
         time_spent: progress.time_spent || 0,
-        video_progress: progress.video_progress,
+        video_progress: progress.progress_percentage,
         quiz_score: progress.quiz_score
       });
     });
