@@ -371,7 +371,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     }
   };
 
-  const handleLessonCompletion = async (lessonId: string, timeSpent?: number, quizScore?: number) => {
+  const handleLessonCompletion = async (lessonId: string, timeSpent?: number, quizScore?: number, isFinalQuiz?: boolean) => {
     try {
       // Mark lesson as complete in database
       const response = await fetch(`/api/lessons/${lessonId}/complete`, {
@@ -387,6 +387,14 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
       if (response.ok) {
         console.log('✅ Lesson completion saved to database');
+        
+        // If this was a final quiz with a passing score, redirect to My Learning
+        if (isFinalQuiz && quizScore && quizScore >= 80) {
+          console.log('🎉 Final quiz passed! Redirecting to My Learning...');
+          // Use router.push for cleaner navigation within Next.js
+          router.push('/home/courses');
+          return; // Exit early, no need to refresh course data since we're leaving
+        }
         
         // Get fresh course data from server to ensure consistency
         const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}&language=${selectedLanguage}`);
@@ -706,7 +714,7 @@ function LessonPlayer({
   onNext: () => void;
   hasNextLesson: boolean;
   isLastLesson: boolean;
-  onLessonComplete: (lessonId: string, timeSpent?: number) => void;
+  onLessonComplete: (lessonId: string, timeSpent?: number, quizScore?: number, isFinalQuiz?: boolean) => void;
   selectedLanguage: 'en' | 'es';
 }) {
   const [currentLessonCompleted, setCurrentLessonCompleted] = useState(lesson.completed);
@@ -766,7 +774,8 @@ function LessonPlayer({
               if (passed && score >= 80) {
                 setCurrentLessonCompleted(true);
                 // Save quiz completion to database with score
-                onLessonComplete(lesson.id, 0, score);
+                // Pass is_final_quiz flag to handle redirect after API success
+                onLessonComplete(lesson.id, 0, score, lesson.is_final_quiz);
               }
             }}
           />
@@ -1099,7 +1108,6 @@ function QuizPlayer({
   currentScore?: number;
   onQuizComplete: (score: number, passed: boolean) => void;
 }) {
-  const router = useRouter();
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
@@ -1109,17 +1117,6 @@ function QuizPlayer({
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
-  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Cleanup redirect timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-        redirectTimeoutRef.current = null;
-      }
-    };
-  }, []);
 
   // Fetch quiz questions from database
   useEffect(() => {
@@ -1203,30 +1200,10 @@ function QuizPlayer({
     // Notify parent component
     onQuizComplete(scorePercentage, passed);
 
-    // If this is a final quiz and user passed, redirect to My Learning after 3 seconds
+    // Mark as redirecting if this is a final quiz and user passed
+    // The actual redirect will be handled by the parent after API success
     if (lesson.is_final_quiz && passed) {
       setRedirecting(true);
-      
-      // Clear any existing timeout
-      if (redirectTimeoutRef.current) {
-        clearTimeout(redirectTimeoutRef.current);
-      }
-      
-      // Set new timeout with proper error handling
-      redirectTimeoutRef.current = setTimeout(() => {
-        try {
-          // Use window.location for more reliable redirect
-          window.location.href = '/home/courses';
-        } catch (error) {
-          console.error('Failed to redirect to My Learning:', error);
-          // Fallback to router.push if window.location fails
-          router.push('/home/courses').catch((err) => {
-            console.error('Router push failed:', err);
-            // Final fallback - show a link to the user
-            setRedirecting(false);
-          });
-        }
-      }, 3000);
     }
   };
 
@@ -1315,7 +1292,7 @@ function QuizPlayer({
               <div className="mt-2">
                 <p className="text-green-700 text-sm flex items-center gap-2">
                   <Spinner className="h-3 w-3" />
-                  Redirecting to My Learning in 3 seconds...
+                  Saving your progress and redirecting to My Learning...
                 </p>
                 <Link 
                   href="/home/courses"
