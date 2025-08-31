@@ -37,7 +37,7 @@ export interface CourseLesson {
   // Progress
   completed: boolean;
   time_spent: number;
-  last_accessed: string | null;
+  last_accessed: string | null;  // Will use updated_at from database
 }
 
 export async function loadLearnerCourseDetails(courseId: string): Promise<LearnerCourseDetails> {
@@ -112,10 +112,10 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     throw lessonsError;
   }
 
-  // Get lesson progress
+  // Get lesson progress (using updated_at as last_accessed since that column might not exist)
   const { data: lessonProgress, error: progressError } = await client
     .from('lesson_progress')
-    .select('lesson_id, status, time_spent, last_accessed')
+    .select('lesson_id, status, time_spent, updated_at, created_at')
     .eq('user_id', user.id);
 
   if (progressError) {
@@ -128,7 +128,8 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     progressMap.set(progress.lesson_id, {
       completed: progress.status === 'completed',
       time_spent: progress.time_spent || 0,
-      last_accessed: progress.last_accessed || null
+      // Use updated_at if available, fall back to created_at
+      last_accessed: progress.updated_at || progress.created_at || null
     });
   });
 

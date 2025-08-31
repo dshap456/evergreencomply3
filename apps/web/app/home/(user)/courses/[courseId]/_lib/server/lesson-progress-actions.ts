@@ -39,16 +39,23 @@ export const updateLessonProgressAction = enhanceAction(
     }
 
     // Upsert lesson progress
+    // Note: Some columns might not exist yet if migration hasn't been run
+    const progressData: any = {
+      user_id: user.id,
+      lesson_id: data.lessonId,
+      time_spent: data.timeSpent,
+      status: data.progress >= 95 ? 'completed' : 'in_progress', // Auto-complete at 95%
+      updated_at: new Date().toISOString(), // Always update this for tracking
+    };
+    
+    // Only add these if the columns exist (after migration)
+    if (data.progress !== undefined) {
+      progressData.progress_percentage = data.progress;
+    }
+    
     const { error: progressError } = await client
       .from('lesson_progress')
-      .upsert({
-        user_id: user.id,
-        lesson_id: data.lessonId,
-        progress_percentage: data.progress,
-        time_spent: data.timeSpent,
-        last_accessed: new Date().toISOString(),
-        status: data.progress >= 95 ? 'completed' : 'in_progress', // Auto-complete at 95%
-      }, {
+      .upsert(progressData, {
         onConflict: 'user_id,lesson_id'
       });
 
@@ -82,18 +89,26 @@ export const completeLessonAction = enhanceAction(
     }
 
     // Mark lesson as completed
+    const completionData: any = {
+      user_id: user.id,
+      lesson_id: data.lessonId,
+      time_spent: data.timeSpent,
+      status: 'completed',
+      completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(), // Always update this for tracking
+    };
+    
+    // Only add these if the columns exist (after migration)
+    if (data.finalProgress !== undefined) {
+      completionData.progress_percentage = data.finalProgress;
+    }
+    if (data.quizScore !== undefined) {
+      completionData.quiz_score = data.quizScore;
+    }
+    
     const { error: progressError } = await client
       .from('lesson_progress')
-      .upsert({
-        user_id: user.id,
-        lesson_id: data.lessonId,
-        progress_percentage: data.finalProgress,
-        time_spent: data.timeSpent,
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-        last_accessed: new Date().toISOString(),
-        quiz_score: data.quizScore,
-      }, {
+      .upsert(completionData, {
         onConflict: 'user_id,lesson_id'
       });
 
