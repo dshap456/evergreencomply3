@@ -435,7 +435,17 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             }, 1500); // 1.5 second delay to show completion
           }
         } else {
-          console.error('❌ Failed to refresh course data after completion');
+          console.error('❌ Failed to refresh course data after completion:', courseResult.error);
+          // Still mark the lesson as completed in the UI even if refresh fails
+          const updatedModules = course.modules.map(module => ({
+            ...module,
+            lessons: module.lessons.map(lesson => 
+              lesson.id === lessonId 
+                ? { ...lesson, completed: true, quiz_score: quizScore }
+                : lesson
+            )
+          }));
+          setCourse({ ...course, modules: updatedModules });
         }
         
       } else {
@@ -1099,6 +1109,17 @@ function QuizPlayer({
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup redirect timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+        redirectTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch quiz questions from database
   useEffect(() => {
@@ -1185,8 +1206,26 @@ function QuizPlayer({
     // If this is a final quiz and user passed, redirect to My Learning after 3 seconds
     if (lesson.is_final_quiz && passed) {
       setRedirecting(true);
-      setTimeout(() => {
-        router.push('/home/courses');
+      
+      // Clear any existing timeout
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+      
+      // Set new timeout with proper error handling
+      redirectTimeoutRef.current = setTimeout(() => {
+        try {
+          // Use window.location for more reliable redirect
+          window.location.href = '/home/courses';
+        } catch (error) {
+          console.error('Failed to redirect to My Learning:', error);
+          // Fallback to router.push if window.location fails
+          router.push('/home/courses').catch((err) => {
+            console.error('Router push failed:', err);
+            // Final fallback - show a link to the user
+            setRedirecting(false);
+          });
+        }
       }, 3000);
     }
   };
@@ -1273,10 +1312,18 @@ function QuizPlayer({
               ✅ Quiz completed successfully!
             </p>
             {lesson.is_final_quiz && redirecting && (
-              <p className="text-green-700 text-sm mt-2 flex items-center gap-2">
-                <Spinner className="h-3 w-3" />
-                Redirecting to My Learning in 3 seconds...
-              </p>
+              <div className="mt-2">
+                <p className="text-green-700 text-sm flex items-center gap-2">
+                  <Spinner className="h-3 w-3" />
+                  Redirecting to My Learning in 3 seconds...
+                </p>
+                <Link 
+                  href="/home/courses"
+                  className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block underline"
+                >
+                  Click here if you're not redirected automatically
+                </Link>
+              </div>
             )}
           </div>
         ) : (
