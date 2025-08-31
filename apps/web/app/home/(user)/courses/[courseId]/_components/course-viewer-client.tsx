@@ -227,16 +227,29 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         if (result.success && result.lessonId) {
           setLastAccessedLesson(result.lessonId);
           // Check if this lesson is still available (not locked)
-          const lesson = course.modules
-            .flatMap(m => m.lessons)
-            .find(l => l.id === result.lessonId);
+          const allLessons = course.modules.flatMap(m => m.lessons);
+          console.log('📚 All lessons in course:', allLessons.map(l => ({ 
+            id: l.id.substring(0, 8), 
+            title: l.title, 
+            locked: l.is_locked,
+            completed: l.completed 
+          })));
+          
+          const lesson = allLessons.find(l => l.id === result.lessonId);
+          
+          console.log('🔍 Looking for lesson:', result.lessonId);
+          console.log('📖 Found lesson:', lesson ? {
+            title: lesson.title,
+            is_locked: lesson.is_locked,
+            completed: lesson.completed
+          } : 'NOT FOUND');
           
           if (lesson && !lesson.is_locked) {
             console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
             setCurrentLessonId(result.lessonId);
             return;
           } else {
-            console.log('🔒 Last accessed lesson is locked or not found');
+            console.log('🔒 Cannot restore - lesson is locked or not found');
           }
         }
       } catch (error) {

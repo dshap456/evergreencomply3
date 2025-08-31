@@ -7,6 +7,8 @@ export async function GET(request: NextRequest) {
     const courseId = searchParams.get('courseId');
     const language = searchParams.get('language') || 'en';
 
+    console.log('[API] last-accessed called with:', { courseId, language });
+
     if (!courseId) {
       return NextResponse.json({ success: false, error: 'Course ID required' }, { status: 400 });
     }
@@ -16,8 +18,11 @@ export async function GET(request: NextRequest) {
     // Get current user
     const { data: { user }, error: userError } = await client.auth.getUser();
     if (!user || userError) {
+      console.log('[API] No user authenticated');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+
+    console.log('[API] User ID:', user.id);
 
     // First get all lessons for this course
     const { data: courseLessons, error: lessonsError } = await client
@@ -37,6 +42,8 @@ export async function GET(request: NextRequest) {
 
     const lessonIds = courseLessons?.map(l => l.id) || [];
     
+    console.log('[API] Found lessons for course:', lessonIds.length);
+    
     if (lessonIds.length === 0) {
       return NextResponse.json({ success: true, lessonId: null });
     }
@@ -52,6 +59,8 @@ export async function GET(request: NextRequest) {
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();
+    
+    console.log('[API] Lesson progress query result:', { lessonProgress, error });
 
     if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
       console.error('Error fetching last accessed lesson:', error);
