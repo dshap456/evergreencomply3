@@ -386,13 +386,23 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       });
 
       if (response.ok) {
-        console.log('✅ Lesson completion saved to database');
+        const responseData = await response.json();
+        console.log('✅ Lesson completion saved to database:', responseData);
         
         // If this was a final quiz with a passing score, redirect to My Learning
         if (isFinalQuiz && quizScore && quizScore >= 80) {
           console.log('🎉 Final quiz passed! Redirecting to My Learning...');
-          // Use router.push for cleaner navigation within Next.js
-          router.push('/home/courses');
+          // Add a small delay to ensure database operations complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          try {
+            // Use router.push for cleaner navigation within Next.js
+            await router.push('/home/courses');
+          } catch (navError) {
+            console.error('❌ Navigation error:', navError);
+            // Try alternative navigation
+            window.location.href = '/home/courses';
+          }
           return; // Exit early, no need to refresh course data since we're leaving
         }
         
@@ -457,7 +467,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         }
         
       } else {
-        console.error('❌ Failed to save lesson completion');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('❌ Failed to save lesson completion:', errorData);
       }
     } catch (error) {
       console.error('❌ Error saving lesson completion:', error);
