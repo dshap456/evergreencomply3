@@ -174,20 +174,48 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
 
-  // Auto-select the first incomplete lesson when course loads
+  // Fetch last accessed lesson from database
   useEffect(() => {
-    if (course && !currentLessonId) {
+    const fetchLastAccessedLesson = async () => {
+      if (!course) return;
+      
+      try {
+        const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
+        const result = await response.json();
+        
+        if (result.success && result.lessonId) {
+          setLastAccessedLesson(result.lessonId);
+          // Check if this lesson is still available (not locked)
+          const lesson = course.modules
+            .flatMap(m => m.lessons)
+            .find(l => l.id === result.lessonId);
+          
+          if (lesson && !lesson.is_locked) {
+            setCurrentLessonId(result.lessonId);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch last accessed lesson:', error);
+      }
+      
+      // Fallback to first incomplete lesson if no valid last accessed lesson
       const nextLesson = getNextLesson();
       if (nextLesson) {
         setCurrentLessonId(nextLesson.lesson.id);
       }
+    };
+    
+    if (course && !currentLessonId) {
+      fetchLastAccessedLesson();
     }
-  }, [course, currentLessonId]);
+  }, [course, currentLessonId, courseId, selectedLanguage]);
 
-  const handleSelectLesson = (lessonId: string) => {
+  const handleSelectLesson = async (lessonId: string) => {
     // Find the lesson to check if it's locked
     const lesson = course?.modules
       .flatMap(m => m.lessons)
@@ -200,6 +228,22 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     
     setCurrentLessonId(lessonId);
     setSidebarOpen(false); // Close sidebar on mobile after selection
+    
+    // Save the current lesson as last accessed
+    try {
+      await fetch('/api/lessons/update-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId,
+          courseId,
+          language: selectedLanguage,
+          updateLastAccessed: true
+        })
+      });
+    } catch (error) {
+      console.error('Failed to update last accessed lesson:', error);
+    }
   };
 
   const getCurrentLesson = () => {
@@ -247,11 +291,27 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return currentIndex === allLessons.length - 1;
   };
 
-  const handleNextLesson = () => {
+  const handleNextLesson = async () => {
     const nextLesson = getNextLessonInSequence();
     if (nextLesson) {
       console.log('🎯 Manual navigation to next lesson:', nextLesson.lesson.title);
       setCurrentLessonId(nextLesson.lesson.id);
+      
+      // Save the new lesson as last accessed
+      try {
+        await fetch('/api/lessons/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonId: nextLesson.lesson.id,
+            courseId,
+            language: selectedLanguage,
+            updateLastAccessed: true
+          })
+        });
+      } catch (error) {
+        console.error('Failed to update last accessed lesson:', error);
+      }
     } else {
       console.log('❌ No next lesson available');
     }
@@ -299,9 +359,25 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             const nextLessonData = allLessons[currentIndex + 1];
             
             // Auto-advance to next lesson after a short delay
-            setTimeout(() => {
+            setTimeout(async () => {
               console.log('🚀 Auto-advancing to next lesson:', nextLessonData.lesson.title);
               setCurrentLessonId(nextLessonData.lesson.id);
+              
+              // Save the new lesson as last accessed
+              try {
+                await fetch('/api/lessons/update-progress', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    lessonId: nextLessonData.lesson.id,
+                    courseId,
+                    language: selectedLanguage,
+                    updateLastAccessed: true
+                  })
+                });
+              } catch (error) {
+                console.error('Failed to update last accessed lesson:', error);
+              }
             }, 1500); // 1.5 second delay to show completion
           }
         } else {
