@@ -37,6 +37,7 @@ export interface CourseLesson {
   // Progress
   completed: boolean;
   time_spent: number;
+  last_accessed: string | null;
 }
 
 export async function loadLearnerCourseDetails(courseId: string): Promise<LearnerCourseDetails> {
@@ -114,7 +115,7 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
   // Get lesson progress
   const { data: lessonProgress, error: progressError } = await client
     .from('lesson_progress')
-    .select('lesson_id, status, time_spent')
+    .select('lesson_id, status, time_spent, last_accessed')
     .eq('user_id', user.id);
 
   if (progressError) {
@@ -122,11 +123,12 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
   }
 
   // Create progress map
-  const progressMap = new Map<string, { completed: boolean; time_spent: number }>();
+  const progressMap = new Map<string, { completed: boolean; time_spent: number; last_accessed: string | null }>();
   lessonProgress?.forEach(progress => {
     progressMap.set(progress.lesson_id, {
       completed: progress.status === 'completed',
-      time_spent: progress.time_spent || 0
+      time_spent: progress.time_spent || 0,
+      last_accessed: progress.last_accessed || null
     });
   });
 
@@ -148,7 +150,7 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
     lessons: (lessonsByModule.get(module.id) || [])
       .sort((a, b) => a.order_index - b.order_index)
       .map(lesson => {
-        const progress = progressMap.get(lesson.id) || { completed: false, time_spent: 0 };
+        const progress = progressMap.get(lesson.id) || { completed: false, time_spent: 0, last_accessed: null };
         return {
           id: lesson.id,
           title: lesson.title,
@@ -160,7 +162,8 @@ export async function loadLearnerCourseDetails(courseId: string): Promise<Learne
           asset_url: lesson.asset_url,
           is_final_quiz: lesson.is_final_quiz,
           completed: progress.completed,
-          time_spent: progress.time_spent
+          time_spent: progress.time_spent,
+          last_accessed: progress.last_accessed
         };
       })
   }));

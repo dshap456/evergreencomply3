@@ -25,12 +25,22 @@ export function CourseLearningInterface({ course }: CourseLearningInterfaceProps
   // Get the current lesson object
   const currentLesson = getCurrentLesson(course, currentLessonId);
 
-  // Get the first available (unlocked, incomplete) lesson on component mount
+  // Restore last accessed lesson or get first available lesson on component mount
+  // This fixes the issue where refreshing the page would reset to the first incomplete lesson
+  // Now it remembers where the user was and restores their position
   useEffect(() => {
     if (!currentLessonId) {
-      const firstAvailableLesson = getFirstAvailableLesson(course);
-      if (firstAvailableLesson) {
-        setCurrentLessonId(firstAvailableLesson.id);
+      // First, try to find the most recently accessed lesson that isn't completed
+      const lastAccessedLesson = getLastAccessedLesson(course);
+      
+      if (lastAccessedLesson) {
+        setCurrentLessonId(lastAccessedLesson.id);
+      } else {
+        // Fall back to first incomplete lesson if no recently accessed lesson
+        const firstAvailableLesson = getFirstAvailableLesson(course);
+        if (firstAvailableLesson) {
+          setCurrentLessonId(firstAvailableLesson.id);
+        }
       }
     }
   }, [currentLessonId, course]);
@@ -210,7 +220,13 @@ export function CourseLearningInterface({ course }: CourseLearningInterfaceProps
         <LessonNavigation
           modules={course.modules}
           currentLessonId={currentLessonId}
-          onLessonSelect={setCurrentLessonId}
+          onLessonSelect={(lessonId) => {
+            setCurrentLessonId(lessonId);
+            // Update last_accessed when user selects a lesson
+            if (lessonId) {
+              handleProgressUpdate(lessonId, 0);
+            }
+          }}
         />
       </div>
     </div>
@@ -242,6 +258,26 @@ function getFirstAvailableLesson(course: LearnerCourseDetails): CourseLesson | n
     }
   }
   return null;
+}
+
+function getLastAccessedLesson(course: LearnerCourseDetails): CourseLesson | null {
+  // Find the most recently accessed lesson that isn't completed
+  let mostRecentLesson: CourseLesson | null = null;
+  let mostRecentTime: string | null = null;
+  
+  for (const module of course.modules) {
+    for (const lesson of module.lessons) {
+      // Consider lessons that have been accessed but not completed
+      if (lesson.last_accessed && !lesson.completed) {
+        if (!mostRecentTime || lesson.last_accessed > mostRecentTime) {
+          mostRecentTime = lesson.last_accessed;
+          mostRecentLesson = lesson;
+        }
+      }
+    }
+  }
+  
+  return mostRecentLesson;
 }
 
 function getNextAvailableLesson(course: LearnerCourseDetails, currentLessonId: string): CourseLesson | null {
