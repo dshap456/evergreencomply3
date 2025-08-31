@@ -69,6 +69,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   });
 
   const loadCourseData = async (language: 'en' | 'es' = selectedLanguage) => {
+    console.log('📚 Loading course data for language:', language);
     try {
       setLoading(true);
       setError(null);
@@ -77,6 +78,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const result = await response.json();
       
       if (result.success) {
+        console.log('📚 Course data loaded successfully');
         // Process lessons to determine locked state
         const processedCourse = processLessonLockStates(result.course);
         setCourse(processedCourse);
@@ -128,6 +130,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   useEffect(() => {
+    console.log('🚀 Initial load effect - loading course data');
     // Load course data with the selected language (from localStorage or default)
     loadCourseData(selectedLanguage);
   }, [courseId]);
@@ -174,7 +177,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
-  const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
+  
+  // Wrapper to debug lesson changes
+  const setCurrentLessonId = (id: string | null) => {
+    console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}"`, new Error().stack.split('\n').slice(1, 4).join('\n'));
+    setCurrentLessonIdRaw(id);
+  };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
@@ -182,15 +191,31 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   // Fetch last accessed lesson from database - only once per restoration key
   useEffect(() => {
+    console.log('🔍 Restoration effect running:', {
+      hasCourse: !!course,
+      currentLessonId,
+      lessonRestorationKey,
+      selectedLanguage
+    });
+    
     const fetchLastAccessedLesson = async () => {
-      if (!course) return;
+      if (!course) {
+        console.log('⏸️ No course data yet, waiting...');
+        return;
+      }
       
       // Don't restore if we already have a lesson selected (prevents overriding manual selections)
-      if (currentLessonId) return;
+      if (currentLessonId) {
+        console.log('⏸️ Already have lesson selected:', currentLessonId);
+        return;
+      }
       
+      console.log('🔍 Fetching last accessed lesson...');
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
         const result = await response.json();
+        
+        console.log('📡 Last accessed API response:', result);
         
         if (result.success && result.lessonId) {
           setLastAccessedLesson(result.lessonId);
@@ -200,9 +225,11 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             .find(l => l.id === result.lessonId);
           
           if (lesson && !lesson.is_locked) {
-            console.log('📍 Restoring last accessed lesson:', lesson.title);
+            console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
             setCurrentLessonId(result.lessonId);
             return;
+          } else {
+            console.log('🔒 Last accessed lesson is locked or not found');
           }
         }
       } catch (error) {
@@ -212,8 +239,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       // Fallback to first incomplete lesson if no valid last accessed lesson
       const nextLesson = getNextLesson();
       if (nextLesson) {
-        console.log('📍 No last accessed lesson, starting with:', nextLesson.lesson.title);
+        console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
         setCurrentLessonId(nextLesson.lesson.id);
+      } else {
+        console.log('❌ No available lessons found');
       }
     };
     
