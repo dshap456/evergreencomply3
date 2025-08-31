@@ -15,7 +15,7 @@ export const sendContactEmail = enhanceAction(
       hasContactEmail: !!process.env.CONTACT_EMAIL,
       contactEmail: process.env.CONTACT_EMAIL,
       hasResendKey: !!process.env.RESEND_API_KEY,
-      resendKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10),
+      resendKeyConfigured: !!process.env.RESEND_API_KEY,
     });
 
     try {

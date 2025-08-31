@@ -2,7 +2,7 @@ import { Resend } from 'resend';
 
 console.log('=== Resend Module Loading ===');
 console.log('RESEND_API_KEY at module load:', !!process.env.RESEND_API_KEY);
-console.log('RESEND_API_KEY prefix at module load:', process.env.RESEND_API_KEY?.substring(0, 10));
+// API key check - not logging actual key for security
 
 // Initialize Resend with your API key
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -40,7 +40,7 @@ export async function sendEmail({
     htmlLength: html?.length,
   });
   console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
-  console.log('RESEND_API_KEY prefix:', process.env.RESEND_API_KEY?.substring(0, 10));
+  // API key configured
   
   if (!process.env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY is not configured');

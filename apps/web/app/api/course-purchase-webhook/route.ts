@@ -60,9 +60,8 @@ export async function POST(request: NextRequest) {
     console.error('[COURSE-WEBHOOK] Body received, length:', body.length);
     console.error('[COURSE-WEBHOOK] First 100 chars of body:', body.substring(0, 100));
     console.error('[COURSE-WEBHOOK] Signature present:', !!signature);
-    console.error('[COURSE-WEBHOOK] Signature value:', signature);
+    // Not logging signature or secret values for security
     console.error('[COURSE-WEBHOOK] Webhook secret configured:', !!process.env.STRIPE_WEBHOOK_SECRET);
-    console.error('[COURSE-WEBHOOK] Webhook secret first 20 chars:', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 20));
     
     // Log this attempt to database for debugging
     try {
@@ -101,7 +100,7 @@ export async function POST(request: NextRequest) {
     } catch (err: any) {
       console.error('[COURSE-WEBHOOK] ❌ Signature verification failed:', err.message);
       console.error('[COURSE-WEBHOOK] Error type:', err.type);
-      console.error('[COURSE-WEBHOOK] Webhook secret:', process.env.STRIPE_WEBHOOK_SECRET?.substring(0, 20) + '...');
+      // Not logging webhook secret for security
       
       // CRITICAL: Return 400 so Stripe will retry!
       // Never silently fail webhook processing
