@@ -30,28 +30,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not enrolled in this course' }, { status: 403 });
     }
 
-    // Update lesson progress with last_accessed timestamp
-    const updateData: any = {
-      user_id: user.id,
-      lesson_id: lessonId,
-      language,
-      updated_at: new Date().toISOString()
-    };
-
-    // Always update last_accessed when this endpoint is called
-    if (updateLastAccessed) {
-      updateData.last_accessed = new Date().toISOString();
-    }
-
-    const { error: progressError } = await client
+    // First check if a record exists
+    const { data: existingProgress } = await client
       .from('lesson_progress')
-      .upsert(updateData, {
-        onConflict: 'user_id,lesson_id,language'
-      });
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('lesson_id', lessonId)
+      .eq('language', language)
+      .single();
 
-    if (progressError) {
-      console.error('Error updating lesson progress:', progressError);
-      return NextResponse.json({ success: false, error: 'Failed to update progress' }, { status: 500 });
+    const now = new Date().toISOString();
+    
+    if (existingProgress) {
+      // Update existing record
+      const updateData: any = {
+        updated_at: now
+      };
+      
+      if (updateLastAccessed) {
+        updateData.last_accessed = now;
+      }
+      
+      const { error: updateError } = await client
+        .from('lesson_progress')
+        .update(updateData)
+        .eq('id', existingProgress.id);
+      
+      if (updateError) {
+        console.error('Error updating lesson progress:', updateError);
+        return NextResponse.json({ success: false, error: 'Failed to update progress' }, { status: 500 });
+      }
+    } else {
+      // Insert new record
+      const insertData: any = {
+        user_id: user.id,
+        lesson_id: lessonId,
+        language,
+        updated_at: now,
+        created_at: now,
+        status: 'in_progress'
+      };
+      
+      if (updateLastAccessed) {
+        insertData.last_accessed = now;
+      }
+      
+      const { error: insertError } = await client
+        .from('lesson_progress')
+        .insert(insertData);
+      
+      if (insertError) {
+        console.error('Error inserting lesson progress:', insertError);
+        return NextResponse.json({ success: false, error: 'Failed to insert progress' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });

@@ -210,12 +210,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         return;
       }
       
-      console.log('🔍 Fetching last accessed lesson...');
+      console.log('🔍 Fetching last accessed lesson...', {
+        courseId,
+        language: selectedLanguage,
+        url: `/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`
+      });
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
         const result = await response.json();
         
-        console.log('📡 Last accessed API response:', result);
+        console.log('📡 Last accessed API response:', {
+          status: response.status,
+          result
+        });
         
         if (result.success && result.lessonId) {
           setLastAccessedLesson(result.lessonId);

@@ -19,25 +19,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get the most recently accessed lesson for this course and language
-    const { data: lessonProgress, error } = await client
-      .from('lesson_progress')
+    // First get all lessons for this course
+    const { data: courseLessons, error: lessonsError } = await client
+      .from('lessons')
       .select(`
-        lesson_id,
-        last_accessed,
-        updated_at,
-        status,
-        lessons!inner (
-          id,
-          course_modules!inner (
-            course_id
-          )
+        id,
+        course_modules!inner (
+          course_id
         )
       `)
+      .eq('course_modules.course_id', courseId);
+
+    if (lessonsError) {
+      console.error('Error fetching course lessons:', lessonsError);
+      return NextResponse.json({ success: false, error: 'Failed to fetch course lessons' }, { status: 500 });
+    }
+
+    const lessonIds = courseLessons?.map(l => l.id) || [];
+    
+    if (lessonIds.length === 0) {
+      return NextResponse.json({ success: true, lessonId: null });
+    }
+
+    // Now get the most recent progress for these lessons
+    const { data: lessonProgress, error } = await client
+      .from('lesson_progress')
+      .select('lesson_id, last_accessed, updated_at, status')
       .eq('user_id', user.id)
       .eq('language', language)
-      .eq('lessons.course_modules.course_id', courseId)
-      .order('last_accessed', { ascending: false, nullsFirst: false })
+      .in('lesson_id', lessonIds)
+      .order('last_accessed', { ascending: false, nullsFirst: true })
+      .order('updated_at', { ascending: false })
       .limit(1)
       .single();
 
@@ -48,6 +60,7 @@ export async function GET(request: NextRequest) {
 
     // If we found a lesson with last_accessed, return it
     if (lessonProgress?.lesson_id) {
+      console.log('Found last accessed lesson:', lessonProgress);
       return NextResponse.json({ 
         success: true, 
         lessonId: lessonProgress.lesson_id,
