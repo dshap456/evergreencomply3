@@ -147,6 +147,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         localStorage.setItem(`course-${courseId}-language`, newLanguage);
       }
       setCurrentLessonId(null); // Reset current lesson
+      setLessonRestorationKey(prev => prev + 1); // Trigger new restoration
       await loadCourseData(newLanguage);
     }
   };
@@ -177,11 +178,15 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
+  const [lessonRestorationKey, setLessonRestorationKey] = useState(0);
 
-  // Fetch last accessed lesson from database
+  // Fetch last accessed lesson from database - only once per restoration key
   useEffect(() => {
     const fetchLastAccessedLesson = async () => {
       if (!course) return;
+      
+      // Don't restore if we already have a lesson selected (prevents overriding manual selections)
+      if (currentLessonId) return;
       
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
@@ -195,6 +200,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             .find(l => l.id === result.lessonId);
           
           if (lesson && !lesson.is_locked) {
+            console.log('📍 Restoring last accessed lesson:', lesson.title);
             setCurrentLessonId(result.lessonId);
             return;
           }
@@ -206,14 +212,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       // Fallback to first incomplete lesson if no valid last accessed lesson
       const nextLesson = getNextLesson();
       if (nextLesson) {
+        console.log('📍 No last accessed lesson, starting with:', nextLesson.lesson.title);
         setCurrentLessonId(nextLesson.lesson.id);
       }
     };
     
-    if (course && !currentLessonId) {
-      fetchLastAccessedLesson();
-    }
-  }, [course, currentLessonId, courseId, selectedLanguage]);
+    fetchLastAccessedLesson();
+  }, [course, lessonRestorationKey]); // Only depend on course and restoration key
 
   const handleSelectLesson = async (lessonId: string) => {
     // Find the lesson to check if it's locked
