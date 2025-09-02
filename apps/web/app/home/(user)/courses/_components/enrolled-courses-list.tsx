@@ -108,22 +108,6 @@ function CourseCard({ course }: { course: LearnerCourse }) {
           <Progress value={course.progress_percentage} className="h-2" />
         </div>
 
-        {/* Course Stats */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="font-medium">Modules</div>
-            <div className="text-muted-foreground">
-              {course.completed_modules}/{course.total_modules}
-            </div>
-          </div>
-          <div>
-            <div className="font-medium">Lessons</div>
-            <div className="text-muted-foreground">
-              {course.completed_lessons}/{course.total_lessons}
-            </div>
-          </div>
-        </div>
-
         {/* Additional Info */}
         <div className="space-y-2">
           {course.duration_minutes && (

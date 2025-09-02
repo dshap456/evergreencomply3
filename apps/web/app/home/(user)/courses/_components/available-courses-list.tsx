@@ -83,18 +83,6 @@ function AvailableCourseCard({ course }: { course: LearnerCourse }) {
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col space-y-4">
-        {/* Course Info */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="font-medium">Modules</div>
-            <div className="text-muted-foreground">{course.total_modules}</div>
-          </div>
-          <div>
-            <div className="font-medium">Lessons</div>
-            <div className="text-muted-foreground">{course.total_lessons}</div>
-          </div>
-        </div>
-
         {/* Additional Details */}
         {course.duration_minutes && (
           <div className="text-xs text-muted-foreground">

@@ -63,18 +63,6 @@ function PurchasableCourseCard({ course }: { course: AvailableCourse }) {
       </CardHeader>
       
       <CardContent className="space-y-4 flex-1 flex flex-col">
-        {/* Course Info */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <div className="font-medium">Modules</div>
-            <div className="text-muted-foreground">{course.total_modules}</div>
-          </div>
-          <div>
-            <div className="font-medium">Lessons</div>
-            <div className="text-muted-foreground">{course.total_lessons}</div>
-          </div>
-        </div>
-
         {/* Additional Details */}
         <div className="space-y-1">
           {course.duration_minutes && (
