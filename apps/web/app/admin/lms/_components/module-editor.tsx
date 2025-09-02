@@ -376,7 +376,7 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         open={showCreateLesson}
         onOpenChange={setShowCreateLesson}
         onLessonCreated={handleLessonCreated}
-        nextOrderIndex={moduleData.lessons.length}
+        nextOrderIndex={moduleData.lessons.length + 1}
         moduleId={moduleData.id}
         language={moduleData.language}
       />
