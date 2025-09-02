@@ -51,18 +51,20 @@ export const updateLessonAction = enhanceAction(
       updateData.video_url = data.video_url;
     }
 
-    const { error } = await client
+    const { data: updatedLesson, error } = await client
       .from('lessons')
       .update(updateData)
-      .eq('id', data.id);
+      .eq('id', data.id)
+      .select()
+      .single();
 
     if (error) {
       console.error('❌ UpdateLessonAction: Database error:', error);
       throw new Error(`Failed to update lesson: ${error.message}`);
     }
 
-    console.log('✅ UpdateLessonAction: Lesson updated successfully');
-    return { success: true };
+    console.log('✅ UpdateLessonAction: Lesson updated successfully:', updatedLesson);
+    return { success: true, lesson: updatedLesson };
   },
   {
     auth: true,

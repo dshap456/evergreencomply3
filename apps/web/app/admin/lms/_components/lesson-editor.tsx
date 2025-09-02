@@ -128,7 +128,12 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
         
         console.log('LessonEditor: Update data being sent:', updateData);
         
-        await updateLessonAction(updateData);
+        const updateResult = await updateLessonAction(updateData);
+        
+        // Update local state with the returned lesson data from database
+        if (updateResult.lesson) {
+          setLessonData(updateResult.lesson);
+        }
 
         // If this is a quiz lesson, save the quiz data
         if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
@@ -172,7 +177,8 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
         }
         
         toast.success('Lesson saved successfully');
-        onSave(lessonData);
+        // Pass the updated lesson data from the database (or current state if update failed)
+        onSave(updateResult.lesson || lessonData);
         setIsDirty(false);
       } catch (error) {
         console.error('Failed to save lesson:', error);
