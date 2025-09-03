@@ -290,7 +290,7 @@ export function CoursePlayer({
         // Small delay for better UX
         setTimeout(() => {
           selectLesson(nextLesson.id);
-        }, 1500);
+        }, 250);
       }
 
       // Reload course data to update accessibility
