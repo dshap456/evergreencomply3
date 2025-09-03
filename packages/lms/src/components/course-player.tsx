@@ -561,6 +561,20 @@ export function CoursePlayer({
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* DEBUG: Quick Complete Button */}
+              {process.env.NODE_ENV === 'development' && currentLesson && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    console.log('[DEBUG] Quick completing lesson:', currentLesson.id);
+                    handleLessonComplete(currentLesson.id);
+                  }}
+                  className="text-xs"
+                >
+                  🔧 Quick Complete
+                </Button>
+              )}
               {/* Language Switcher */}
               <Button
                 variant="outline"
@@ -584,6 +598,15 @@ export function CoursePlayer({
               <p className="text-xs text-gray-500">
                 {progress.progressPercentage}% complete
               </p>
+              {/* DEBUG: Show current lesson info */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-200">
+                  <strong>Debug Info:</strong><br/>
+                  Current Lesson ID: {currentLessonId || 'none'}<br/>
+                  Language: {languagePreference.language_code}<br/>
+                  Last Saved: {localStorage.getItem(`last_lesson_${courseId}`) || 'none'}
+                </div>
+              )}
             </div>
           )}
         </CardHeader>
