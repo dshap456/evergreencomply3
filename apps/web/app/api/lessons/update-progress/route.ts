@@ -3,18 +3,7 @@ import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 export async function POST(request: NextRequest) {
   try {
-    // Handle both regular JSON and beacon requests (text/plain)
-    let body;
-    const contentType = request.headers.get('content-type');
-    
-    if (contentType && contentType.includes('text/plain')) {
-      // Handle navigator.sendBeacon requests
-      const text = await request.text();
-      body = JSON.parse(text);
-    } else {
-      body = await request.json();
-    }
-    
+    const body = await request.json();
     const { lessonId, courseId, language = 'en', updateLastAccessed = false } = body;
 
     if (!lessonId || !courseId) {
