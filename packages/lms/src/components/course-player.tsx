@@ -245,13 +245,14 @@ export function CoursePlayer({
       const userId = user?.id;
       if (!userId) throw new Error('Not authenticated');
 
-      // Mark lesson as completed with user_id
+      // Mark lesson as completed with user_id and language
       const { error: progressError } = await supabase
         .from('lesson_progress')
         .upsert({
           user_id: userId,
           lesson_id: lessonId,
           status: 'completed',
+          language: languagePreference.language_code, // Required for unique constraint
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
