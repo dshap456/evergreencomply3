@@ -41,6 +41,19 @@ async function ContactPage() {
               <p className={'text-muted-foreground'}>
                 <Trans i18nKey={'marketing:contactSubheading'} />
               </p>
+
+              <div className="mt-4 p-4 bg-muted rounded-lg text-center">
+                <p className="text-base font-medium mb-1">Prefer to call?</p>
+                <a 
+                  href="tel:9709190034" 
+                  className="text-xl font-bold text-primary hover:underline transition-all"
+                >
+                  (970) 919-0034
+                </a>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Mon-Fri, 8am-5pm MST
+                </p>
+              </div>
             </div>
 
             <ContactForm />

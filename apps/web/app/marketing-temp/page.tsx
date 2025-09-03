@@ -303,7 +303,12 @@ function Home() {
                     Contact Us
                   </Button>
                 </Link>
-                <p className="text-xs text-muted-foreground">Or call us directly at (970) 919-0034</p>
+                <p className="text-base font-medium text-muted-foreground mt-3">
+                  Or call us directly at{' '}
+                  <a href="tel:9709190034" className="text-lg font-semibold text-foreground hover:text-primary transition-colors">
+                    (970) 919-0034
+                  </a>
+                </p>
               </div>
             </div>
           </div>
