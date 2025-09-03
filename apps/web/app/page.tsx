@@ -58,6 +58,9 @@ function Home() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Link href="/about" className="text-sm font-medium hover:text-primary">
+              About
+            </Link>
             <Link href="/contact" className="text-sm font-medium hover:text-primary">
               Contact
             </Link>
@@ -342,7 +345,7 @@ function Home() {
                   <h3 className="text-sm font-medium">Company</h3>
                   <ul className="space-y-2">
                     <li>
-                      <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+                      <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground">
                         About
                       </Link>
                     </li>
