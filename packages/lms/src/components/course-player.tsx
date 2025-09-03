@@ -674,49 +674,59 @@ export function CoursePlayer({
         <div className="lg:col-span-3">
           {renderLessonContent()}
           
-          {/* DEBUG: Quick action buttons */}
-          <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded">
-            <p className="text-sm font-bold mb-2">🔧 Debug Controls:</p>
-            <div className="flex gap-2 flex-wrap">
-              <Button 
-                size="sm" 
-                variant="destructive"
-                onClick={() => {
-                  if (currentLessonId) {
-                    console.log('[DEBUG] Marking lesson as complete:', currentLessonId);
-                    handleLessonComplete(currentLessonId);
-                  }
-                }}
-              >
-                Mark Current as Complete
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => {
-                  console.log('[DEBUG] Reloading course data...');
-                  loadCourseData();
-                }}
-              >
-                Reload Course Data
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => {
-                  console.log('[DEBUG] Clearing localStorage...');
-                  localStorage.removeItem(`last_lesson_${courseId}`);
-                  localStorage.removeItem(`course_lang_${courseId}`);
-                  loadCourseData();
-                }}
-              >
-                Clear Local Storage
-              </Button>
-            </div>
-            <p className="text-xs mt-2 text-red-700">
-              Open browser console (F12) to see debug logs
-            </p>
-          </div>
+          {/* Admin Debug Panel */}
+          <Card className="mt-4 border-amber-200 bg-amber-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <span>🛠️ Admin Controls</span>
+                <Badge variant="outline" className="text-xs">Debug Mode</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  size="sm" 
+                  variant="default"
+                  onClick={() => {
+                    if (currentLessonId) {
+                      console.log('[DEBUG] Marking lesson as complete:', currentLessonId);
+                      handleLessonComplete(currentLessonId);
+                    }
+                  }}
+                >
+                  ✓ Quick Complete
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  onClick={() => {
+                    console.log('[DEBUG] Reloading course data...');
+                    loadCourseData();
+                  }}
+                >
+                  🔄 Refresh Data
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  onClick={() => {
+                    console.log('[DEBUG] Clearing localStorage...');
+                    localStorage.removeItem(`last_lesson_${courseId}`);
+                    localStorage.removeItem(`course_lang_${courseId}`);
+                    loadCourseData();
+                  }}
+                >
+                  🗑️ Clear Cache
+                </Button>
+              </div>
+              <Separator />
+              <div className="text-xs space-y-1">
+                <p><strong>Console:</strong> Press F12 to see debug logs</p>
+                <p><strong>Current ID:</strong> <code className="bg-white px-1 rounded">{currentLessonId || 'none'}</code></p>
+                <p><strong>Cached:</strong> <code className="bg-white px-1 rounded">{localStorage.getItem(`last_lesson_${courseId}`) || 'none'}</code></p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
