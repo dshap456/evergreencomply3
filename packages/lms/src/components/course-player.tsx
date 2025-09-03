@@ -562,7 +562,7 @@ export function CoursePlayer({
             </div>
             <div className="flex items-center gap-2">
               {/* DEBUG: Quick Complete Button */}
-              {process.env.NODE_ENV === 'development' && currentLesson && (
+              {currentLesson && (
                 <Button
                   variant="destructive"
                   size="sm"
@@ -599,14 +599,12 @@ export function CoursePlayer({
                 {progress.progressPercentage}% complete
               </p>
               {/* DEBUG: Show current lesson info */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-200">
-                  <strong>Debug Info:</strong><br/>
-                  Current Lesson ID: {currentLessonId || 'none'}<br/>
-                  Language: {languagePreference.language_code}<br/>
-                  Last Saved: {localStorage.getItem(`last_lesson_${courseId}`) || 'none'}
-                </div>
-              )}
+              <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-200">
+                <strong>Debug Info:</strong><br/>
+                Current Lesson ID: {currentLessonId || 'none'}<br/>
+                Language: {languagePreference.language_code}<br/>
+                Last Saved: {localStorage.getItem(`last_lesson_${courseId}`) || 'none'}
+              </div>
             </div>
           )}
         </CardHeader>
@@ -675,6 +673,50 @@ export function CoursePlayer({
         {/* Main Content Area */}
         <div className="lg:col-span-3">
           {renderLessonContent()}
+          
+          {/* DEBUG: Quick action buttons */}
+          <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded">
+            <p className="text-sm font-bold mb-2">🔧 Debug Controls:</p>
+            <div className="flex gap-2 flex-wrap">
+              <Button 
+                size="sm" 
+                variant="destructive"
+                onClick={() => {
+                  if (currentLessonId) {
+                    console.log('[DEBUG] Marking lesson as complete:', currentLessonId);
+                    handleLessonComplete(currentLessonId);
+                  }
+                }}
+              >
+                Mark Current as Complete
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  console.log('[DEBUG] Reloading course data...');
+                  loadCourseData();
+                }}
+              >
+                Reload Course Data
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => {
+                  console.log('[DEBUG] Clearing localStorage...');
+                  localStorage.removeItem(`last_lesson_${courseId}`);
+                  localStorage.removeItem(`course_lang_${courseId}`);
+                  loadCourseData();
+                }}
+              >
+                Clear Local Storage
+              </Button>
+            </div>
+            <p className="text-xs mt-2 text-red-700">
+              Open browser console (F12) to see debug logs
+            </p>
+          </div>
         </div>
       </div>
     </div>
