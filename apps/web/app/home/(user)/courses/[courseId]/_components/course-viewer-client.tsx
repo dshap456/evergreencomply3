@@ -55,6 +55,7 @@ interface CourseData {
 }
 
 export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -135,6 +136,44 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     loadCourseData(selectedLanguage);
   }, [courseId]);
 
+  // Save progress when navigating away or closing the tab
+  useEffect(() => {
+    const saveProgressBeforeUnload = async () => {
+      if (currentLessonId && courseId) {
+        // Save to localStorage immediately (synchronous)
+        localStorage.setItem(`course-${courseId}-last-lesson-${selectedLanguage}`, currentLessonId);
+        
+        // Try to save to database (might not complete if tab closes)
+        navigator.sendBeacon('/api/lessons/update-progress', JSON.stringify({
+          lessonId: currentLessonId,
+          courseId,
+          language: selectedLanguage,
+          updateLastAccessed: true
+        }));
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      saveProgressBeforeUnload();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveProgressBeforeUnload();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // Save when component unmounts
+      saveProgressBeforeUnload();
+    };
+  }, [currentLessonId, courseId, selectedLanguage]);
+
   const handleLanguageSwitch = async (newLanguage: 'en' | 'es') => {
     if (newLanguage === selectedLanguage) return;
     
@@ -179,10 +218,15 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
   
-  // Wrapper to debug lesson changes
+  // Wrapper to debug lesson changes and save progress
   const setCurrentLessonId = (id: string | null) => {
     console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}"`, new Error().stack.split('\n').slice(1, 4).join('\n'));
     setCurrentLessonIdRaw(id);
+    
+    // Save to localStorage as immediate backup
+    if (id && courseId) {
+      localStorage.setItem(`course-${courseId}-last-lesson-${selectedLanguage}`, id);
+    }
   };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -210,7 +254,40 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         return;
       }
       
-      console.log('🔍 Fetching last accessed lesson...', {
+      // First, check localStorage for immediate restoration
+      const localStorageKey = `course-${courseId}-last-lesson-${selectedLanguage}`;
+      const storedLessonId = localStorage.getItem(localStorageKey);
+      
+      if (storedLessonId) {
+        console.log('💾 Found lesson in localStorage:', storedLessonId);
+        const allLessons = course.modules.flatMap(m => m.lessons);
+        const storedLesson = allLessons.find(l => l.id === storedLessonId);
+        
+        if (storedLesson && !storedLesson.is_locked) {
+          console.log('✅ Restoring from localStorage:', storedLesson.title);
+          setCurrentLessonId(storedLessonId);
+          
+          // Still update the database with last accessed
+          try {
+            await fetch('/api/lessons/update-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                lessonId: storedLessonId,
+                courseId,
+                language: selectedLanguage,
+                updateLastAccessed: true
+              })
+            });
+          } catch (error) {
+            console.error('Failed to update last accessed in DB:', error);
+          }
+          return;
+        }
+      }
+      
+      // Fallback to database if localStorage doesn't have a valid lesson
+      console.log('🔍 Fetching last accessed lesson from database...', {
         courseId,
         language: selectedLanguage,
         url: `/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`
@@ -245,7 +322,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           } : 'NOT FOUND');
           
           if (lesson && !lesson.is_locked) {
-            console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
+            console.log('✅ Restoring last accessed lesson from DB:', lesson.title, lesson.id);
             setCurrentLessonId(result.lessonId);
             return;
           } else {
