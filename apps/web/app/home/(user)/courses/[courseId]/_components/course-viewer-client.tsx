@@ -864,9 +864,9 @@ Download Asset
                 size="sm" 
                 variant="default"
                 onClick={() => {
-                  if (currentLessonId) {
-                    console.log('[DEBUG] Quick completing lesson:', currentLessonId);
-                    handleSaveProgress(currentLessonId, true, 100);
+                  if (currentLesson?.id) {
+                    console.log('[DEBUG] Quick completing lesson:', currentLesson.id);
+                    handleSaveProgress(currentLesson.id, true, 100);
                   }
                 }}
               >
@@ -898,7 +898,7 @@ Download Asset
             <div className="h-px bg-gray-300" />
             <div className="text-xs space-y-1">
               <p><strong>Console:</strong> Press F12 to see debug logs</p>
-              <p><strong>Current Lesson:</strong> <code className="bg-white px-1 rounded">{currentLessonId?.substring(0, 8) || 'none'}</code></p>
+              <p><strong>Current Lesson:</strong> <code className="bg-white px-1 rounded">{currentLesson?.id?.substring(0, 8) || 'none'}</code></p>
               <p><strong>Language:</strong> <code className="bg-white px-1 rounded">{selectedLanguage}</code></p>
               <p><strong>Progress:</strong> <code className="bg-white px-1 rounded">{course?.progress_percentage || 0}%</code></p>
             </div>
