@@ -303,7 +303,7 @@ function Home() {
                     Contact Us
                   </Button>
                 </Link>
-                <p className="text-xs text-muted-foreground">Or call us directly at (555) 123-4567</p>
+                <p className="text-xs text-muted-foreground">Or call us directly at (970) 919-0034</p>
               </div>
             </div>
           </div>
