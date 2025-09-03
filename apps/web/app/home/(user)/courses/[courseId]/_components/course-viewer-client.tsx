@@ -849,61 +849,6 @@ Download Asset
       {/* Lesson Content */}
       <div className="flex-1 p-2 sm:p-4 md:p-6 bg-gray-50 overflow-y-auto">
         {renderLessonContent()}
-        
-        {/* Admin Debug Panel */}
-        <Card className="mt-4 border-amber-200 bg-amber-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <span>🛠️ Admin Controls</span>
-              <Badge variant="outline" className="text-xs">Debug Mode</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-2 flex-wrap">
-              <Button 
-                size="sm" 
-                variant="default"
-                onClick={() => {
-                  if (currentLesson?.id) {
-                    console.log('[DEBUG] Quick completing lesson:', currentLesson.id);
-                    handleSaveProgress(currentLesson.id, true, 100);
-                  }
-                }}
-              >
-                ✓ Quick Complete
-              </Button>
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={() => {
-                  console.log('[DEBUG] Reloading course data...');
-                  loadCourseData(selectedLanguage);
-                }}
-              >
-                🔄 Refresh Data
-              </Button>
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={() => {
-                  console.log('[DEBUG] Clearing localStorage...');
-                  localStorage.removeItem(`last_lesson_${courseId}`);
-                  localStorage.removeItem(`course-${courseId}-language`);
-                  loadCourseData(selectedLanguage);
-                }}
-              >
-                🗑️ Clear Cache
-              </Button>
-            </div>
-            <div className="h-px bg-gray-300" />
-            <div className="text-xs space-y-1">
-              <p><strong>Console:</strong> Press F12 to see debug logs</p>
-              <p><strong>Current Lesson:</strong> <code className="bg-white px-1 rounded">{currentLesson?.id?.substring(0, 8) || 'none'}</code></p>
-              <p><strong>Language:</strong> <code className="bg-white px-1 rounded">{selectedLanguage}</code></p>
-              <p><strong>Progress:</strong> <code className="bg-white px-1 rounded">{course?.progress_percentage || 0}%</code></p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

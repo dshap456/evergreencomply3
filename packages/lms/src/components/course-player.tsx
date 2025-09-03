@@ -120,6 +120,11 @@ export function CoursePlayer({
 
       setCourse(courseData);
 
+      // Check language preference (removed as table doesn't exist)
+      // Language preference is now handled in component state only
+      const langPref = null;
+      const langError = true;
+
       // Load language preference from localStorage
       const storedLang = localStorage.getItem(`course_lang_${courseId}`) as 'en' | 'es' | null;
       if (storedLang) {
@@ -131,35 +136,6 @@ export function CoursePlayer({
         // Show language selection dialog for first-time users
         setShowLanguageDialog(true);
       }
-
-      // Bulk-read lesson progress for all lessons at once
-      const lessonIds = courseData.modules.flatMap((m: any) => 
-        (m.lessons || []).map((l: any) => l.id)
-      );
-
-      console.log('[DEBUG] Loading progress for user:', userId);
-      console.log('[DEBUG] Lesson IDs to check:', lessonIds);
-
-      const { data: lpRows, error: lpErr } = await supabase
-        .from('lesson_progress')
-        .select('lesson_id, status, language, updated_at')
-        .in('lesson_id', lessonIds)
-        .eq('user_id', userId);
-
-      if (lpErr) {
-        console.error('[ERROR] Failed to read lesson progress:', lpErr);
-      } else {
-        console.log('[DEBUG] Lesson progress rows found:', lpRows);
-      }
-
-      // Build a set of completed lessons for quick lookup
-      const completedSet = new Set(
-        (lpRows || [])
-          .filter(r => r.status === 'completed')
-          .map(r => r.lesson_id)
-      );
-      
-      console.log('[DEBUG] Completed lessons set:', Array.from(completedSet));
 
       // Process modules and lessons with accessibility
       const processedModules = await Promise.all(
@@ -179,11 +155,18 @@ export function CoursePlayer({
                     }
                   );
 
-                  // Use the pre-fetched completion status from bulk read
+                  // Check lesson progress - scope to user to avoid .single() errors
+                  const { data: lessonProgress } = await supabase
+                    .from('lesson_progress')
+                    .select('status')
+                    .eq('lesson_id', lesson.id)
+                    .eq('user_id', userId)
+                    .maybeSingle();
+
                   return {
                     ...lesson,
                     is_accessible: isAccessible || false,
-                    is_completed: completedSet.has(lesson.id)
+                    is_completed: lessonProgress?.status === 'completed'
                   };
                 })
             );
@@ -197,47 +180,16 @@ export function CoursePlayer({
 
       setModules(processedModules);
 
-      // Try to restore the last accessed lesson first
-      const lastAccessedLessonId = localStorage.getItem(`last_lesson_${courseId}`);
+      // Find current lesson (first incomplete accessible lesson)
       let nextLessonId = null;
-      
-      // Check if last accessed lesson is still valid and accessible
-      if (lastAccessedLessonId) {
-        const lastLesson = processedModules
-          .flatMap(m => m.lessons)
-          .find(l => l.id === lastAccessedLessonId);
-        
-        if (lastLesson && lastLesson.is_accessible) {
-          console.log('[DEBUG] Restoring last accessed lesson:', lastAccessedLessonId);
-          nextLessonId = lastAccessedLessonId;
-        }
-      }
-      
-      // If no last accessed or it's not valid, find first incomplete accessible lesson
-      if (!nextLessonId) {
-        console.log('[DEBUG] Finding next incomplete lesson...');
-        const allLessons = processedModules.flatMap(m => m.lessons);
-        
-        // First, try to find the first incomplete but accessible lesson
-        for (const lesson of allLessons) {
-          console.log('[DEBUG] Checking lesson:', lesson.id, 'accessible:', lesson.is_accessible, 'completed:', lesson.is_completed);
+      for (const module of processedModules) {
+        for (const lesson of module.lessons) {
           if (lesson.is_accessible && !lesson.is_completed) {
             nextLessonId = lesson.id;
-            console.log('[DEBUG] Found next incomplete lesson:', nextLessonId);
             break;
           }
         }
-        
-        // If no incomplete lessons, find the first accessible lesson (might be reviewing)
-        if (!nextLessonId) {
-          for (const lesson of allLessons) {
-            if (lesson.is_accessible) {
-              nextLessonId = lesson.id;
-              console.log('[DEBUG] All lessons complete, starting from first accessible:', nextLessonId);
-              break;
-            }
-          }
-        }
+        if (nextLessonId) break;
       }
 
       if (nextLessonId) {
@@ -246,7 +198,6 @@ export function CoursePlayer({
         // Course might be completed, find last lesson
         const allLessons = processedModules.flatMap(m => m.lessons);
         if (allLessons.length > 0) {
-          console.log('[DEBUG] No incomplete lessons found, showing last lesson');
           setCurrentLessonId(allLessons[allLessons.length - 1].id);
         }
       }
@@ -283,11 +234,8 @@ export function CoursePlayer({
     if (lesson && lesson.is_accessible) {
       setCurrentLessonId(lessonId);
       setCurrentLesson(lesson);
-      // Remember the last accessed lesson
-      localStorage.setItem(`last_lesson_${courseId}`, lessonId);
-      console.log('[DEBUG] Selected lesson:', lessonId);
     }
-  }, [modules, courseId]);
+  }, [modules]);
 
   // Handle lesson completion
   const handleLessonComplete = useCallback(async (lessonId: string) => {
@@ -297,31 +245,19 @@ export function CoursePlayer({
       const userId = user?.id;
       if (!userId) throw new Error('Not authenticated');
 
-      // Mark lesson as completed with user_id, language, and onConflict
-      console.log('[DEBUG] Attempting to save lesson completion:');
-      console.log('[DEBUG] - User ID:', userId);
-      console.log('[DEBUG] - Lesson ID:', lessonId);
-      console.log('[DEBUG] - Language:', languagePreference.language_code);
-      
-      const { data: upsertData, error: progressError } = await supabase
+      // Mark lesson as completed with user_id
+      const { error: progressError } = await supabase
         .from('lesson_progress')
         .upsert({
           user_id: userId,
           lesson_id: lessonId,
           status: 'completed',
-          language: languagePreference.language_code, // Required for unique constraint
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        }, { 
-          onConflict: 'user_id,lesson_id,language' // Explicitly handle the composite unique constraint
-        })
-        .select();
+        });
 
       if (progressError) {
-        console.error('[ERROR] Failed to update lesson progress:', progressError);
-        console.error('[ERROR] Full error details:', JSON.stringify(progressError, null, 2));
-      } else {
-        console.log('[SUCCESS] Lesson progress saved:', upsertData);
+        console.error('Failed to update lesson progress:', progressError);
       }
 
       // Recalculate course progress
@@ -351,17 +287,14 @@ export function CoursePlayer({
       const currentIndex = allLessons.findIndex(l => l.id === lessonId);
       if (currentIndex < allLessons.length - 1) {
         const nextLesson = allLessons[currentIndex + 1];
-        console.log('[DEBUG] Auto-advancing to next lesson:', nextLesson.id);
         // Small delay for better UX
         setTimeout(() => {
           selectLesson(nextLesson.id);
-          // Reload to update accessibility and progress
-          loadCourseData();
         }, 1500);
-      } else {
-        // Just reload to update progress
-        loadCourseData();
       }
+
+      // Reload course data to update accessibility
+      loadCourseData();
 
     } catch (error) {
       console.error('Error handling lesson completion:', error);
@@ -377,7 +310,7 @@ export function CoursePlayer({
 
       if (!confirmSwitch) return;
 
-      // Update language preference in state
+      // Update language preference in state only (table doesn't exist)
       setLanguagePreference(prev => ({
         ...prev,
         language_code: newLanguage
@@ -561,20 +494,6 @@ export function CoursePlayer({
               )}
             </div>
             <div className="flex items-center gap-2">
-              {/* DEBUG: Quick Complete Button */}
-              {currentLesson && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    console.log('[DEBUG] Quick completing lesson:', currentLesson.id);
-                    handleLessonComplete(currentLesson.id);
-                  }}
-                  className="text-xs"
-                >
-                  🔧 Quick Complete
-                </Button>
-              )}
               {/* Language Switcher */}
               <Button
                 variant="outline"
@@ -598,13 +517,6 @@ export function CoursePlayer({
               <p className="text-xs text-gray-500">
                 {progress.progressPercentage}% complete
               </p>
-              {/* DEBUG: Show current lesson info */}
-              <div className="text-xs bg-yellow-50 p-2 rounded border border-yellow-200">
-                <strong>Debug Info:</strong><br/>
-                Current Lesson ID: {currentLessonId || 'none'}<br/>
-                Language: {languagePreference.language_code}<br/>
-                Last Saved: {localStorage.getItem(`last_lesson_${courseId}`) || 'none'}
-              </div>
             </div>
           )}
         </CardHeader>
@@ -673,60 +585,6 @@ export function CoursePlayer({
         {/* Main Content Area */}
         <div className="lg:col-span-3">
           {renderLessonContent()}
-          
-          {/* Admin Debug Panel */}
-          <Card className="mt-4 border-amber-200 bg-amber-50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <span>🛠️ Admin Controls</span>
-                <Badge variant="outline" className="text-xs">Debug Mode</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex gap-2 flex-wrap">
-                <Button 
-                  size="sm" 
-                  variant="default"
-                  onClick={() => {
-                    if (currentLessonId) {
-                      console.log('[DEBUG] Marking lesson as complete:', currentLessonId);
-                      handleLessonComplete(currentLessonId);
-                    }
-                  }}
-                >
-                  ✓ Quick Complete
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="secondary"
-                  onClick={() => {
-                    console.log('[DEBUG] Reloading course data...');
-                    loadCourseData();
-                  }}
-                >
-                  🔄 Refresh Data
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="secondary"
-                  onClick={() => {
-                    console.log('[DEBUG] Clearing localStorage...');
-                    localStorage.removeItem(`last_lesson_${courseId}`);
-                    localStorage.removeItem(`course_lang_${courseId}`);
-                    loadCourseData();
-                  }}
-                >
-                  🗑️ Clear Cache
-                </Button>
-              </div>
-              <Separator />
-              <div className="text-xs space-y-1">
-                <p><strong>Console:</strong> Press F12 to see debug logs</p>
-                <p><strong>Current ID:</strong> <code className="bg-white px-1 rounded">{currentLessonId || 'none'}</code></p>
-                <p><strong>Cached:</strong> <code className="bg-white px-1 rounded">{localStorage.getItem(`last_lesson_${courseId}`) || 'none'}</code></p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>
