@@ -137,13 +137,29 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
   };
 
   const handleLessonCreated = (newLesson: Lesson) => {
+    console.log('handleLessonCreated: Adding new lesson to module:', newLesson);
+    
+    // Check if lesson already exists to prevent duplicates
+    const lessonExists = moduleData.lessons.some(l => l.id === newLesson.id);
+    if (lessonExists) {
+      console.log('handleLessonCreated: Lesson already exists in module, skipping duplicate');
+      setShowCreateLesson(false);
+      return;
+    }
+    
     const updatedModule = {
       ...moduleData,
       lessons: [...moduleData.lessons, newLesson].sort((a, b) => a.order_index - b.order_index)
     };
+    
+    console.log('handleLessonCreated: Updated module with new lesson count:', updatedModule.lessons.length);
     setModuleData(updatedModule);
-    setIsDirty(true);
+    
+    // Call onSave immediately to persist and update parent component
+    onSave(updatedModule);
+    
     setShowCreateLesson(false);
+    toast.success('Lesson added to module successfully');
   };
 
   const handleLessonDelete = (lessonId: string) => {
@@ -312,9 +328,9 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
                     </Button>
                   </div>
 
-                  {/* Order Number (display as 1-based for user) */}
+                  {/* Order Number (display based on actual order_index) */}
                   <div className="flex items-center justify-center w-8 h-8 bg-muted rounded text-sm font-medium">
-                    {lesson.order_index + 1}
+                    {lesson.order_index}
                   </div>
 
                   {/* Content Type Icon */}
@@ -376,7 +392,11 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         open={showCreateLesson}
         onOpenChange={setShowCreateLesson}
         onLessonCreated={handleLessonCreated}
-        nextOrderIndex={moduleData.lessons.length + 1}
+        nextOrderIndex={
+          moduleData.lessons.length > 0 
+            ? Math.max(...moduleData.lessons.map(l => l.order_index)) + 1 
+            : 1
+        }
         moduleId={moduleData.id}
         language={moduleData.language}
       />

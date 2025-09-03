@@ -142,13 +142,36 @@ export function CreateLessonDialog({
           video_metadata_id: result.lesson.video_metadata_id,
         };
 
+        // Call the parent callback with the new lesson
         onLessonCreated(newLesson);
+        
+        // Reset form and close dialog
         form.reset();
         onOpenChange(false);
-        toast.success('Lesson created successfully');
+        
+        // Show success message with refresh hint
+        toast.success('Lesson created successfully', {
+          description: 'The lesson has been saved to the database.'
+        });
       } catch (error) {
         console.error('CreateLessonDialog: Failed to create lesson:', error);
-        toast.error('Failed to create lesson');
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
+        // Provide more specific error messages
+        if (errorMessage.includes('unique constraint') || errorMessage.includes('duplicate key')) {
+          toast.error('This lesson position is already taken', {
+            description: 'The page will refresh to show the current state. Please try again.',
+            duration: 5000
+          });
+          // Refresh the page to get the latest state
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else if (errorMessage.includes('unauthorized') || errorMessage.includes('Unauthorized')) {
+          toast.error('You are not authorized to create lessons. Please check your permissions.');
+        } else {
+          toast.error(`Failed to create lesson: ${errorMessage}`);
+        }
       }
     });
   };
