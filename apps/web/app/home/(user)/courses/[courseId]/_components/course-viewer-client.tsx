@@ -643,9 +643,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                               {lesson.title}
                             </span>
                           </div>
-                          {lesson.is_locked && (
+                          {/* {lesson.is_locked && (
                             <p className="text-xs text-gray-500 mt-0.5">Complete previous lesson to unlock</p>
-                          )}
+                          )} */}
                         </div>
                       </button>
                     ))}
