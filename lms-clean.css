@@ -1,0 +1,72 @@
+/**
+ * LMS Clean Interface
+ * Removes unnecessary "Complete previous lesson to unlock" messages
+ * while preserving lesson titles and structure
+ */
+
+/* Hide lock messages and unlock text */
+.lesson-item .lock-message,
+.lesson-item [class*="complete-previous"],
+.lesson-item [class*="unlock"],
+.lesson-locked-text,
+.locked-message,
+span:has-text("Complete previous lesson"),
+*:has-text("to unlock"):not(.lesson-title) {
+    display: none !important;
+}
+
+/* Target common LMS patterns */
+.course-navigation .locked .description,
+.course-navigation .locked .subtitle,
+.lesson-list .locked-info,
+.module-item.locked .lock-text,
+.syllabus-item .prerequisite-message {
+    display: none !important;
+}
+
+/* Remove lock icons if desired */
+.lock-icon,
+.fa-lock,
+.icon-lock,
+[class*="lock-icon"] {
+    display: none !important;
+}
+
+/* Restore full opacity for locked items */
+.lesson-item.locked,
+.module-item.locked,
+.locked,
+[class*="locked"]:not(.permanently-locked) {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Keep lesson numbers and titles visible */
+.lesson-title,
+.lesson-name,
+.module-title,
+[class*="lesson-number"],
+[class*="lesson-heading"] {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Optional: Make locked lessons clickable (remove if not desired) */
+.lesson-item.locked,
+.module-item.locked {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Clean up extra spacing from hidden elements */
+.lesson-item,
+.module-item {
+    gap: 0.5rem !important;
+}
+
+/* Specific fix for items with gray text */
+.lesson-item span[style*="color: gray"],
+.lesson-item span[style*="color: #999"],
+.lesson-item .muted-text {
+    display: none !important;
+}
