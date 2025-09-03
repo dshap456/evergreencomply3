@@ -139,14 +139,6 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
   const handleLessonCreated = (newLesson: Lesson) => {
     console.log('handleLessonCreated: Adding new lesson to module:', newLesson);
     
-    // Check if lesson already exists to prevent duplicates
-    const lessonExists = moduleData.lessons.some(l => l.id === newLesson.id);
-    if (lessonExists) {
-      console.log('handleLessonCreated: Lesson already exists in module, skipping duplicate');
-      setShowCreateLesson(false);
-      return;
-    }
-    
     const updatedModule = {
       ...moduleData,
       lessons: [...moduleData.lessons, newLesson].sort((a, b) => a.order_index - b.order_index)
