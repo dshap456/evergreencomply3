@@ -216,19 +216,22 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
-  const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
+  
+  // Wrapper to debug lesson changes and save progress
+  const setCurrentLessonId = (id: string | null) => {
+    console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}"`, new Error().stack.split('\n').slice(1, 4).join('\n'));
+    setCurrentLessonIdRaw(id);
+    
+    // Save to localStorage as immediate backup
+    if (id && courseId) {
+      localStorage.setItem(`course-${courseId}-last-lesson-${selectedLanguage}`, id);
+    }
+  };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [lessonRestorationKey, setLessonRestorationKey] = useState(0);
-  
-  // Save current lesson to localStorage whenever it changes
-  useEffect(() => {
-    if (currentLessonId && courseId) {
-      console.log(`💾 Saving current lesson to localStorage: ${currentLessonId}`);
-      localStorage.setItem(`course-${courseId}-last-lesson-${selectedLanguage}`, currentLessonId);
-    }
-  }, [currentLessonId, courseId, selectedLanguage]);
 
   // Fetch last accessed lesson from database - only once per restoration key
   useEffect(() => {
