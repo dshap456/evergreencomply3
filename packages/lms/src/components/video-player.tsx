@@ -58,6 +58,11 @@ export function VideoPlayer({
       setLoading(true);
       setError(null);
 
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
       // Get video metadata and secure URL
       const { data: videoPath, error: urlError } = await supabase.rpc(
         'get_secure_video_url',
@@ -112,12 +117,13 @@ export function VideoPlayer({
         }
       }
 
-      // Load existing progress
+      // Load existing progress - scope to user to avoid .single() errors
       const { data: progressData } = await supabase
         .from('video_progress')
         .select('current_time, duration')
         .eq('lesson_id', lessonId)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
 
       if (progressData?.current_time) {
         setCurrentTime(progressData.current_time);

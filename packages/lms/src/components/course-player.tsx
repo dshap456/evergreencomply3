@@ -83,6 +83,11 @@ export function CoursePlayer({
       setLoading(true);
       setError(null);
 
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
       // Load course information
       const { data: courseData, error: courseError } = await supabase
         .from('courses')
@@ -115,17 +120,17 @@ export function CoursePlayer({
 
       setCourse(courseData);
 
-      // Check language preference
-      const { data: langPref, error: langError } = await supabase
-        .from('user_course_language_preferences')
-        .select('language_code')
-        .eq('course_id', courseId)
-        .single();
+      // Check language preference (removed as table doesn't exist)
+      // Language preference is now handled in component state only
+      const langPref = null;
+      const langError = true;
 
-      if (!langError && langPref) {
+      // Load language preference from localStorage
+      const storedLang = localStorage.getItem(`course_lang_${courseId}`) as 'en' | 'es' | null;
+      if (storedLang) {
         setLanguagePreference(prev => ({
           ...prev,
-          language_code: langPref.language_code
+          language_code: storedLang
         }));
       } else {
         // Show language selection dialog for first-time users
@@ -145,17 +150,18 @@ export function CoursePlayer({
                   const { data: isAccessible } = await supabase.rpc(
                     'is_lesson_accessible',
                     {
-                      p_user_id: (await supabase.auth.getUser()).data.user?.id,
+                      p_user_id: userId,
                       p_lesson_id: lesson.id
                     }
                   );
 
-                  // Check lesson progress
+                  // Check lesson progress - scope to user to avoid .single() errors
                   const { data: lessonProgress } = await supabase
                     .from('lesson_progress')
                     .select('status')
                     .eq('lesson_id', lesson.id)
-                    .single();
+                    .eq('user_id', userId)
+                    .maybeSingle();
 
                   return {
                     ...lesson,
@@ -234,10 +240,16 @@ export function CoursePlayer({
   // Handle lesson completion
   const handleLessonComplete = useCallback(async (lessonId: string) => {
     try {
-      // Mark lesson as completed
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      if (!userId) throw new Error('Not authenticated');
+
+      // Mark lesson as completed with user_id
       const { error: progressError } = await supabase
         .from('lesson_progress')
         .upsert({
+          user_id: userId,
           lesson_id: lessonId,
           status: 'completed',
           completed_at: new Date().toISOString(),
@@ -252,7 +264,7 @@ export function CoursePlayer({
       const { data: newProgress } = await supabase.rpc(
         'calculate_course_progress',
         {
-          p_user_id: (await supabase.auth.getUser()).data.user?.id,
+          p_user_id: userId,
           p_course_id: courseId
         }
       );
@@ -261,7 +273,7 @@ export function CoursePlayer({
       if (newProgress === 100) {
         try {
           await supabase.rpc('complete_course', {
-            p_user_id: (await supabase.auth.getUser()).data.user?.id,
+            p_user_id: userId,
             p_course_id: courseId
           });
           onComplete?.();
@@ -298,25 +310,18 @@ export function CoursePlayer({
 
       if (!confirmSwitch) return;
 
-      // Save language preference
-      const { error } = await supabase
-        .from('user_course_language_preferences')
-        .upsert({
-          course_id: courseId,
-          language_code: newLanguage,
-          selected_at: new Date().toISOString()
-        });
-
-      if (!error) {
-        setLanguagePreference(prev => ({
-          ...prev,
-          language_code: newLanguage
-        }));
-        setShowLanguageDialog(false);
-        
-        // Reload course data for new language
-        loadCourseData();
-      }
+      // Update language preference in state only (table doesn't exist)
+      setLanguagePreference(prev => ({
+        ...prev,
+        language_code: newLanguage
+      }));
+      setShowLanguageDialog(false);
+      
+      // Store in localStorage for persistence
+      localStorage.setItem(`course_lang_${courseId}`, newLanguage);
+      
+      // Reload course data for new language
+      loadCourseData();
     } catch (error) {
       console.error('Failed to change language:', error);
     }
