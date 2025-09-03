@@ -120,11 +120,6 @@ export function CoursePlayer({
 
       setCourse(courseData);
 
-      // Check language preference (removed as table doesn't exist)
-      // Language preference is now handled in component state only
-      const langPref = null;
-      const langError = true;
-
       // Load language preference from localStorage
       const storedLang = localStorage.getItem(`course_lang_${courseId}`) as 'en' | 'es' | null;
       if (storedLang) {
@@ -136,6 +131,28 @@ export function CoursePlayer({
         // Show language selection dialog for first-time users
         setShowLanguageDialog(true);
       }
+
+      // Bulk-read lesson progress for all lessons at once
+      const lessonIds = courseData.modules.flatMap((m: any) => 
+        (m.lessons || []).map((l: any) => l.id)
+      );
+
+      const { data: lpRows, error: lpErr } = await supabase
+        .from('lesson_progress')
+        .select('lesson_id, status, language, updated_at')
+        .in('lesson_id', lessonIds)
+        .eq('user_id', userId);
+
+      if (lpErr) {
+        console.warn('Failed to read lesson progress:', lpErr);
+      }
+
+      // Build a set of completed lessons for quick lookup
+      const completedSet = new Set(
+        (lpRows || [])
+          .filter(r => r.status === 'completed')
+          .map(r => r.lesson_id)
+      );
 
       // Process modules and lessons with accessibility
       const processedModules = await Promise.all(
@@ -155,18 +172,11 @@ export function CoursePlayer({
                     }
                   );
 
-                  // Check lesson progress - scope to user to avoid .single() errors
-                  const { data: lessonProgress } = await supabase
-                    .from('lesson_progress')
-                    .select('status')
-                    .eq('lesson_id', lesson.id)
-                    .eq('user_id', userId)
-                    .maybeSingle();
-
+                  // Use the pre-fetched completion status from bulk read
                   return {
                     ...lesson,
                     is_accessible: isAccessible || false,
-                    is_completed: lessonProgress?.status === 'completed'
+                    is_completed: completedSet.has(lesson.id)
                   };
                 })
             );
@@ -245,7 +255,7 @@ export function CoursePlayer({
       const userId = user?.id;
       if (!userId) throw new Error('Not authenticated');
 
-      // Mark lesson as completed with user_id and language
+      // Mark lesson as completed with user_id, language, and onConflict
       const { error: progressError } = await supabase
         .from('lesson_progress')
         .upsert({
@@ -255,6 +265,8 @@ export function CoursePlayer({
           language: languagePreference.language_code, // Required for unique constraint
           completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'user_id,lesson_id,language' // Explicitly handle the composite unique constraint
         });
 
       if (progressError) {
@@ -311,7 +323,7 @@ export function CoursePlayer({
 
       if (!confirmSwitch) return;
 
-      // Update language preference in state only (table doesn't exist)
+      // Update language preference in state
       setLanguagePreference(prev => ({
         ...prev,
         language_code: newLanguage
