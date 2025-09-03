@@ -137,6 +137,9 @@ export function CoursePlayer({
         (m.lessons || []).map((l: any) => l.id)
       );
 
+      console.log('[DEBUG] Loading progress for user:', userId);
+      console.log('[DEBUG] Lesson IDs to check:', lessonIds);
+
       const { data: lpRows, error: lpErr } = await supabase
         .from('lesson_progress')
         .select('lesson_id, status, language, updated_at')
@@ -144,7 +147,9 @@ export function CoursePlayer({
         .eq('user_id', userId);
 
       if (lpErr) {
-        console.warn('Failed to read lesson progress:', lpErr);
+        console.error('[ERROR] Failed to read lesson progress:', lpErr);
+      } else {
+        console.log('[DEBUG] Lesson progress rows found:', lpRows);
       }
 
       // Build a set of completed lessons for quick lookup
@@ -153,6 +158,8 @@ export function CoursePlayer({
           .filter(r => r.status === 'completed')
           .map(r => r.lesson_id)
       );
+      
+      console.log('[DEBUG] Completed lessons set:', Array.from(completedSet));
 
       // Process modules and lessons with accessibility
       const processedModules = await Promise.all(
@@ -190,16 +197,47 @@ export function CoursePlayer({
 
       setModules(processedModules);
 
-      // Find current lesson (first incomplete accessible lesson)
+      // Try to restore the last accessed lesson first
+      const lastAccessedLessonId = localStorage.getItem(`last_lesson_${courseId}`);
       let nextLessonId = null;
-      for (const module of processedModules) {
-        for (const lesson of module.lessons) {
+      
+      // Check if last accessed lesson is still valid and accessible
+      if (lastAccessedLessonId) {
+        const lastLesson = processedModules
+          .flatMap(m => m.lessons)
+          .find(l => l.id === lastAccessedLessonId);
+        
+        if (lastLesson && lastLesson.is_accessible) {
+          console.log('[DEBUG] Restoring last accessed lesson:', lastAccessedLessonId);
+          nextLessonId = lastAccessedLessonId;
+        }
+      }
+      
+      // If no last accessed or it's not valid, find first incomplete accessible lesson
+      if (!nextLessonId) {
+        console.log('[DEBUG] Finding next incomplete lesson...');
+        const allLessons = processedModules.flatMap(m => m.lessons);
+        
+        // First, try to find the first incomplete but accessible lesson
+        for (const lesson of allLessons) {
+          console.log('[DEBUG] Checking lesson:', lesson.id, 'accessible:', lesson.is_accessible, 'completed:', lesson.is_completed);
           if (lesson.is_accessible && !lesson.is_completed) {
             nextLessonId = lesson.id;
+            console.log('[DEBUG] Found next incomplete lesson:', nextLessonId);
             break;
           }
         }
-        if (nextLessonId) break;
+        
+        // If no incomplete lessons, find the first accessible lesson (might be reviewing)
+        if (!nextLessonId) {
+          for (const lesson of allLessons) {
+            if (lesson.is_accessible) {
+              nextLessonId = lesson.id;
+              console.log('[DEBUG] All lessons complete, starting from first accessible:', nextLessonId);
+              break;
+            }
+          }
+        }
       }
 
       if (nextLessonId) {
@@ -208,6 +246,7 @@ export function CoursePlayer({
         // Course might be completed, find last lesson
         const allLessons = processedModules.flatMap(m => m.lessons);
         if (allLessons.length > 0) {
+          console.log('[DEBUG] No incomplete lessons found, showing last lesson');
           setCurrentLessonId(allLessons[allLessons.length - 1].id);
         }
       }
@@ -244,8 +283,11 @@ export function CoursePlayer({
     if (lesson && lesson.is_accessible) {
       setCurrentLessonId(lessonId);
       setCurrentLesson(lesson);
+      // Remember the last accessed lesson
+      localStorage.setItem(`last_lesson_${courseId}`, lessonId);
+      console.log('[DEBUG] Selected lesson:', lessonId);
     }
-  }, [modules]);
+  }, [modules, courseId]);
 
   // Handle lesson completion
   const handleLessonComplete = useCallback(async (lessonId: string) => {
@@ -256,7 +298,12 @@ export function CoursePlayer({
       if (!userId) throw new Error('Not authenticated');
 
       // Mark lesson as completed with user_id, language, and onConflict
-      const { error: progressError } = await supabase
+      console.log('[DEBUG] Attempting to save lesson completion:');
+      console.log('[DEBUG] - User ID:', userId);
+      console.log('[DEBUG] - Lesson ID:', lessonId);
+      console.log('[DEBUG] - Language:', languagePreference.language_code);
+      
+      const { data: upsertData, error: progressError } = await supabase
         .from('lesson_progress')
         .upsert({
           user_id: userId,
@@ -267,10 +314,14 @@ export function CoursePlayer({
           updated_at: new Date().toISOString()
         }, { 
           onConflict: 'user_id,lesson_id,language' // Explicitly handle the composite unique constraint
-        });
+        })
+        .select();
 
       if (progressError) {
-        console.error('Failed to update lesson progress:', progressError);
+        console.error('[ERROR] Failed to update lesson progress:', progressError);
+        console.error('[ERROR] Full error details:', JSON.stringify(progressError, null, 2));
+      } else {
+        console.log('[SUCCESS] Lesson progress saved:', upsertData);
       }
 
       // Recalculate course progress
@@ -300,14 +351,17 @@ export function CoursePlayer({
       const currentIndex = allLessons.findIndex(l => l.id === lessonId);
       if (currentIndex < allLessons.length - 1) {
         const nextLesson = allLessons[currentIndex + 1];
+        console.log('[DEBUG] Auto-advancing to next lesson:', nextLesson.id);
         // Small delay for better UX
         setTimeout(() => {
           selectLesson(nextLesson.id);
+          // Reload to update accessibility and progress
+          loadCourseData();
         }, 1500);
+      } else {
+        // Just reload to update progress
+        loadCourseData();
       }
-
-      // Reload course data to update accessibility
-      loadCourseData();
 
     } catch (error) {
       console.error('Error handling lesson completion:', error);
