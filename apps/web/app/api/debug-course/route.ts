@@ -128,12 +128,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get lesson progress for the user
+    // Get lesson progress for the user FOR THE SPECIFIC LANGUAGE
     const lessonIds = lessons?.map(l => l.id) || [];
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
       .select('lesson_id, status, time_spent, video_progress, quiz_score, updated_at')
       .eq('user_id', user.id)
+      .eq('language', language)  // Filter by language to get correct progress
       .in('lesson_id', lessonIds);
 
     if (progressError) {

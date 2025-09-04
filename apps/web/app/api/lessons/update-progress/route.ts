@@ -44,7 +44,8 @@ export async function POST(request: NextRequest) {
     if (existingProgress) {
       // Update existing record
       const updateData: any = {
-        updated_at: now
+        updated_at: now,
+        status: 'in_progress'  // Ensure status is set
       };
       
       if (updateLastAccessed) {

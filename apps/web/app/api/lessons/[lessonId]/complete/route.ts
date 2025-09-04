@@ -61,10 +61,11 @@ export async function POST(
       beforeProgress: beforeProgress?.progress_percentage
     });
 
-    // Update course enrollment progress
+    // Update course enrollment progress WITH LANGUAGE PARAMETER
     const { error: enrollmentError } = await client.rpc('update_course_progress', {
       p_user_id: user.id,
-      p_lesson_id: lessonId
+      p_lesson_id: lessonId,
+      p_language: language  // Pass the language to calculate progress correctly
     });
 
     if (enrollmentError) {
