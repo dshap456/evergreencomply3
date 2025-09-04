@@ -254,7 +254,7 @@ function DOTHazmatGeneralPage() {
                     <div className="space-y-3 text-sm pt-2">
                       <div className="flex items-center gap-3">
                         <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">3-year certification</span>
+                        <span className="font-medium">49 CFR §172 Compliant</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />

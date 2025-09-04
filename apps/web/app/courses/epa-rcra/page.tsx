@@ -182,9 +182,9 @@ function EPARCRAPage() {
                     {targetAudience.map((audience, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-[rgba(34,197,94,0.05)] to-[rgba(34,197,94,0.15)] rounded-lg border border-[rgba(34,197,94,0.3)] hover:border-[rgba(34,197,94,0.5)] transition-all hover:shadow-md"
+                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-[rgba(34,197,94,0.25)] to-[rgba(34,197,94,0.35)] rounded-lg border border-[rgba(34,197,94,0.6)] hover:border-[rgba(34,197,94,0.8)] transition-all hover:shadow-md"
                       >
-                        <div className="bg-[rgba(34,197,94,0.3)] p-2 rounded-full">
+                        <div className="bg-[rgba(34,197,94,0.5)] p-2 rounded-full">
                           <Users className="h-5 w-5 text-[rgba(34,197,94,1)] flex-shrink-0" />
                         </div>
                         <span className="font-medium text-foreground">{audience}</span>
@@ -235,7 +235,7 @@ function EPARCRAPage() {
                     <div className="space-y-3 text-sm pt-2">
                       <div className="flex items-center gap-3">
                         <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">Annual certification</span>
+                        <span className="font-medium">EPA 40 CFR Compliant</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
