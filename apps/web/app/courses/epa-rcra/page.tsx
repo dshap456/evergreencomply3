@@ -164,6 +164,24 @@ function EPARCRAPage() {
                 </div>
 
                 <div>
+                  <h3 className="text-2xl font-bold mb-6 text-primary">Course Preview</h3>
+                  <div className="mb-12">
+                    <p className="text-sm text-muted-foreground mb-4 text-center">
+                      Watch a sample of our engaging course content and see how we make compliance training effective and painless.
+                    </p>
+                    <div className="relative aspect-video rounded-lg overflow-hidden shadow-xl">
+                      <iframe
+                        src="https://www.youtube.com/embed/Zl2QW71CxdQ"
+                        title="EPA RCRA Course Preview"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
                   <h3 className="text-2xl font-bold mb-6 text-primary">Learning Objectives</h3>
                   <div className="space-y-4">
                     {learningObjectives.map((objective, index) => (
