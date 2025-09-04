@@ -167,6 +167,9 @@ function DOTHazmatGeneralPage() {
                 <div>
                   <h3 className="text-2xl font-bold mb-6 text-primary">Course Preview</h3>
                   <div className="mb-12">
+                    <p className="text-sm text-muted-foreground mb-4 text-center">
+                      Watch a sample of our engaging course content and see how we make compliance training effective and painless.
+                    </p>
                     <div className="relative aspect-video rounded-lg overflow-hidden shadow-xl">
                       <iframe
                         src="https://www.youtube.com/embed/kjI6JFHbM1A"
@@ -176,9 +179,6 @@ function DOTHazmatGeneralPage() {
                         className="absolute inset-0 w-full h-full"
                       />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-4 text-center">
-                      Watch a sample of our engaging course content and see how we make compliance training effective and enjoyable.
-                    </p>
                   </div>
                 </div>
 
