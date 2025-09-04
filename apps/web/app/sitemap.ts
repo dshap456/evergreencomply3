@@ -21,6 +21,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   
   const categories = [...new Set(categoriesData?.map(c => c.category) || [])];
 
+  // Fetch all published blog posts
+  const { data: blogPosts } = await supabase
+    .from('blog_posts')
+    .select('slug, updated_at')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -109,6 +116,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
+  // Blog posts
+  const blogPostPages: MetadataRoute.Sitemap = blogPosts?.map((post) => ({
+    url: `${BASE_URL}/blog/${post.slug}`,
+    lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  })) || [];
+
+  // Blog main page
+  const blogPages: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    },
+  ];
+
   // Combine all pages
-  return [...staticPages, ...coursePages, ...categoryPages, ...locationPages];
+  return [...staticPages, ...coursePages, ...categoryPages, ...locationPages, ...blogPages, ...blogPostPages];
 }
