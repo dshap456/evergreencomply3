@@ -251,7 +251,7 @@ function DOTHazmatAdvancedPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="text-center">
-                      <div className="text-5xl font-bold text-primary">$1</div>
+                      <div className="text-5xl font-bold text-primary">$159</div>
                       <p className="text-muted-foreground">per employee / 3-year cert</p>
                     </div>
                     <div className="space-y-3 text-sm pt-2">
