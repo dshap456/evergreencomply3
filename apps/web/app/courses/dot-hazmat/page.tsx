@@ -165,6 +165,24 @@ function DOTHazmatGeneralPage() {
                 </div>
 
                 <div>
+                  <h3 className="text-2xl font-bold mb-6 text-primary">Course Preview</h3>
+                  <div className="mb-12">
+                    <div className="relative aspect-video rounded-lg overflow-hidden shadow-xl">
+                      <iframe
+                        src="https://www.youtube.com/embed/kjI6JFHbM1A"
+                        title="DOT HAZMAT General Awareness Course Preview"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-4 text-center">
+                      Watch a sample of our engaging course content and see how we make compliance training effective and enjoyable.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
                   <h3 className="text-2xl font-bold mb-6 text-primary">Learning Objectives</h3>
                   <div className="space-y-4">
                     {learningObjectives.map((objective, index) => (
@@ -183,9 +201,9 @@ function DOTHazmatGeneralPage() {
                     {targetAudience.map((audience, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-[rgba(233,195,81,0.05)] to-[rgba(233,195,81,0.15)] rounded-lg border border-[rgba(233,195,81,0.3)] hover:border-[rgba(233,195,81,0.5)] transition-all hover:shadow-md"
+                        className="flex items-center gap-3 p-4 bg-gradient-to-r from-[rgba(233,195,81,0.25)] to-[rgba(233,195,81,0.35)] rounded-lg border border-[rgba(233,195,81,0.6)] hover:border-[rgba(233,195,81,0.8)] transition-all hover:shadow-md"
                       >
-                        <div className="bg-[rgba(233,195,81,0.3)] p-2 rounded-full">
+                        <div className="bg-[rgba(233,195,81,0.5)] p-2 rounded-full">
                           <Users className="h-5 w-5 text-[rgba(233,195,81,1)] flex-shrink-0" />
                         </div>
                         <span className="font-medium text-foreground">{audience}</span>
