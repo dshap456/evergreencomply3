@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
+import Script from 'next/script';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -29,6 +30,13 @@ import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { CustomShieldIcon } from '../../_components/custom-icons';
 import { AddToCartButton } from '../../_components/add-to-cart-button';
+import { 
+  generateSEOMetadata, 
+  generateCourseStructuredData,
+  generateBreadcrumbStructuredData,
+  getCategoryKeywords,
+  generateCourseDescription
+} from '~/lib/seo/seo-utils';
 
 interface CoursePageProps {
   params: Promise<{ slug: string }>;
@@ -41,7 +49,7 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
   
   const { data: course } = await supabase
     .from('courses')
-    .select('title, description')
+    .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
     .single();
@@ -49,13 +57,41 @@ export async function generateMetadata({ params }: CoursePageProps): Promise<Met
   if (!course) {
     return {
       title: 'Course Not Found',
+      robots: { index: false, follow: false },
     };
   }
 
-  return {
-    title: `${course.title} - Evergreen Comply`,
-    description: course.description || `Learn ${course.title} with Evergreen Comply's comprehensive training program.`,
-  };
+  const courseContent = getCourseContent(slug);
+  const keywords = [
+    course.title.toLowerCase(),
+    ...(course.category ? getCategoryKeywords(course.category) : []),
+    'online training',
+    'certification course',
+    'compliance training',
+    courseContent.certification,
+  ];
+
+  const description = course.seo_description || 
+    course.description || 
+    generateCourseDescription(
+      course.title,
+      course.category || 'Professional',
+      courseContent.duration,
+      courseContent.features.map(f => f.title)
+    );
+
+  return generateSEOMetadata({
+    title: course.title,
+    description,
+    keywords,
+    url: `/courses/${slug}`,
+    type: 'course',
+    image: courseContent.image,
+    price: Number(course.price),
+    currency: 'USD',
+    category: course.category,
+    duration: courseContent.duration,
+  });
 }
 
 async function CoursePage({ params }: CoursePageProps) {
@@ -78,8 +114,45 @@ async function CoursePage({ params }: CoursePageProps) {
   // This could be moved to the database in the future
   const courseContent = getCourseContent(slug);
 
+  // Generate structured data for SEO
+  const courseStructuredData = generateCourseStructuredData({
+    title: course.title,
+    description: course.description || courseContent.description,
+    provider: 'Evergreen Comply',
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com'}/courses/${slug}`,
+    price: Number(course.price),
+    currency: 'USD',
+    duration: courseContent.duration,
+    category: course.category,
+    language: 'en-US',
+    image: courseContent.image,
+    skills: courseContent.features.map(f => f.title),
+    targetAudience: ['Safety Managers', 'Compliance Officers', 'HR Professionals', 'Operations Managers'],
+  });
+
+  const breadcrumbStructuredData = generateBreadcrumbStructuredData([
+    { name: 'Home', url: '/' },
+    { name: 'Courses', url: '/courses' },
+    { name: course.title, url: `/courses/${slug}` },
+  ]);
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <>
+      <Script
+        id="course-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(courseStructuredData),
+        }}
+      />
+      <Script
+        id="breadcrumb-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbStructuredData),
+        }}
+      />
+      <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2">
@@ -268,6 +341,7 @@ async function CoursePage({ params }: CoursePageProps) {
         </section>
       </main>
     </div>
+    </>
   );
 }
 
