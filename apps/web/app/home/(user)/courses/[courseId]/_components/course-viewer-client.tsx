@@ -286,7 +286,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       console.log('🔍 Fetching last accessed lesson...', {
         courseId,
         language: selectedLanguage,
-        url: `/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`
+        url: `/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`,
+        totalModules: course.modules.length,
+        totalLessons: course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
       });
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
@@ -301,8 +303,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           setLastAccessedLesson(result.lessonId);
           // Check if this lesson is still available (not locked)
           const allLessons = course.modules.flatMap(m => m.lessons);
-          console.log('📚 All lessons in course:', allLessons.map(l => ({ 
-            id: l.id.substring(0, 8), 
+          console.log('📚 All lessons in course (first 10):', allLessons.slice(0, 10).map(l => ({ 
+            id: l.id, 
             title: l.title, 
             locked: l.is_locked,
             completed: l.completed 
@@ -310,12 +312,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           
           const lesson = allLessons.find(l => l.id === result.lessonId);
           
-          console.log('🔍 Looking for lesson:', result.lessonId);
+          console.log('🔍 Looking for lesson ID:', result.lessonId);
           console.log('📖 Found lesson:', lesson ? {
+            id: lesson.id,
             title: lesson.title,
             is_locked: lesson.is_locked,
             completed: lesson.completed
-          } : 'NOT FOUND');
+          } : `NOT FOUND - Total lessons: ${allLessons.length}`);
           
           if (lesson && !lesson.is_locked) {
             console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);

@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .eq('language', language)
       .in('lesson_id', lessonIds)
-      .order('last_accessed', { ascending: false, nullsFirst: true })
+      .order('last_accessed', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();
