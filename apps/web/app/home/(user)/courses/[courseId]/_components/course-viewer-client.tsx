@@ -257,6 +257,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       lastSavedLessonRef.current = currentLessonId;
       
       try {
+        console.log('📡 Sending save request with:', {
+          lessonId: currentLessonId,
+          courseId,
+          language: selectedLanguage,
+          updateLastAccessed: true
+        });
+        
         const response = await fetch('/api/lessons/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -268,16 +275,27 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           })
         });
         
+        console.log('📨 Response received:', response.status, response.statusText);
+        
         if (!response.ok) {
           const error = await response.json();
           console.error('❌ Failed to save current lesson:', error);
           // Reset lastSavedLessonRef on error so it can retry
           lastSavedLessonRef.current = null;
         } else {
-          console.log('✅ Current lesson saved successfully');
+          const result = await response.json();
+          console.log('✅ Current lesson saved successfully:', result);
+          
+          // Verify by checking enrollment
+          const verifyResponse = await fetch('/api/test-course-progress');
+          const verifyResult = await verifyResponse.json();
+          console.log('🔍 Verification - current_lesson_id in DB:', 
+            verifyResult.enrollments?.find((e: any) => e.course_id === courseId)?.current_lesson_id
+          );
         }
       } catch (error) {
         console.error('❌ Network error saving current lesson:', error);
+        console.error('Full error details:', error);
         // Reset lastSavedLessonRef on error so it can retry
         lastSavedLessonRef.current = null;
       }
