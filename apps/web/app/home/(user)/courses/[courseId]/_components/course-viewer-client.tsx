@@ -223,8 +223,11 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   // Save current lesson when it changes and on unmount
   useEffect(() => {
+    console.log('📍 Save effect running - currentLessonId:', currentLessonId, 'courseId:', courseId, 'isRestoring:', isRestoringRef.current);
+    
     // Don't save during restoration
     if (isRestoringRef.current) {
+      console.log('⏸️ Skipping save - restoration in progress');
       return;
     }
 
@@ -236,31 +239,47 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
     // Save current lesson whenever it changes (not just on unmount)
     const saveCurrentLesson = async () => {
-      if (currentLessonId && lastSavedLessonRef.current !== currentLessonId) {
-        console.log('💾 Auto-saving current lesson:', currentLessonId, 'for course:', courseId);
-        lastSavedLessonRef.current = currentLessonId;
+      console.log('🔍 Checking if should save - current:', currentLessonId, 'lastSaved:', lastSavedLessonRef.current);
+      
+      // Skip if no lesson selected
+      if (!currentLessonId) {
+        console.log('🚫 No lesson to save');
+        return;
+      }
+      
+      // Skip if already saved
+      if (lastSavedLessonRef.current === currentLessonId) {
+        console.log('🔄 Already saved this lesson');
+        return;
+      }
+      
+      console.log('💾 Auto-saving current lesson:', currentLessonId, 'for course:', courseId);
+      lastSavedLessonRef.current = currentLessonId;
+      
+      try {
+        const response = await fetch('/api/lessons/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonId: currentLessonId,
+            courseId,
+            language: selectedLanguage,
+            updateLastAccessed: true
+          })
+        });
         
-        try {
-          const response = await fetch('/api/lessons/update-progress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lessonId: currentLessonId,
-              courseId,
-              language: selectedLanguage,
-              updateLastAccessed: true
-            })
-          });
-          
-          if (!response.ok) {
-            const error = await response.json();
-            console.error('❌ Failed to save current lesson:', error);
-          } else {
-            console.log('✅ Current lesson saved successfully');
-          }
-        } catch (error) {
-          console.error('❌ Network error saving current lesson:', error);
+        if (!response.ok) {
+          const error = await response.json();
+          console.error('❌ Failed to save current lesson:', error);
+          // Reset lastSavedLessonRef on error so it can retry
+          lastSavedLessonRef.current = null;
+        } else {
+          console.log('✅ Current lesson saved successfully');
         }
+      } catch (error) {
+        console.error('❌ Network error saving current lesson:', error);
+        // Reset lastSavedLessonRef on error so it can retry
+        lastSavedLessonRef.current = null;
       }
     };
 
