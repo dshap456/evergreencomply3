@@ -568,6 +568,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         const courseResult = await courseResponse.json();
         
         if (courseResult.success) {
+          console.log('📊 Course refresh after completion:', {
+            progress: courseResult.course.progress_percentage,
+            modules: courseResult.course.modules?.length,
+            lessons: courseResult.course.modules?.reduce((acc: number, m: any) => acc + m.lessons.length, 0)
+          });
+          
           // Process lessons to determine locked state with fresh server data
           const processedCourse = processLessonLockStates(courseResult.course);
           setCourse(processedCourse);
