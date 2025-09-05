@@ -220,14 +220,15 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [lessonRestorationKey, setLessonRestorationKey] = useState(0);
   const lastSavedLessonRef = useRef<string | null>(null);
   const isRestoringRef = useRef<boolean>(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Save current lesson when it changes and on unmount
   useEffect(() => {
-    console.log('📍 Save effect running - currentLessonId:', currentLessonId, 'courseId:', courseId, 'isRestoring:', isRestoringRef.current);
+    console.log('📍 Save effect running - currentLessonId:', currentLessonId, 'courseId:', courseId, 'isInitialLoad:', isInitialLoad);
     
-    // Don't save during restoration
-    if (isRestoringRef.current) {
-      console.log('⏸️ Skipping save - restoration in progress');
+    // Don't save during initial load/restoration
+    if (isInitialLoad) {
+      console.log('⏸️ Skipping save - initial load/restoration');
       return;
     }
 
@@ -331,7 +332,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         });
       }
     };
-  }, [currentLessonId, courseId, selectedLanguage]);
+  }, [currentLessonId, courseId, selectedLanguage, isInitialLoad]);
 
   // Fetch last accessed lesson from database when course loads
   useEffect(() => {
@@ -394,10 +395,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           
           if (lesson && !lesson.is_locked) {
             console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
-            isRestoringRef.current = true;
             setCurrentLessonId(result.lessonId);
-            // Clear restoration flag after a short delay
-            setTimeout(() => { isRestoringRef.current = false; }, 1000);
+            // Mark initial load as complete
+            setIsInitialLoad(false);
+            console.log('🎆 Initial load complete - saves enabled');
             return;
           } else {
             console.log('🔒 Cannot restore - lesson is locked or not found');
@@ -411,9 +412,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const nextLesson = getNextLesson();
       if (nextLesson) {
         console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
-        isRestoringRef.current = true;
         setCurrentLessonId(nextLesson.lesson.id);
-        setTimeout(() => { isRestoringRef.current = false; }, 1000);
+        // Mark initial load as complete
+        setIsInitialLoad(false);
+        console.log('🎆 Initial load complete - saves enabled');
       } else {
         console.log('❌ No available lessons found');
       }
@@ -433,6 +435,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       return;
     }
     
+    // Ensure saves are enabled for manual navigation
+    setIsInitialLoad(false);
     setCurrentLessonId(lessonId);
     setSidebarOpen(false); // Close sidebar on mobile after selection
     // No need to save here - the useEffect will auto-save when currentLessonId changes
