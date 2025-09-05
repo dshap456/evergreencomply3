@@ -56,6 +56,18 @@ interface CourseData {
 
 export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   console.log('🚀 CourseViewerClient initialized with courseId:', courseId);
+  
+  // Validate courseId
+  if (!courseId) {
+    console.error('❌ CourseViewerClient: No courseId provided!');
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p className="text-red-600">Error: Course ID is missing</p>
+        </CardContent>
+      </Card>
+    );
+  }
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +87,17 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`, { cache: 'no-store' });
+      // Ensure courseId is present before making request
+      if (!courseId) {
+        console.error('❌ Cannot load course data: courseId is undefined');
+        setError('Course ID is missing');
+        setLoading(false);
+        return;
+      }
+      
+      const url = `/api/debug-course?courseId=${encodeURIComponent(courseId)}&language=${language}`;
+      console.log('📡 Fetching from URL:', url);
+      const response = await fetch(url, { cache: 'no-store' });
       const result = await response.json();
       
       console.log('📚 API Response:', {

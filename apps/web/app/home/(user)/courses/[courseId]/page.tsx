@@ -17,6 +17,13 @@ interface LearnerCoursePageProps {
 
 function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   const { courseId } = use(params);
+  
+  console.log('[PAGE] courseId from params:', courseId);
+  
+  if (!courseId) {
+    console.error('[PAGE] No courseId found in params!');
+    notFound();
+  }
 
   return (
     <PageBody className="pt-0">
