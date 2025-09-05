@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // First check if a record exists
     const { data: existingProgress } = await client
       .from('lesson_progress')
-      .select('id')
+      .select('id, status')
       .eq('user_id', user.id)
       .eq('lesson_id', lessonId)
       .eq('language', language)
@@ -42,11 +42,15 @@ export async function POST(request: NextRequest) {
     const now = new Date().toISOString();
     
     if (existingProgress) {
-      // Update existing record
+      // Update existing record WITHOUT changing status if already completed
       const updateData: any = {
-        updated_at: now,
-        status: 'in_progress'  // Ensure status is set
+        updated_at: now
       };
+      
+      // Only set to in_progress if not already completed
+      if (existingProgress.status !== 'completed') {
+        updateData.status = 'in_progress';
+      }
       
       if (updateLastAccessed) {
         updateData.last_accessed = now;
