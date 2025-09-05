@@ -17,6 +17,7 @@ export function StorageVideoPlayer({ lessonId, languageCode = 'en', onProgress, 
   const [error, setError] = useState<string | null>(null);
   const [hasVideo, setHasVideo] = useState(false);
   const [status, setStatus] = useState<string>('unknown');
+  const [initialTime, setInitialTime] = useState<number>(0);
 
   useEffect(() => {
     async function loadVideoUrl() {
@@ -26,12 +27,22 @@ export function StorageVideoPlayer({ lessonId, languageCode = 'en', onProgress, 
         
         console.log('🎥 Loading video for lesson:', lessonId);
 
-        const response = await fetch(`/api/video/secure-url/${lessonId}?language=${languageCode}`);
-        const result = await response.json();
+        const [videoResponse, progressResponse] = await Promise.all([
+          fetch(`/api/video/secure-url/${lessonId}?language=${languageCode}`),
+          fetch(`/api/lessons/video-progress?lessonId=${lessonId}&language=${languageCode}`)
+        ]);
+
+        const result = await videoResponse.json();
+        const progressData = await progressResponse.json();
         
         console.log('🔍 Video API response:', result);
+        console.log('⏱️ Progress data:', progressData);
 
-        if (!response.ok) {
+        if (progressData.success && progressData.current_time > 0) {
+          setInitialTime(progressData.current_time);
+        }
+
+        if (!videoResponse.ok) {
           throw new Error(result.error || 'Failed to load video');
         }
 
@@ -108,6 +119,8 @@ export function StorageVideoPlayer({ lessonId, languageCode = 'en', onProgress, 
   return (
     <VideoPlayer 
       src={videoUrl}
+      lessonId={lessonId}
+      initialTime={initialTime}
       isPlaceholder={false}
       onProgress={onProgress}
       onCompletion={onCompletion}

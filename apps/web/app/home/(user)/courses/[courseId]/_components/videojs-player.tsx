@@ -7,6 +7,8 @@ import 'video.js/dist/video-js.css';
 
 interface VideoJSPlayerProps {
   src: string;
+  lessonId?: string;
+  initialTime?: number;
   onProgress?: (progress: number) => void;
   onCompletion?: (completed: boolean) => void;
   className?: string;
@@ -14,6 +16,8 @@ interface VideoJSPlayerProps {
 
 export function VideoJSPlayer({ 
   src, 
+  lessonId,
+  initialTime = 0,
   onProgress, 
   onCompletion,
   className = ''
@@ -22,6 +26,8 @@ export function VideoJSPlayer({
   const playerRef = useRef<Player | null>(null);
   const [maxWatchedTime, setMaxWatchedTime] = useState(0);
   const [hasCompleted, setHasCompleted] = useState(false);
+  const progressSendTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSentProgressRef = useRef<{ time: number; duration: number } | null>(null);
 
   useEffect(() => {
     // Initialize Video.js player
@@ -79,6 +85,66 @@ export function VideoJSPlayer({
       }
     });
 
+    // Function to send progress to server
+    const maybeSendProgress = (currentTime: number, duration: number) => {
+      if (!lessonId || duration <= 0) return;
+      
+      // Throttle to ~5 seconds
+      const shouldSend = !lastSentProgressRef.current || 
+        Math.abs(currentTime - lastSentProgressRef.current.time) >= 5;
+      
+      if (shouldSend) {
+        // Clear any pending timeout
+        if (progressSendTimeoutRef.current) {
+          clearTimeout(progressSendTimeoutRef.current);
+        }
+        
+        // Set a new timeout to batch the send
+        progressSendTimeoutRef.current = setTimeout(() => {
+          const deviceInfo = {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          };
+          
+          const payload = {
+            lessonId,
+            currentTime: Math.floor(currentTime),
+            duration: Math.floor(duration),
+            deviceInfo
+          };
+          
+          // Try sendBeacon first, fallback to fetch
+          const dataStr = JSON.stringify(payload);
+          const blob = new Blob([dataStr], { type: 'application/json' });
+          
+          if (navigator.sendBeacon) {
+            const sent = navigator.sendBeacon('/api/lessons/video-progress', blob);
+            if (sent) {
+              console.log('📤 Progress sent via beacon:', currentTime);
+            } else {
+              // Fallback to fetch
+              fetch('/api/lessons/video-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: dataStr,
+                keepalive: true
+              }).catch(err => console.error('Failed to send progress:', err));
+            }
+          } else {
+            // No beacon support, use fetch
+            fetch('/api/lessons/video-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: dataStr,
+              keepalive: true
+            }).catch(err => console.error('Failed to send progress:', err));
+          }
+          
+          lastSentProgressRef.current = { time: currentTime, duration };
+        }, 500); // Small delay to batch rapid updates
+      }
+    };
+    
     // Track time updates
     let lastReportedProgress = 0;
     player.on('timeupdate', () => {
@@ -104,6 +170,9 @@ export function VideoJSPlayer({
             setHasCompleted(true);
             onCompletion?.(true);
           }
+          
+          // Send progress to server
+          maybeSendProgress(currentTime, duration);
         }
       }
     });
@@ -176,21 +245,86 @@ export function VideoJSPlayer({
     });
 
     player.on('loadedmetadata', () => {
+      const duration = player.duration();
       console.log('📊 Video metadata loaded:', {
-        duration: player.duration(),
+        duration: duration,
         width: player.videoWidth(),
-        height: player.videoHeight()
+        height: player.videoHeight(),
+        initialTime: initialTime
       });
+      
+      // Seek to initial time if provided and valid
+      if (initialTime && initialTime > 0 && duration > 0) {
+        // Only seek if within duration minus 5 seconds (don't resume at very end)
+        if (initialTime < duration - 5) {
+          player.currentTime(initialTime);
+          setMaxWatchedTime(initialTime);
+          console.log('⏱️ Resumed at', initialTime, 'seconds');
+        }
+      }
     });
 
+    // Send progress on visibility change or page unload
+    const sendFinalProgress = () => {
+      if (playerRef.current && !playerRef.current.isDisposed() && lessonId) {
+        const currentTime = playerRef.current.currentTime() || 0;
+        const duration = playerRef.current.duration() || 0;
+        
+        if (duration > 0) {
+          const deviceInfo = {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            event: 'page_unload'
+          };
+          
+          const payload = JSON.stringify({
+            lessonId,
+            currentTime: Math.floor(currentTime),
+            duration: Math.floor(duration),
+            deviceInfo
+          });
+          
+          // Use sendBeacon for reliable unload sending
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/lessons/video-progress', 
+              new Blob([payload], { type: 'application/json' }));
+          }
+        }
+      }
+    };
+    
+    // Add event listeners for page visibility/unload
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        sendFinalProgress();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', sendFinalProgress);
+    window.addEventListener('beforeunload', sendFinalProgress);
+    
     // Cleanup
     return () => {
+      // Clear any pending progress timeout
+      if (progressSendTimeoutRef.current) {
+        clearTimeout(progressSendTimeoutRef.current);
+      }
+      
+      // Send final progress before cleanup
+      sendFinalProgress();
+      
+      // Remove event listeners
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', sendFinalProgress);
+      window.removeEventListener('beforeunload', sendFinalProgress);
+      
       if (playerRef.current) {
         playerRef.current.dispose();
         playerRef.current = null;
       }
     };
-  }, [src]); // Only reinitialize if src changes
+  }, [src, lessonId, initialTime]); // Reinitialize if these change
 
   // Update max watched time when it changes
   useEffect(() => {

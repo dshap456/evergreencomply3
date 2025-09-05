@@ -399,6 +399,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             // Mark initial load as complete
             setIsInitialLoad(false);
             console.log('🎆 Initial load complete - saves enabled');
+            
+            // Update last_accessed timestamp for restored lesson
+            fetch('/api/lessons/update-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                lessonId: result.lessonId,
+                courseId,
+                language: selectedLanguage,
+                updateLastAccessed: true
+              })
+            }).catch(err => console.error('Failed to update last accessed:', err));
+            
             return;
           } else {
             console.log('🔒 Cannot restore - lesson is locked or not found');
@@ -416,6 +429,18 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         // Mark initial load as complete
         setIsInitialLoad(false);
         console.log('🎆 Initial load complete - saves enabled');
+        
+        // Update last_accessed timestamp for fallback lesson
+        fetch('/api/lessons/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonId: nextLesson.lesson.id,
+            courseId,
+            language: selectedLanguage,
+            updateLastAccessed: true
+          })
+        }).catch(err => console.error('Failed to update last accessed:', err));
       } else {
         console.log('❌ No available lessons found');
       }

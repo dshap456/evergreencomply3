@@ -21,6 +21,8 @@ const VideoJSPlayer = dynamic(
 
 interface VideoPlayerProps {
   src: string;
+  lessonId?: string;
+  initialTime?: number;
   isPlaceholder?: boolean;
   onProgress?: (progress: number) => void;
   onCompletion?: (completed: boolean) => void;
@@ -28,6 +30,8 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({ 
   src, 
+  lessonId,
+  initialTime,
   isPlaceholder = false, 
   onProgress, 
   onCompletion 
@@ -47,6 +51,8 @@ export function VideoPlayer({
     <div className="relative w-full h-full bg-gray-900">
       <VideoJSPlayer 
         src={src}
+        lessonId={lessonId}
+        initialTime={initialTime}
         onProgress={onProgress}
         onCompletion={onCompletion}
         className="w-full h-full"
