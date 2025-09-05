@@ -935,10 +935,14 @@ function LessonPlayer({
                   console.log('Video progress:', progress);
                 }}
                 onCompletion={(completed) => {
+                  console.log('🎬 Video completion callback triggered!', { completed, lessonId: lesson.id });
                   if (completed) {
+                    console.log('🎬 Video marked as completed, calling onLessonComplete...');
                     setCurrentLessonCompleted(true);
                     // Save completion to database and refresh course data
                     onLessonComplete(lesson.id);
+                  } else {
+                    console.log('🎬 Video not marked as completed');
                   }
                 }}
               />

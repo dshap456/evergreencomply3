@@ -167,8 +167,14 @@ export function VideoJSPlayer({
           
           // Check for completion (95% threshold)
           if (progress >= 95 && !hasCompleted) {
+            console.log('🎥 VideoJS: Video reached 95% completion!');
             setHasCompleted(true);
-            onCompletion?.(true);
+            if (onCompletion) {
+              console.log('🎥 VideoJS: Calling onCompletion callback');
+              onCompletion(true);
+            } else {
+              console.log('⚠️ VideoJS: No onCompletion callback provided!');
+            }
           }
           
           // Send progress to server
