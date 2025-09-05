@@ -556,6 +556,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   const handleLessonCompletion = async (lessonId: string, timeSpent?: number, quizScore?: number, isFinalQuiz?: boolean) => {
+    console.log('🎯 LESSON COMPLETION TRIGGERED!', {
+      lessonId,
+      timeSpent,
+      quizScore,
+      language: selectedLanguage
+    });
+    
     try {
       // Mark lesson as complete in database
       const response = await fetch(`/api/lessons/${lessonId}/complete`, {
@@ -572,6 +579,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       if (response.ok) {
         const responseData = await response.json();
         console.log('✅ Lesson completion saved to database:', responseData);
+        console.log('💾 Response details:', JSON.stringify(responseData, null, 2));
         
         // If this was a final quiz with a passing score, redirect to My Learning
         if (isFinalQuiz && quizScore && quizScore >= 80) {
@@ -644,6 +652,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('❌ Failed to save lesson completion:', errorData);
+        console.error('❌ Response status:', response.status);
+        console.error('❌ Error details:', JSON.stringify(errorData, null, 2));
       }
     } catch (error) {
       console.error('❌ Error saving lesson completion:', error);
