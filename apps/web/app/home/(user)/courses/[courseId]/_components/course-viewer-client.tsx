@@ -75,7 +75,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`);
+      const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`, { cache: 'no-store' });
       const result = await response.json();
       
       console.log('📚 API Response:', {
@@ -364,7 +364,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         totalLessons: course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
       });
       try {
-        const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
+        const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`, { cache: 'no-store' });
         const result = await response.json();
         
         console.log('📡 Last accessed API response:', {
@@ -564,7 +564,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         }
         
         // Get fresh course data from server to ensure consistency
-        const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}&language=${selectedLanguage}`);
+        const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}&language=${selectedLanguage}`, { cache: 'no-store' });
         const courseResult = await courseResponse.json();
         
         if (courseResult.success) {

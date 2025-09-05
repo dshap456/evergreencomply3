@@ -161,17 +161,13 @@ export async function GET(request: NextRequest) {
       const progress = progressMap.get(lesson.id) || {
         completed: false,
         time_spent: 0,
-        video_progress: 0,
-        quiz_score: null,
         last_accessed: null
       };
 
       lessonsByModule.get(lesson.module_id)!.push({
         ...lesson,
         completed: progress.completed,
-        time_spent: progress.time_spent,
-        video_progress: progress.video_progress,
-        quiz_score: progress.quiz_score
+        time_spent: progress.time_spent
       });
     });
 
