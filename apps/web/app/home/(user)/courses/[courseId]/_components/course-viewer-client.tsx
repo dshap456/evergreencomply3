@@ -393,28 +393,33 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             completed: lesson.completed
           } : `NOT FOUND - Total lessons: ${allLessons.length}`);
           
-          if (lesson && !lesson.is_locked) {
-            console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
+          if (lesson) {
+            // Always resume to last accessed, even if the gating would lock it
+            console.log('✅ Restoring last accessed lesson (ignoring lock):', lesson.title, lesson.id, 'locked:', lesson.is_locked);
             setCurrentLessonId(result.lessonId);
             // Mark initial load as complete
             setIsInitialLoad(false);
             console.log('🎆 Initial load complete - saves enabled');
             
             // Update last_accessed timestamp for restored lesson
-            fetch('/api/lessons/update-progress', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                lessonId: result.lessonId,
-                courseId,
-                language: selectedLanguage,
-                updateLastAccessed: true
-              })
-            }).catch(err => console.error('Failed to update last accessed:', err));
+            try {
+              await fetch('/api/lessons/update-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  lessonId: result.lessonId,
+                  courseId,
+                  language: selectedLanguage,
+                  updateLastAccessed: true
+                })
+              });
+            } catch (err) {
+              console.warn('Failed to persist restored last accessed:', err);
+            }
             
             return;
           } else {
-            console.log('🔒 Cannot restore - lesson is locked or not found');
+            console.log('❌ Lesson not found in course');
           }
         }
       } catch (error) {

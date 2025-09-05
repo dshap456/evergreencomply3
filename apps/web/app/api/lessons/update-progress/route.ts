@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify user is enrolled in the course
+    // Try to get enrollment (but don't fail if not found - RLS will protect the actual data)
     const { data: enrollment, error: enrollmentError } = await client
       .from('course_enrollments')
       .select('id')
@@ -26,12 +26,13 @@ export async function POST(request: NextRequest) {
       .eq('course_id', courseId)
       .single();
 
+    // Only log if there's no enrollment, don't block the progress update
     if (enrollmentError || !enrollment) {
-      return NextResponse.json({ success: false, error: 'User not enrolled in this course' }, { status: 403 });
+      console.log('[API] No enrollment found, skipping enrollment update but continuing with progress update');
     }
 
-    // Update current lesson in enrollment if requested
-    if (updateLastAccessed) {
+    // Update current lesson in enrollment if requested and enrollment exists
+    if (updateLastAccessed && enrollment) {
       console.log('[API] Updating enrollment current lesson:', { enrollmentId: enrollment.id, lessonId, language });
       const { data: updateData, error: updateEnrollmentError } = await client
         .from('course_enrollments')
