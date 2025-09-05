@@ -220,25 +220,64 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const lastSavedLessonRef = useRef<string | null>(null);
   const isRestoringRef = useRef<boolean>(false);
 
-  // Save current lesson ONLY when component unmounts (not on every change)
+  // Save current lesson when it changes and on unmount
   useEffect(() => {
     // Don't save during restoration
     if (isRestoringRef.current) {
       return;
     }
 
-    // Save when component unmounts (navigation away)
+    // Save current lesson whenever it changes (not just on unmount)
+    const saveCurrentLesson = async () => {
+      if (currentLessonId && lastSavedLessonRef.current !== currentLessonId) {
+        console.log('💾 Auto-saving current lesson:', currentLessonId);
+        lastSavedLessonRef.current = currentLessonId;
+        
+        try {
+          await fetch('/api/lessons/update-progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lessonId: currentLessonId,
+              courseId,
+              language: selectedLanguage,
+              updateLastAccessed: true
+            })
+          });
+        } catch (error) {
+          console.error('Failed to save current lesson:', error);
+        }
+      }
+    };
+
+    // Save immediately when lesson changes
+    saveCurrentLesson();
+
+    // Also save on unmount as backup
     return () => {
       if (currentLessonId) {
-        console.log('🚪 Component unmounting - saving progress for lesson:', currentLessonId);
-        // Use sendBeacon for reliable unmount saves
-        const data = JSON.stringify({
-          lessonId: currentLessonId,
-          courseId,
-          language: selectedLanguage,
-          updateLastAccessed: true
+        console.log('🚪 Component unmounting - final save for lesson:', currentLessonId);
+        // Try regular fetch first
+        fetch('/api/lessons/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lessonId: currentLessonId,
+            courseId,
+            language: selectedLanguage,
+            updateLastAccessed: true
+          }),
+          keepalive: true // This helps with unmount saves
+        }).catch(() => {
+          // Fallback to sendBeacon if fetch fails
+          const data = JSON.stringify({
+            lessonId: currentLessonId,
+            courseId,
+            language: selectedLanguage,
+            updateLastAccessed: true
+          });
+          navigator.sendBeacon('/api/lessons/update-progress', new Blob([data], { type: 'application/json' }));
         });
-        navigator.sendBeacon('/api/lessons/update-progress', new Blob([data], { type: 'application/json' }));
       }
     };
   }, [currentLessonId, courseId, selectedLanguage]);
@@ -345,22 +384,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     
     setCurrentLessonId(lessonId);
     setSidebarOpen(false); // Close sidebar on mobile after selection
-    
-    // Save the current lesson as last accessed
-    try {
-      await fetch('/api/lessons/update-progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lessonId,
-          courseId,
-          language: selectedLanguage,
-          updateLastAccessed: true
-        })
-      });
-    } catch (error) {
-      console.error('Failed to update last accessed lesson:', error);
-    }
+    // No need to save here - the useEffect will auto-save when currentLessonId changes
   };
 
   const getCurrentLesson = () => {
@@ -408,27 +432,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return currentIndex === allLessons.length - 1;
   };
 
-  const handleNextLesson = async () => {
+  const handleNextLesson = () => {
     const nextLesson = getNextLessonInSequence();
     if (nextLesson) {
       console.log('🎯 Manual navigation to next lesson:', nextLesson.lesson.title);
       setCurrentLessonId(nextLesson.lesson.id);
-      
-      // Save the new lesson as last accessed
-      try {
-        await fetch('/api/lessons/update-progress', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lessonId: nextLesson.lesson.id,
-            courseId,
-            language: selectedLanguage,
-            updateLastAccessed: true
-          })
-        });
-      } catch (error) {
-        console.error('Failed to update last accessed lesson:', error);
-      }
+      // No need to save here - the useEffect will auto-save when currentLessonId changes
     } else {
       console.log('❌ No next lesson available');
     }
@@ -494,25 +503,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             const nextLessonData = allLessons[currentIndex + 1];
             
             // Auto-advance to next lesson after a short delay
-            setTimeout(async () => {
+            setTimeout(() => {
               console.log('🚀 Auto-advancing to next lesson:', nextLessonData.lesson.title);
               setCurrentLessonId(nextLessonData.lesson.id);
-              
-              // Save the new lesson as last accessed
-              try {
-                await fetch('/api/lessons/update-progress', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    lessonId: nextLessonData.lesson.id,
-                    courseId,
-                    language: selectedLanguage,
-                    updateLastAccessed: true
-                  })
-                });
-              } catch (error) {
-                console.error('Failed to update last accessed lesson:', error);
-              }
+              // No need to save here - the useEffect will auto-save when currentLessonId changes
             }, 1500); // 1.5 second delay to show completion
           }
         } else {

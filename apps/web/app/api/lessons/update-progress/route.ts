@@ -30,6 +30,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not enrolled in this course' }, { status: 403 });
     }
 
+    // Update current lesson in enrollment if requested
+    if (updateLastAccessed) {
+      const { error: updateEnrollmentError } = await client
+        .from('course_enrollments')
+        .update({ 
+          current_lesson_id: lessonId,
+          current_lesson_language: language
+        })
+        .eq('id', enrollment.id);
+      
+      if (updateEnrollmentError) {
+        console.error('Error updating enrollment current lesson:', updateEnrollmentError);
+      }
+    }
+
     // First check if a record exists
     const { data: existingProgress } = await client
       .from('lesson_progress')

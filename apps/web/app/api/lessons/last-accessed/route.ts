@@ -24,7 +24,30 @@ export async function GET(request: NextRequest) {
 
     console.log('[API] User ID:', user.id);
 
-    // First get all lessons for this course
+    // First check if we have a current_lesson_id stored in the enrollment
+    const { data: enrollment, error: enrollmentError } = await client
+      .from('course_enrollments')
+      .select('current_lesson_id, current_lesson_language')
+      .eq('user_id', user.id)
+      .eq('course_id', courseId)
+      .single();
+
+    if (!enrollmentError && enrollment?.current_lesson_id) {
+      // If we have a saved current lesson and it matches the requested language, return it
+      if (enrollment.current_lesson_language === language) {
+        console.log('[API] Found current lesson in enrollment:', enrollment.current_lesson_id);
+        return NextResponse.json({ 
+          success: true, 
+          lessonId: enrollment.current_lesson_id,
+          source: 'enrollment'
+        });
+      }
+    }
+
+    // Fallback to the original method if no current_lesson_id is set
+    // or if the language doesn't match
+    
+    // Get all lessons for this course
     const { data: courseLessons, error: lessonsError } = await client
       .from('lessons')
       .select(`
@@ -69,11 +92,12 @@ export async function GET(request: NextRequest) {
 
     // If we found a lesson with last_accessed, return it
     if (lessonProgress?.lesson_id) {
-      console.log('Found last accessed lesson:', lessonProgress);
+      console.log('Found last accessed lesson from progress:', lessonProgress);
       return NextResponse.json({ 
         success: true, 
         lessonId: lessonProgress.lesson_id,
-        lastAccessed: lessonProgress.last_accessed || lessonProgress.updated_at
+        lastAccessed: lessonProgress.last_accessed || lessonProgress.updated_at,
+        source: 'progress'
       });
     }
 
