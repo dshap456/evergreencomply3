@@ -55,6 +55,7 @@ interface CourseData {
 }
 
 export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
+  console.log('🚀 CourseViewerClient initialized with courseId:', courseId);
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +70,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   });
 
   const loadCourseData = async (language: 'en' | 'es' = selectedLanguage) => {
-    console.log('📚 Loading course data for courseId:', courseId, 'language:', language);
+    console.log('📚 Loading course data for courseId:', courseId, 'language:', language, 'type:', typeof courseId);
     try {
       setLoading(true);
       setError(null);
@@ -210,7 +211,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   
   // Wrapper to debug lesson changes
   const setCurrentLessonId = (id: string | null) => {
-    console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}"`, new Error().stack.split('\n').slice(1, 4).join('\n'));
+    console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}" (courseId: ${courseId})`);
     setCurrentLessonIdRaw(id);
   };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
@@ -224,6 +225,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   useEffect(() => {
     // Don't save during restoration
     if (isRestoringRef.current) {
+      return;
+    }
+
+    // Don't save if courseId is missing
+    if (!courseId) {
+      console.warn('⚠️ Cannot save - courseId is missing');
       return;
     }
 
