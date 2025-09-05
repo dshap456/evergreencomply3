@@ -230,11 +230,11 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     // Save current lesson whenever it changes (not just on unmount)
     const saveCurrentLesson = async () => {
       if (currentLessonId && lastSavedLessonRef.current !== currentLessonId) {
-        console.log('💾 Auto-saving current lesson:', currentLessonId);
+        console.log('💾 Auto-saving current lesson:', currentLessonId, 'for course:', courseId);
         lastSavedLessonRef.current = currentLessonId;
         
         try {
-          await fetch('/api/lessons/update-progress', {
+          const response = await fetch('/api/lessons/update-progress', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -244,8 +244,15 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
               updateLastAccessed: true
             })
           });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            console.error('❌ Failed to save current lesson:', error);
+          } else {
+            console.log('✅ Current lesson saved successfully');
+          }
         } catch (error) {
-          console.error('Failed to save current lesson:', error);
+          console.error('❌ Network error saving current lesson:', error);
         }
       }
     };

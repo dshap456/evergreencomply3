@@ -32,17 +32,21 @@ export async function POST(request: NextRequest) {
 
     // Update current lesson in enrollment if requested
     if (updateLastAccessed) {
-      const { error: updateEnrollmentError } = await client
+      console.log('[API] Updating enrollment current lesson:', { enrollmentId: enrollment.id, lessonId, language });
+      const { data: updateData, error: updateEnrollmentError } = await client
         .from('course_enrollments')
         .update({ 
           current_lesson_id: lessonId,
           current_lesson_language: language
         })
-        .eq('id', enrollment.id);
+        .eq('id', enrollment.id)
+        .select();
       
       if (updateEnrollmentError) {
         console.error('Error updating enrollment current lesson:', updateEnrollmentError);
+        return NextResponse.json({ success: false, error: 'Failed to update current lesson' }, { status: 500 });
       }
+      console.log('[API] Successfully updated enrollment:', updateData);
     }
 
     // First check if a record exists
