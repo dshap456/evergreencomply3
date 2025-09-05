@@ -28,7 +28,12 @@ export async function POST(request: NextRequest) {
 
     // Only log if there's no enrollment, don't block the progress update
     if (enrollmentError || !enrollment) {
-      console.log('[API] No enrollment found, skipping enrollment update but continuing with progress update');
+      console.log('[API] No enrollment found, skipping enrollment update but continuing with progress update', {
+        error: enrollmentError,
+        userId: user.id,
+        courseId,
+        enrollmentFound: !!enrollment
+      });
     }
 
     // Update current lesson in enrollment if requested and enrollment exists
