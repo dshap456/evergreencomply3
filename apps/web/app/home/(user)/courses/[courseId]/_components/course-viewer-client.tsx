@@ -74,7 +74,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   
   // Initialize language from localStorage with courseId-specific key
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && courseId) {
       const savedLanguage = localStorage.getItem(`course-${courseId}-language`);
       return (savedLanguage === 'es' || savedLanguage === 'en') ? savedLanguage : 'en';
     }
@@ -97,8 +97,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       
       const url = `/api/debug-course?courseId=${encodeURIComponent(courseId)}&language=${language}`;
       console.log('📡 Fetching from URL:', url);
+      console.log('📡 Full URL would be:', window.location.origin + url);
+      
       const response = await fetch(url, { cache: 'no-store' });
+      console.log('📡 Response status:', response.status);
+      
       const result = await response.json();
+      console.log('📡 Response data:', result);
       
       console.log('📚 API Response:', {
         status: response.status,
