@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     const lessonIds = lessons?.map(l => l.id) || [];
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
-      .select('lesson_id, status, time_spent, video_progress, quiz_score, updated_at')
+      .select('lesson_id, status, time_spent, updated_at')
       .eq('user_id', user.id)
       .eq('language', language)  // Filter by language to get correct progress
       .in('lesson_id', lessonIds);
@@ -147,8 +147,6 @@ export async function GET(request: NextRequest) {
       progressMap.set(progress.lesson_id, {
         completed: progress.status === 'completed',
         time_spent: progress.time_spent || 0,
-        video_progress: progress.video_progress || 0,
-        quiz_score: progress.quiz_score || null,
         last_accessed: progress.updated_at
       });
     });
