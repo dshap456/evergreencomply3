@@ -4,7 +4,7 @@ import { getSupabaseServerClient } from '@kit/supabase/server-client';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { lessonId, courseId, language = 'en', updateLastAccessed = false } = body;
+    const { lessonId, courseId, language: requestedLanguage = 'en', updateLastAccessed = false } = body;
 
     if (!lessonId || !courseId) {
       return NextResponse.json({ success: false, error: 'Lesson ID and Course ID required' }, { status: 400 });
@@ -17,6 +17,22 @@ export async function POST(request: NextRequest) {
     if (!user || userError) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+    
+    // Get the actual lesson to find its language
+    const { data: lessonData } = await client
+      .from('lessons')
+      .select('language')
+      .eq('id', lessonId)
+      .single();
+    
+    // Use the LESSON's language, not the requested language!
+    const language = lessonData?.language || requestedLanguage;
+    
+    console.log('[UPDATE-PROGRESS] Language:', {
+      requestedLanguage,
+      lessonLanguage: lessonData?.language,
+      usingLanguage: language
+    });
 
     // Try to get enrollment (but don't fail if not found - RLS will protect the actual data)
     const { data: enrollment, error: enrollmentError } = await client

@@ -17,7 +17,28 @@ export async function POST(
     }
 
     // Extract quiz score and language if provided
-    const { time_spent, quiz_score, is_quiz, language = 'en' } = body;
+    const { time_spent, quiz_score, is_quiz, language: requestedLanguage = 'en' } = body;
+    
+    // Get the actual lesson to find its language
+    const { data: lessonData, error: lessonError } = await client
+      .from('lessons')
+      .select('id, language, title')
+      .eq('id', lessonId)
+      .single();
+    
+    if (lessonError || !lessonData) {
+      console.error('[COMPLETE] Failed to get lesson:', lessonError);
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
+    
+    // Use the LESSON's language, not the requested language!
+    const language = lessonData.language || requestedLanguage;
+    
+    console.log('[COMPLETE] Language resolution:', {
+      requestedLanguage,
+      lessonLanguage: lessonData.language,
+      usingLanguage: language
+    });
 
     // CRITICAL DEBUG: Log exactly what we're saving
     console.log('[COMPLETE] ============ SAVING COMPLETION ============');
