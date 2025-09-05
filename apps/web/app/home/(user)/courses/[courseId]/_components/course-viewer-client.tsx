@@ -94,34 +94,41 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   const processLessonLockStates = (courseData: CourseData): CourseData => {
     let previousLessonCompleted = true;
+    let allLessonsFlat: CourseLesson[] = [];
     
-    const processedModules = courseData.modules.map(module => {
-      const processedLessons = module.lessons.map(lesson => {
-        // First lesson is always unlocked, others depend on previous completion
-        const isLocked = !previousLessonCompleted;
-        
-        // Check if lesson meets completion criteria
-        // For now, we rely on the lesson.completed flag from lesson_progress table
-        // which already validates completion requirements (95% video, 80% quiz score)
-        const isFullyCompleted = lesson.completed;
-        
-        // Update previous lesson completed state for next iteration
-        if (!isLocked) {
-          previousLessonCompleted = isFullyCompleted;
-        }
-        
-        return {
-          ...lesson,
-          is_locked: isLocked,
-          completed: isFullyCompleted
-        };
+    // First, flatten all lessons to process them in order
+    courseData.modules.forEach(module => {
+      module.lessons.forEach(lesson => {
+        allLessonsFlat.push(lesson);
       });
-      
-      return {
-        ...module,
-        lessons: processedLessons
-      };
     });
+    
+    // Process all lessons in sequence to determine lock states
+    const processedLessonsMap = new Map<string, CourseLesson>();
+    allLessonsFlat.forEach((lesson, index) => {
+      // First lesson is always unlocked, others depend on previous completion
+      const isLocked = index > 0 ? !previousLessonCompleted : false;
+      
+      // Check if lesson meets completion criteria
+      const isFullyCompleted = lesson.completed || false;
+      
+      // Update previous lesson completed state for next iteration
+      previousLessonCompleted = isFullyCompleted;
+      
+      processedLessonsMap.set(lesson.id, {
+        ...lesson,
+        is_locked: isLocked,
+        completed: isFullyCompleted
+      });
+    });
+    
+    // Now rebuild modules with processed lessons
+    const processedModules = courseData.modules.map(module => ({
+      ...module,
+      lessons: module.lessons.map(lesson => 
+        processedLessonsMap.get(lesson.id) || lesson
+      )
+    }));
     
     return {
       ...courseData,
@@ -131,6 +138,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   useEffect(() => {
     console.log('🚀 Initial load effect - loading course data');
+    // Reset state when courseId changes (navigation)
+    setCurrentLessonId(null);
+    setLastAccessedLesson(null);
+    
     // Load course data with the selected language (from localStorage or default)
     loadCourseData(selectedLanguage);
   }, [courseId]);
@@ -188,6 +199,49 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [lessonRestorationKey, setLessonRestorationKey] = useState(0);
+  const lastSavedLessonRef = useRef<string | null>(null);
+
+  // Save current lesson when it changes or component unmounts
+  useEffect(() => {
+    const saveCurrentLesson = async () => {
+      if (currentLessonId && currentLessonId !== lastSavedLessonRef.current) {
+        console.log('💾 Auto-saving current lesson:', currentLessonId);
+        try {
+          await fetch('/api/lessons/update-progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              lessonId: currentLessonId,
+              courseId,
+              language: selectedLanguage,
+              updateLastAccessed: true
+            })
+          });
+          lastSavedLessonRef.current = currentLessonId;
+        } catch (error) {
+          console.error('Failed to auto-save lesson progress:', error);
+        }
+      }
+    };
+
+    // Save when lesson changes
+    saveCurrentLesson();
+
+    // Save when component unmounts (navigation away)
+    return () => {
+      if (currentLessonId && currentLessonId !== lastSavedLessonRef.current) {
+        console.log('🚪 Component unmounting - saving progress');
+        // Use sendBeacon for reliable unmount saves
+        const data = JSON.stringify({
+          lessonId: currentLessonId,
+          courseId,
+          language: selectedLanguage,
+          updateLastAccessed: true
+        });
+        navigator.sendBeacon('/api/lessons/update-progress', new Blob([data], { type: 'application/json' }));
+      }
+    };
+  }, [currentLessonId, courseId, selectedLanguage]);
 
   // Fetch last accessed lesson from database - only once per restoration key
   useEffect(() => {
@@ -267,7 +321,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     };
     
     fetchLastAccessedLesson();
-  }, [course, lessonRestorationKey]); // Only depend on course and restoration key
+  }, [course, lessonRestorationKey, courseId, selectedLanguage]); // Include all dependencies
 
   const handleSelectLesson = async (lessonId: string) => {
     // Find the lesson to check if it's locked
