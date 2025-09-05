@@ -19,13 +19,21 @@ export async function POST(
     // Extract quiz score and language if provided
     const { time_spent, quiz_score, is_quiz, language = 'en' } = body;
 
-    // Debug logging before upsert
-    console.log('[COMPLETE] Attempting to save progress:', {
-      userId: user.id,
-      lessonId,
-      language,
-      status: 'completed'
-    });
+    // CRITICAL DEBUG: Log exactly what we're saving
+    console.log('[COMPLETE] ============ SAVING COMPLETION ============');
+    console.log('[COMPLETE] Lesson ID:', lessonId);
+    console.log('[COMPLETE] User ID:', user.id);
+    console.log('[COMPLETE] Language:', language);
+    console.log('[COMPLETE] Body received:', body);
+    
+    // First check what's already in the database
+    const { data: existingProgress } = await client
+      .from('lesson_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('lesson_id', lessonId);
+    
+    console.log('[COMPLETE] Existing progress records for this lesson:', existingProgress);
     
     // Update or create lesson progress
     const { data: progress, error: progressError } = await client
@@ -49,11 +57,9 @@ export async function POST(
       return NextResponse.json({ error: progressError.message }, { status: 500 });
     }
     
-    console.log('[COMPLETE] Progress saved successfully:', {
-      progressId: progress?.id,
-      status: progress?.status,
-      language: progress?.language
-    });
+    console.log('[COMPLETE] Progress saved successfully!');
+    console.log('[COMPLETE] Saved record:', progress);
+    console.log('[COMPLETE] =========================================');
 
     // Debug: Check progress before update
     const { data: beforeProgress } = await client
@@ -76,17 +82,24 @@ export async function POST(
     });
 
     // Update course enrollment progress WITH LANGUAGE PARAMETER
-    const { error: enrollmentError } = await client.rpc('update_course_progress', {
+    console.log('[COMPLETE] Calling update_course_progress RPC with:', {
+      p_user_id: user.id,
+      p_lesson_id: lessonId,
+      p_language: language
+    });
+    
+    const { data: rpcData, error: enrollmentError } = await client.rpc('update_course_progress', {
       p_user_id: user.id,
       p_lesson_id: lessonId,
       p_language: language  // Pass the language to calculate progress correctly
     });
 
     if (enrollmentError) {
-      console.error('❌ Error updating course progress:', enrollmentError);
+      console.error('[COMPLETE] ❌ RPC FAILED:', enrollmentError);
+      console.error('[COMPLETE] RPC error details:', JSON.stringify(enrollmentError, null, 2));
       // Don't fail the request if this fails, as the lesson is still marked complete
     } else {
-      console.log('✅ Course progress update RPC called successfully');
+      console.log('[COMPLETE] ✅ RPC succeeded, returned:', rpcData);
     }
 
     // Get lesson details to check if it's a quiz and get course ID

@@ -75,11 +75,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Now get the most recent progress for these lessons
+    // Don't filter by language since lesson IDs are unique
     const { data: lessonProgress, error } = await client
       .from('lesson_progress')
-      .select('lesson_id, last_accessed, updated_at, status')
+      .select('lesson_id, last_accessed, updated_at, status, language')
       .eq('user_id', user.id)
-      .eq('language', language)
       .in('lesson_id', lessonIds)
       .order('last_accessed', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })

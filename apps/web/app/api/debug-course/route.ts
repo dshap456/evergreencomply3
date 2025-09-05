@@ -101,7 +101,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all lessons for these modules WITH LANGUAGE FILTER
+    // Get all lessons for these modules
+    // REMOVED language filter - lessons should already be filtered by module
     const moduleIds = modules.map(m => m.id);
     const { data: lessons, error: lessonsError } = await client
       .from('lessons')
@@ -115,11 +116,18 @@ export async function GET(request: NextRequest) {
         video_url,
         content,
         asset_url,
-        is_final_quiz
+        is_final_quiz,
+        language
       `)
       .in('module_id', moduleIds)
-      .eq('language', language)  // CRITICAL: Filter lessons by language too!
+      // .eq('language', language)  // REMOVED: Modules already filter by language
       .order('order_index');
+    
+    console.log('[DEBUG-COURSE] Lessons found:', {
+      count: lessons?.length || 0,
+      languages: [...new Set(lessons?.map(l => l.language) || [])],
+      firstFew: lessons?.slice(0, 3).map(l => ({ id: l.id, title: l.title, language: l.language }))
+    });
 
     if (lessonsError) {
       console.error('Lessons error:', lessonsError);
@@ -129,35 +137,41 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get lesson progress for the user FOR THE SPECIFIC LANGUAGE
+    // Get lesson progress for the user
     const lessonIds = lessons?.map(l => l.id) || [];
     
-    // Debug logging
-    console.log('[DEBUG-COURSE] Fetching progress for:', {
-      userId: user.id,
-      language,
-      lessonIds: lessonIds.slice(0, 3), // Log first 3 for brevity
-      totalLessons: lessonIds.length
-    });
+    // CRITICAL DEBUG: Log exact lesson IDs we're looking for
+    console.log('[DEBUG-COURSE] ============ PROGRESS CHECK ============');
+    console.log('[DEBUG-COURSE] User:', user.id);
+    console.log('[DEBUG-COURSE] Language requested:', language);
+    console.log('[DEBUG-COURSE] Lesson IDs to check:', lessonIds);
+    console.log('[DEBUG-COURSE] First 3 lessons detail:', lessons?.slice(0, 3).map(l => ({
+      id: l.id,
+      title: l.title,
+      module_id: l.module_id
+    })));
     
+    // SIMPLIFIED: Just look up by lesson ID since they're unique
+    // Don't filter by language in the progress lookup
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
-      .select('lesson_id, status, time_spent, updated_at')
+      .select('lesson_id, status, time_spent, updated_at, language')
       .eq('user_id', user.id)
-      .eq('language', language)  // Filter by language to get correct progress
       .in('lesson_id', lessonIds);
-
+    
+    console.log('[DEBUG-COURSE] Progress found (no language filter):', {
+      count: lessonProgress?.length || 0,
+      records: lessonProgress?.map(p => ({ 
+        lesson_id: p.lesson_id,
+        status: p.status,
+        language_in_progress: p.language,
+        language_requested: language
+      }))
+    });
+    
     if (progressError) {
       console.error('Progress error:', progressError);
     }
-    
-    console.log('[DEBUG-COURSE] Progress found:', {
-      progressCount: lessonProgress?.length || 0,
-      progressRecords: lessonProgress?.map(p => ({ 
-        lesson_id: p.lesson_id.substring(0, 8), 
-        status: p.status 
-      }))
-    });
 
     // Create progress map
     const progressMap = new Map<string, any>();
@@ -205,8 +219,16 @@ export async function GET(request: NextRequest) {
     const calculatedProgress = totalLessons > 0 
       ? Math.round((completedLessons / totalLessons) * 100) 
       : 0;
+    
+    console.log('[DEBUG-COURSE] Progress calculation:', {
+      totalLessons,
+      completedLessons,
+      calculatedProgress,
+      enrollmentProgress: enrollment.progress_percentage,
+      willUseCalculated: true  // We're using calculated, not enrollment
+    });
 
-    return NextResponse.json({
+    const responseData = {
       success: true,
       course: {
         id: enrollment.courses.id,
@@ -220,7 +242,16 @@ export async function GET(request: NextRequest) {
         modules: formattedModules,
         current_language: language
       }
-    });
+    };
+    
+    console.log('[DEBUG-COURSE] ============ FINAL RESPONSE ============');
+    console.log('[DEBUG-COURSE] Returning progress:', calculatedProgress + '%');
+    console.log('[DEBUG-COURSE] Total modules:', formattedModules.length);
+    console.log('[DEBUG-COURSE] Total lessons:', totalLessons);
+    console.log('[DEBUG-COURSE] Completed lessons:', completedLessons);
+    console.log('[DEBUG-COURSE] =========================================');
+    
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error('Error in debug-course API:', error);
