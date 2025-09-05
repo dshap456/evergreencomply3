@@ -116,17 +116,15 @@ export async function GET(request: NextRequest) {
         video_url,
         content,
         asset_url,
-        is_final_quiz,
-        language
+        is_final_quiz
       `)
       .in('module_id', moduleIds)
-      // .eq('language', language)  // REMOVED: Modules already filter by language
+      // Note: Not filtering by language since modules already filter
       .order('order_index');
     
     console.log('[DEBUG-COURSE] Lessons found:', {
       count: lessons?.length || 0,
-      languages: [...new Set(lessons?.map(l => l.language) || [])],
-      firstFew: lessons?.slice(0, 3).map(l => ({ id: l.id, title: l.title, language: l.language }))
+      firstFew: lessons?.slice(0, 3).map(l => ({ id: l.id, title: l.title }))
     });
 
     if (lessonsError) {
@@ -155,17 +153,15 @@ export async function GET(request: NextRequest) {
     // Don't filter by language in the progress lookup
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
-      .select('lesson_id, status, time_spent, updated_at, language')
+      .select('lesson_id, status, time_spent, updated_at')
       .eq('user_id', user.id)
       .in('lesson_id', lessonIds);
     
     console.log('[DEBUG-COURSE] Progress found (no language filter):', {
       count: lessonProgress?.length || 0,
-      records: lessonProgress?.map(p => ({ 
-        lesson_id: p.lesson_id,
-        status: p.status,
-        language_in_progress: p.language,
-        language_requested: language
+      records: lessonProgress?.slice(0, 5).map(p => ({ 
+        lesson_id: p.lesson_id.substring(0, 8),
+        status: p.status
       }))
     });
     

@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     // Don't filter by language since lesson IDs are unique
     const { data: lessonProgress, error } = await client
       .from('lesson_progress')
-      .select('lesson_id, last_accessed, updated_at, status, language')
+      .select('lesson_id, last_accessed, updated_at, status')
       .eq('user_id', user.id)
       .in('lesson_id', lessonIds)
       .order('last_accessed', { ascending: false, nullsFirst: false })
