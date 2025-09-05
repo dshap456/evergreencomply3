@@ -124,15 +124,15 @@ export async function POST(
     }
 
     // Get lesson details to check if it's a quiz and get course ID
-    const lessonData = await client
+    const lessonDetails = await client
       .from('lessons')
       .select('course_modules!inner(course_id), is_final_quiz, content_type')
       .eq('id', lessonId)
       .single();
 
-    const courseId = lessonData.data?.course_modules?.course_id;
-    const isQuizLesson = lessonData.data?.content_type === 'quiz';
-    const isFinalQuiz = lessonData.data?.is_final_quiz || false;
+    const courseId = lessonDetails.data?.course_modules?.course_id;
+    const isQuizLesson = lessonDetails.data?.content_type === 'quiz';
+    const isFinalQuiz = lessonDetails.data?.is_final_quiz || false;
 
     // If this is a quiz lesson and we have a score, save it
     if (isQuizLesson && quiz_score !== undefined) {
