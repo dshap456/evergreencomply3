@@ -13,6 +13,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Not authenticated' });
   }
 
+  // Debug: Log what courseId we're actually getting
+  console.log('DEBUG ENDPOINT:', {
+    courseId,
+    language,
+    userId: user.id,
+    url: request.url
+  });
+
   // 1. Check enrollment
   const { data: enrollment } = await client
     .from('course_enrollments')
@@ -63,8 +71,21 @@ export async function GET(request: NextRequest) {
     p_language: language
   });
 
+  // Get ALL enrollments for this user to help debug
+  const { data: allEnrollments } = await client
+    .from('course_enrollments')
+    .select('course_id, courses!inner(title)')
+    .eq('user_id', user.id);
+
   return NextResponse.json({
-    user: user.id,
+    debug_info: {
+      courseId_requested: courseId,
+      user_id: user.id,
+      all_user_enrollments: allEnrollments?.map(e => ({
+        course_id: e.course_id,
+        title: e.courses?.title
+      }))
+    },
     enrollment: {
       exists: !!enrollment,
       progress_percentage: enrollment?.progress_percentage,

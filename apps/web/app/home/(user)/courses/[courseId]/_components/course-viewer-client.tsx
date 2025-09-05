@@ -69,7 +69,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   });
 
   const loadCourseData = async (language: 'en' | 'es' = selectedLanguage) => {
-    console.log('📚 Loading course data for language:', language);
+    console.log('📚 Loading course data for courseId:', courseId, 'language:', language);
     try {
       setLoading(true);
       setError(null);
@@ -77,15 +77,35 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`);
       const result = await response.json();
       
-      if (result.success) {
-        console.log('📚 Course data loaded successfully');
+      console.log('📚 API Response:', {
+        status: response.status,
+        success: result.success,
+        error: result.error,
+        hasCourse: !!result.course
+      });
+      
+      if (result.success && result.course) {
+        console.log('📚 Course data loaded successfully:', {
+          title: result.course.title,
+          modules: result.course.modules?.length,
+          progress: result.course.progress_percentage
+        });
         // Process lessons to determine locked state
         const processedCourse = processLessonLockStates(result.course);
         setCourse(processedCourse);
       } else {
-        setError(result.error || 'Failed to load course data');
+        const errorMsg = result.error || 'Failed to load course data';
+        console.error('❌ Failed to load course:', errorMsg);
+        
+        // Check if it's an enrollment issue
+        if (errorMsg.includes('not enrolled')) {
+          setError('You are not enrolled in this course. Please enroll first or contact support.');
+        } else {
+          setError(errorMsg);
+        }
       }
     } catch (err) {
+      console.error('❌ Exception loading course:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
