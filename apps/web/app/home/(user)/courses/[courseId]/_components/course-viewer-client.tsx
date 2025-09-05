@@ -158,9 +158,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   useEffect(() => {
     console.log('🚀 Initial load effect - loading course data');
-    // Reset state when courseId changes (navigation)
-    setCurrentLessonId(null);
-    setLastAccessedLesson(null);
+    // Don't reset currentLessonId here - let the restoration logic handle it
     
     // Load course data with the selected language (from localStorage or default)
     loadCourseData(selectedLanguage);
@@ -263,24 +261,25 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     };
   }, [currentLessonId, courseId, selectedLanguage]);
 
-  // Fetch last accessed lesson from database - only once per restoration key
+  // Fetch last accessed lesson from database when course loads
   useEffect(() => {
     console.log('🔍 Restoration effect running:', {
       hasCourse: !!course,
       currentLessonId,
-      lessonRestorationKey,
+      courseId,
       selectedLanguage
     });
     
     const fetchLastAccessedLesson = async () => {
-      if (!course) {
+      if (!course || !course.modules || course.modules.length === 0) {
         console.log('⏸️ No course data yet, waiting...');
         return;
       }
       
-      // Don't restore if we already have a lesson selected (prevents overriding manual selections)
-      if (currentLessonId) {
-        console.log('⏸️ Already have lesson selected:', currentLessonId);
+      // Only skip restoration if we explicitly have a lesson selected
+      // (not if it's null from initialization)
+      if (currentLessonId && lastSavedLessonRef.current === currentLessonId) {
+        console.log('⏸️ Already have lesson selected and saved:', currentLessonId);
         return;
       }
       
