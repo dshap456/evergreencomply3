@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all lessons for these modules
+    // Get all lessons for these modules WITH LANGUAGE FILTER
     const moduleIds = modules.map(m => m.id);
     const { data: lessons, error: lessonsError } = await client
       .from('lessons')
@@ -118,6 +118,7 @@ export async function GET(request: NextRequest) {
         is_final_quiz
       `)
       .in('module_id', moduleIds)
+      .eq('language', language)  // CRITICAL: Filter lessons by language too!
       .order('order_index');
 
     if (lessonsError) {
@@ -130,6 +131,15 @@ export async function GET(request: NextRequest) {
 
     // Get lesson progress for the user FOR THE SPECIFIC LANGUAGE
     const lessonIds = lessons?.map(l => l.id) || [];
+    
+    // Debug logging
+    console.log('[DEBUG-COURSE] Fetching progress for:', {
+      userId: user.id,
+      language,
+      lessonIds: lessonIds.slice(0, 3), // Log first 3 for brevity
+      totalLessons: lessonIds.length
+    });
+    
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
       .select('lesson_id, status, time_spent, updated_at')
@@ -140,6 +150,14 @@ export async function GET(request: NextRequest) {
     if (progressError) {
       console.error('Progress error:', progressError);
     }
+    
+    console.log('[DEBUG-COURSE] Progress found:', {
+      progressCount: lessonProgress?.length || 0,
+      progressRecords: lessonProgress?.map(p => ({ 
+        lesson_id: p.lesson_id.substring(0, 8), 
+        status: p.status 
+      }))
+    });
 
     // Create progress map
     const progressMap = new Map<string, any>();

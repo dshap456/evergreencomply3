@@ -19,6 +19,14 @@ export async function POST(
     // Extract quiz score and language if provided
     const { time_spent, quiz_score, is_quiz, language = 'en' } = body;
 
+    // Debug logging before upsert
+    console.log('[COMPLETE] Attempting to save progress:', {
+      userId: user.id,
+      lessonId,
+      language,
+      status: 'completed'
+    });
+    
     // Update or create lesson progress
     const { data: progress, error: progressError } = await client
       .from('lesson_progress')
@@ -37,9 +45,15 @@ export async function POST(
       .single();
 
     if (progressError) {
-      console.error('Error updating lesson progress:', progressError);
+      console.error('[COMPLETE] Error updating lesson progress:', progressError);
       return NextResponse.json({ error: progressError.message }, { status: 500 });
     }
+    
+    console.log('[COMPLETE] Progress saved successfully:', {
+      progressId: progress?.id,
+      status: progress?.status,
+      language: progress?.language
+    });
 
     // Debug: Check progress before update
     const { data: beforeProgress } = await client

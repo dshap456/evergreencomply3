@@ -47,16 +47,19 @@ export async function GET(request: NextRequest) {
     // Fallback to the original method if no current_lesson_id is set
     // or if the language doesn't match
     
-    // Get all lessons for this course
+    // Get all lessons for this course IN THE SPECIFIC LANGUAGE
     const { data: courseLessons, error: lessonsError } = await client
       .from('lessons')
       .select(`
         id,
         course_modules!inner (
-          course_id
+          course_id,
+          language
         )
       `)
-      .eq('course_modules.course_id', courseId);
+      .eq('course_modules.course_id', courseId)
+      .eq('course_modules.language', language)
+      .eq('language', language);  // Filter lessons by language too
 
     if (lessonsError) {
       console.error('Error fetching course lessons:', lessonsError);
