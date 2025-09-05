@@ -218,37 +218,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [lessonRestorationKey, setLessonRestorationKey] = useState(0);
   const lastSavedLessonRef = useRef<string | null>(null);
+  const isRestoringRef = useRef<boolean>(false);
 
-  // Save current lesson when it changes or component unmounts
+  // Save current lesson ONLY when component unmounts (not on every change)
   useEffect(() => {
-    const saveCurrentLesson = async () => {
-      if (currentLessonId && currentLessonId !== lastSavedLessonRef.current) {
-        console.log('💾 Auto-saving current lesson:', currentLessonId);
-        try {
-          await fetch('/api/lessons/update-progress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lessonId: currentLessonId,
-              courseId,
-              language: selectedLanguage,
-              updateLastAccessed: true
-            })
-          });
-          lastSavedLessonRef.current = currentLessonId;
-        } catch (error) {
-          console.error('Failed to auto-save lesson progress:', error);
-        }
-      }
-    };
-
-    // Save when lesson changes
-    saveCurrentLesson();
+    // Don't save during restoration
+    if (isRestoringRef.current) {
+      return;
+    }
 
     // Save when component unmounts (navigation away)
     return () => {
-      if (currentLessonId && currentLessonId !== lastSavedLessonRef.current) {
-        console.log('🚪 Component unmounting - saving progress');
+      if (currentLessonId) {
+        console.log('🚪 Component unmounting - saving progress for lesson:', currentLessonId);
         // Use sendBeacon for reliable unmount saves
         const data = JSON.stringify({
           lessonId: currentLessonId,
@@ -322,7 +304,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           
           if (lesson && !lesson.is_locked) {
             console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
+            isRestoringRef.current = true;
             setCurrentLessonId(result.lessonId);
+            // Clear restoration flag after a short delay
+            setTimeout(() => { isRestoringRef.current = false; }, 1000);
             return;
           } else {
             console.log('🔒 Cannot restore - lesson is locked or not found');
@@ -336,7 +321,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const nextLesson = getNextLesson();
       if (nextLesson) {
         console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
+        isRestoringRef.current = true;
         setCurrentLessonId(nextLesson.lesson.id);
+        setTimeout(() => { isRestoringRef.current = false; }, 1000);
       } else {
         console.log('❌ No available lessons found');
       }
