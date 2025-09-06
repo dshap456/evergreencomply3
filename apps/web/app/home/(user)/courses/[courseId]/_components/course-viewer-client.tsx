@@ -14,6 +14,7 @@ import { StorageVideoPlayer } from './storage-video-player';
 
 interface CourseViewerClientProps {
   courseId: string;
+  initialLessonId?: string | null;
 }
 
 interface CourseLesson {
@@ -54,8 +55,21 @@ interface CourseData {
   current_language: 'en' | 'es';
 }
 
-export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
-  console.log('🚀 CourseViewerClient initialized with courseId:', courseId);
+export function CourseViewerClient({ courseId, initialLessonId }: CourseViewerClientProps) {
+  console.log('🚀 CourseViewerClient initialized with:', { courseId, initialLessonId });
+  
+  // IMMEDIATELY fetch saved lesson on mount
+  useEffect(() => {
+    console.log('🔥 IMMEDIATE RESTORATION CHECK');
+    fetch(`/api/debug-lesson-state?courseId=${courseId}`)
+      .then(r => r.json())
+      .then(data => {
+        console.log('🔥 DATABASE STATE:', data);
+        if (data.debug?.current_lesson_in_db) {
+          console.log('🔥 FOUND SAVED LESSON:', data.debug.current_lesson_in_db);
+        }
+      });
+  }, []);
   
   // Validate courseId
   if (!courseId) {
@@ -247,7 +261,14 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
-  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
+  // Initialize with the lesson passed from the server
+  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(() => {
+    if (initialLessonId) {
+      console.log('🎯 INITIALIZING WITH SERVER LESSON:', initialLessonId);
+      return initialLessonId;
+    }
+    return null;
+  });
   
   // Wrapper to debug lesson changes
   const setCurrentLessonId = (id: string | null) => {

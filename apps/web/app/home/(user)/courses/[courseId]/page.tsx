@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { PageBody } from '@kit/ui/page';
 import { Trans } from '@kit/ui/trans';
+import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
@@ -15,7 +16,7 @@ interface LearnerCoursePageProps {
 
 // Completely removed generateMetadata to isolate error
 
-function LearnerCoursePage({ params }: LearnerCoursePageProps) {
+async function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   const { courseId } = use(params);
   
   console.log('[PAGE] courseId from params:', courseId);
@@ -24,12 +25,34 @@ function LearnerCoursePage({ params }: LearnerCoursePageProps) {
     console.error('[PAGE] No courseId found in params!');
     notFound();
   }
+  
+  // Get the saved lesson on the SERVER
+  const client = getSupabaseServerClient();
+  const { data: { user } } = await client.auth.getUser();
+  
+  let savedLessonId = null;
+  if (user) {
+    const { data: enrollment } = await client
+      .from('course_enrollments')
+      .select('current_lesson_id')
+      .eq('user_id', user.id)
+      .eq('course_id', courseId)
+      .single();
+    
+    savedLessonId = enrollment?.current_lesson_id;
+    console.log('[PAGE] Found saved lesson on server:', savedLessonId);
+  }
 
   return (
     <PageBody className="pt-0">
-      <CourseViewerClient courseId={courseId} />
+      <CourseViewerWithSavedLesson courseId={courseId} savedLessonId={savedLessonId} />
     </PageBody>
   );
+}
+
+// Wrapper to pass the saved lesson
+function CourseViewerWithSavedLesson({ courseId, savedLessonId }: { courseId: string; savedLessonId: string | null }) {
+  return <CourseViewerClient courseId={courseId} initialLessonId={savedLessonId} />;
 }
 
 // Temporarily removed - was causing the error
