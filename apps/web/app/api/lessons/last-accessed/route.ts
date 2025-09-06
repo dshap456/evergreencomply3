@@ -40,16 +40,73 @@ export async function GET(request: NextRequest) {
       error: enrollmentError?.message
     });
 
-    if (!enrollmentError && enrollment?.current_lesson_id) {
-      // Return the saved lesson regardless of language
-      // The user was on this lesson, so restore it
-      console.log('[API] Found current lesson in enrollment:', enrollment.current_lesson_id);
+    // If we have a saved lesson ID and it's the same language, return it directly
+    if (!enrollmentError && enrollment?.current_lesson_id && enrollment.current_lesson_language === language) {
+      console.log('[API] Found matching language lesson in enrollment:', enrollment.current_lesson_id);
       return NextResponse.json({ 
         success: true, 
         lessonId: enrollment.current_lesson_id,
-        source: 'enrollment',
+        source: 'enrollment_exact',
         language: enrollment.current_lesson_language
       });
+    }
+    
+    // If we have a saved lesson but different language, find the equivalent lesson by position
+    if (!enrollmentError && enrollment?.current_lesson_id && enrollment.current_lesson_language !== language) {
+      console.log('[API] Found lesson but different language, finding equivalent by position...');
+      
+      // Get the saved lesson's position in its language
+      const { data: savedLesson } = await client
+        .from('lessons')
+        .select(`
+          order_index,
+          course_modules!inner (
+            order_index,
+            course_id
+          )
+        `)
+        .eq('id', enrollment.current_lesson_id)
+        .single();
+      
+      if (savedLesson) {
+        // Find the equivalent lesson in the requested language at the same position
+        const { data: equivalentLessons } = await client
+          .from('lessons')
+          .select(`
+            id,
+            order_index,
+            course_modules!inner (
+              order_index,
+              course_id,
+              language
+            )
+          `)
+          .eq('course_modules.course_id', courseId)
+          .eq('course_modules.language', language)
+          .eq('course_modules.order_index', savedLesson.course_modules.order_index)
+          .eq('order_index', savedLesson.order_index);
+        
+        if (equivalentLessons && equivalentLessons.length > 0) {
+          const equivalentLesson = equivalentLessons[0];
+          console.log('[API] Found equivalent lesson by position:', equivalentLesson.id);
+          
+          // Update the enrollment with the new language lesson
+          await client
+            .from('course_enrollments')
+            .update({ 
+              current_lesson_id: equivalentLesson.id,
+              current_lesson_language: language
+            })
+            .eq('id', enrollment.id);
+          
+          return NextResponse.json({ 
+            success: true, 
+            lessonId: equivalentLesson.id,
+            source: 'enrollment_equivalent',
+            language: language
+          });
+        }
+      }
     }
 
     // Fallback to the original method if no current_lesson_id is set

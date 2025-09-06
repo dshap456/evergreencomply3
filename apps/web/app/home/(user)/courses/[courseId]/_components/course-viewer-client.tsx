@@ -196,11 +196,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   useEffect(() => {
-    console.log('🚀 Initial load effect - loading course data');
+    console.log('🚀 Initial load effect - loading course data for courseId:', courseId);
     // Don't reset currentLessonId here - let the restoration logic handle it
     
     // Load course data with the selected language (from localStorage or default)
-    loadCourseData(selectedLanguage);
+    if (courseId) {
+      loadCourseData(selectedLanguage);
+    }
   }, [courseId]);
 
   const handleLanguageSwitch = async (newLanguage: 'en' | 'es') => {
@@ -394,59 +396,39 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         return;
       }
       
-      console.log('🔍 Fetching last accessed lesson...', {
+      const allLessons = course.modules.flatMap(m => m.lessons);
+      console.log('🔍 Attempting to restore lesson position...', {
         courseId,
         language: selectedLanguage,
-        url: `/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`,
         totalModules: course.modules.length,
-        totalLessons: course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
+        totalLessons: allLessons.length,
+        firstLessonId: allLessons[0]?.id
       });
+      
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`, { cache: 'no-store' });
         const result = await response.json();
         
-        console.log('📡 Last accessed API response:', {
-          status: response.status,
-          result
-        });
+        console.log('📡 Last accessed API response:', result);
         
         if (result.success && result.lessonId) {
-          setLastAccessedLesson(result.lessonId);
           // Check if this lesson exists in the current course data
-          const allLessons = course.modules.flatMap(m => m.lessons);
-          console.log('📚 Total lessons in course:', allLessons.length);
-          console.log('📚 First 3 lesson IDs:', allLessons.slice(0, 3).map(l => l.id));
-          
           const lesson = allLessons.find(l => l.id === result.lessonId);
           
-          console.log('🔍 Looking for lesson ID:', result.lessonId);
-          console.log('🔍 Source:', result.source);
-          
           if (lesson) {
-            console.log('✅ Successfully restored lesson:', {
-              id: lesson.id,
-              title: lesson.title,
-              is_locked: lesson.is_locked,
-              completed: lesson.completed
-            });
+            console.log('✅ Successfully restored to saved lesson:', lesson.title);
             setCurrentLessonId(result.lessonId);
-            // Mark initial load as complete
             setIsInitialLoad(false);
-            console.log('🎆 Initial load complete - saves enabled');
-            
-            // No need to update last_accessed here since we just restored from it
             return;
           } else {
-            console.log('❌ WARNING: Saved lesson not found in current course data!');
-            console.log('This might be due to language mismatch or lesson deletion');
-            // Continue to fallback
+            console.log('⚠️ Saved lesson ID not found in current course, will use fallback');
           }
-        } else {
-          console.log('📭 No last accessed lesson found in database');
         }
       } catch (error) {
-        console.error('Failed to fetch last accessed lesson:', error);
+        console.error('❌ Error fetching last accessed lesson:', error);
       }
+      
+      console.log('📍 Using fallback approach...');
       
       // If no last accessed lesson was found/restored, fallback to first incomplete
       const nextLesson = getNextLesson();
