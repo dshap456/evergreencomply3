@@ -109,8 +109,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         status: response.status,
         success: result.success,
         error: result.error,
-        hasCourse: !!result.course
+        hasCourse: !!result.course,
+        progressFromAPI: result.course?.progress_percentage,
+        enrollmentId: result.course?.enrollment_id
       });
+      
+      if (result.course) {
+        console.log('📚 Full course data from API:', {
+          title: result.course.title,
+          progress_percentage: result.course.progress_percentage,
+          modules: result.course.modules?.length,
+          lessons: result.course.modules?.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0)
+        });
+      }
       
       if (result.success && result.course) {
         console.log('📚 Course data loaded successfully:', {
