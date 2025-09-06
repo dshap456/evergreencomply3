@@ -247,31 +247,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
-  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(() => {
-    // Initialize from localStorage if available
-    if (typeof window !== 'undefined' && courseId) {
-      const saved = localStorage.getItem(`course-${courseId}-current-lesson`);
-      console.log('💾 Initializing currentLessonId from localStorage:', saved);
-      return saved;
-    }
-    return null;
-  });
+  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
   
-  // Wrapper to debug lesson changes AND save to localStorage
+  // Wrapper to debug lesson changes
   const setCurrentLessonId = (id: string | null) => {
     console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}" (courseId: ${courseId})`);
+    console.trace('Call stack for setCurrentLessonId'); // Let's see WHO is calling this
     setCurrentLessonIdRaw(id);
-    
-    // Also save to localStorage for instant restoration
-    if (typeof window !== 'undefined' && courseId) {
-      if (id) {
-        localStorage.setItem(`course-${courseId}-current-lesson`, id);
-        console.log('💾 Saved to localStorage:', id);
-      } else {
-        localStorage.removeItem(`course-${courseId}-current-lesson`);
-        console.log('💾 Removed from localStorage');
-      }
-    }
   };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -280,6 +262,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const lastSavedLessonRef = useRef<string | null>(null);
   const isRestoringRef = useRef<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const hasRestoredRef = useRef<boolean>(false); // Track if we've already restored
 
   // Save current lesson when it changes and on unmount
   useEffect(() => {
@@ -399,7 +382,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       hasCourse: !!course,
       currentLessonId,
       courseId,
-      selectedLanguage
+      selectedLanguage,
+      hasRestored: hasRestoredRef.current
     });
     
     const fetchLastAccessedLesson = async () => {
@@ -408,20 +392,16 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         return;
       }
       
-      const allLessons = course.modules.flatMap(m => m.lessons);
-      
-      // Check if we already have a lesson from localStorage
-      if (currentLessonId) {
-        // Verify this lesson exists in the course
-        const lessonExists = allLessons.some(l => l.id === currentLessonId);
-        if (lessonExists) {
-          console.log('✅ Already have valid lesson from localStorage:', currentLessonId);
-          setIsInitialLoad(false);
-          return;
-        } else {
-          console.log('⚠️ localStorage lesson not in current course, will try API');
-        }
+      // CRITICAL: Only restore ONCE per page load
+      if (hasRestoredRef.current) {
+        console.log('⚠️ Already restored once, skipping to prevent overwrite');
+        return;
       }
+      
+      hasRestoredRef.current = true; // Mark as restored
+      console.log('🚀 First restoration attempt - will not run again');
+      
+      const allLessons = course.modules.flatMap(m => m.lessons);
       console.log('🔍 Attempting to restore lesson position...', {
         courseId,
         language: selectedLanguage,
@@ -462,38 +442,16 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       
       console.log('📍 Using fallback approach...');
       
-      // TEMPORARY: Let's NOT use getNextLesson as fallback to debug the issue
-      // Just don't set any lesson if restoration fails
-      console.log('⚠️ NOT setting any default lesson - user must select one');
-      setIsInitialLoad(false);
-      return;
-      
-      /* DISABLED FOR DEBUGGING
+      // Fallback to first incomplete lesson
       const nextLesson = getNextLesson();
       if (nextLesson) {
-        console.log('📍 No last accessed found, falling back to first incomplete lesson:', nextLesson.lesson.title);
+        console.log('📍 FALLBACK: Setting to first incomplete lesson:', nextLesson.lesson.title);
         setCurrentLessonId(nextLesson.lesson.id);
-        // Mark initial load as complete
         setIsInitialLoad(false);
-        console.log('🎆 Initial load complete - saves enabled');
-        
-        // Update last_accessed timestamp for fallback lesson
-        fetch('/api/lessons/update-progress', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lessonId: nextLesson.lesson.id,
-            courseId,
-            language: selectedLanguage,
-            updateLastAccessed: true
-          })
-        }).catch(err => console.error('Failed to update last accessed:', err));
       } else {
         console.log('❌ No available lessons found');
-        // Still mark initial load as complete
         setIsInitialLoad(false);
       }
-      */
     };
     
     fetchLastAccessedLesson();
