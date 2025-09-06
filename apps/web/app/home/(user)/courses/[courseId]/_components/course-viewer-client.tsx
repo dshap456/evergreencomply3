@@ -430,7 +430,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       
       console.log('📍 Using fallback approach...');
       
-      // If no last accessed lesson was found/restored, fallback to first incomplete
+      // TEMPORARY: Let's NOT use getNextLesson as fallback to debug the issue
+      // Just don't set any lesson if restoration fails
+      console.log('⚠️ NOT setting any default lesson - user must select one');
+      setIsInitialLoad(false);
+      return;
+      
+      /* DISABLED FOR DEBUGGING
       const nextLesson = getNextLesson();
       if (nextLesson) {
         console.log('📍 No last accessed found, falling back to first incomplete lesson:', nextLesson.lesson.title);
@@ -455,6 +461,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         // Still mark initial load as complete
         setIsInitialLoad(false);
       }
+      */
     };
     
     fetchLastAccessedLesson();

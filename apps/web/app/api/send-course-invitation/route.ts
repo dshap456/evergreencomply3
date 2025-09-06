@@ -182,7 +182,7 @@ export async function POST(request: Request) {
       const fallbackSender = 'Evergreen Comply <onboarding@resend.dev>';
       
       // We'll try the primary first, then fallback if it fails
-      let emailSender = primarySender;
+      const emailSender = primarySender;
       
       console.log('=== Email Sender Configuration ===');
       console.log('EMAIL_SENDER env:', process.env.EMAIL_SENDER);

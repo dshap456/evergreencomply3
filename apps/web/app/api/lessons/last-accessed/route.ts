@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
     const courseId = searchParams.get('courseId');
     const language = searchParams.get('language') || 'en';
 
-    console.log('[API] last-accessed called with:', { courseId, language });
+    console.log('[LAST-ACCESSED API] ============ START ============');
+    console.log('[LAST-ACCESSED API] Request:', { courseId, language });
 
     if (!courseId) {
       return NextResponse.json({ success: false, error: 'Course ID required' }, { status: 400 });
@@ -32,12 +33,13 @@ export async function GET(request: NextRequest) {
       .eq('course_id', courseId)
       .single();
 
-    console.log('[API] Enrollment lookup result:', { 
+    console.log('[LAST-ACCESSED API] Enrollment lookup:', { 
       found: !enrollmentError && !!enrollment,
       current_lesson_id: enrollment?.current_lesson_id,
       current_lesson_language: enrollment?.current_lesson_language,
       requested_language: language,
-      error: enrollmentError?.message
+      error: enrollmentError?.message,
+      willReturn: !enrollmentError && enrollment?.current_lesson_id && enrollment.current_lesson_language === language
     });
 
     // If we have a saved lesson ID and it's the same language, return it directly
