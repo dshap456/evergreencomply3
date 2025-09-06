@@ -56,18 +56,21 @@ interface CourseData {
 }
 
 export function CourseViewerClient({ courseId, initialLessonId }: CourseViewerClientProps) {
-  console.log('🚀 CourseViewerClient initialized with:', { courseId, initialLessonId });
+  // FORCE A VISIBLE ALERT TO CONFIRM CODE IS RUNNING
+  console.error('🔴🔴🔴 COURSE VIEWER LOADED 🔴🔴🔴');
+  console.error('Props received:', { courseId, initialLessonId });
+  console.error('Timestamp:', new Date().toISOString());
   
-  // IMMEDIATELY fetch saved lesson on mount
+  // Also show in the UI
   useEffect(() => {
-    console.log('🔥 IMMEDIATE RESTORATION CHECK');
+    console.error('🔥🔥🔥 COMPONENT MOUNTED 🔥🔥🔥');
+    console.error('Initial lesson from server:', initialLessonId);
+    
+    // Debug API call
     fetch(`/api/debug-lesson-state?courseId=${courseId}`)
       .then(r => r.json())
       .then(data => {
-        console.log('🔥 DATABASE STATE:', data);
-        if (data.debug?.current_lesson_in_db) {
-          console.log('🔥 FOUND SAVED LESSON:', data.debug.current_lesson_in_db);
-        }
+        console.error('🔥 DATABASE STATE:', data);
       });
   }, []);
   
