@@ -216,19 +216,13 @@ export async function GET(request: NextRequest) {
         .sort((a, b) => a.order_index - b.order_index)
     }));
 
-    // Calculate overall progress
-    const totalLessons = lessons?.length || 0;
-    const completedLessons = Array.from(progressMap.values()).filter(p => p.completed).length;
-    const calculatedProgress = totalLessons > 0 
-      ? Math.round((completedLessons / totalLessons) * 100) 
-      : 0;
+    // Use enrollment progress directly - don't recalculate
+    const enrollmentProgress = enrollment.progress_percentage || 0;
     
-    console.log('[DEBUG-COURSE] Progress calculation:', {
-      totalLessons,
-      completedLessons,
-      calculatedProgress,
-      enrollmentProgress: enrollment.progress_percentage,
-      willUseCalculated: true  // We're using calculated, not enrollment
+    console.log('[DEBUG-COURSE] Using enrollment progress directly:', {
+      enrollmentProgress,
+      totalLessons: lessons?.length || 0,
+      message: 'Using stored progress from enrollment, not recalculating'
     });
 
     const responseData = {
@@ -238,7 +232,7 @@ export async function GET(request: NextRequest) {
         title: enrollment.courses.title,
         description: enrollment.courses.description || '',
         enrollment_id: enrollment.id,
-        progress_percentage: enrollment.progress_percentage ?? calculatedProgress,  // Use ?? to handle 0 properly
+        progress_percentage: enrollmentProgress,  // Use enrollment progress directly
         enrolled_at: enrollment.enrolled_at,
         completed_at: enrollment.completed_at,
         final_score: enrollment.final_score,
