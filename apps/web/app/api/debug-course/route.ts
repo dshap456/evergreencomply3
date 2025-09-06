@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
         title: enrollment.courses.title,
         description: enrollment.courses.description || '',
         enrollment_id: enrollment.id,
-        progress_percentage: calculatedProgress,
+        progress_percentage: enrollment.progress_percentage || calculatedProgress,
         enrolled_at: enrollment.enrolled_at,
         completed_at: enrollment.completed_at,
         final_score: enrollment.final_score,
