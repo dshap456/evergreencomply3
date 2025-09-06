@@ -52,6 +52,13 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
+    
+    console.log('[DEBUG-COURSE] ============ ENROLLMENT DATA ============');
+    console.log('[DEBUG-COURSE] Enrollment:', JSON.stringify(enrollment, null, 2));
+    console.log('[DEBUG-COURSE] User ID:', user.id);
+    console.log('[DEBUG-COURSE] Course ID:', courseId);
+    console.log('[DEBUG-COURSE] Progress from DB:', enrollment.progress_percentage);
+    console.log('[DEBUG-COURSE] =========================================');
 
     // Check if course is published
     if (enrollment.courses.status !== 'published') {
@@ -231,7 +238,7 @@ export async function GET(request: NextRequest) {
         title: enrollment.courses.title,
         description: enrollment.courses.description || '',
         enrollment_id: enrollment.id,
-        progress_percentage: enrollment.progress_percentage || calculatedProgress,
+        progress_percentage: enrollment.progress_percentage ?? calculatedProgress,  // Use ?? to handle 0 properly
         enrolled_at: enrollment.enrolled_at,
         completed_at: enrollment.completed_at,
         final_score: enrollment.final_score,
