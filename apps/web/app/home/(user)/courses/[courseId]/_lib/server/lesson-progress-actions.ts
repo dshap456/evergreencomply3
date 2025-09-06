@@ -46,6 +46,7 @@ export const updateLessonProgressAction = enhanceAction(
       time_spent: data.timeSpent,
       status: data.progress >= 95 ? 'completed' : 'in_progress', // Auto-complete at 95%
       updated_at: new Date().toISOString(), // Always update this for tracking
+      last_accessed: new Date().toISOString(), // IMPORTANT: Track when lesson was accessed
     };
     
     // Only add these if the columns exist (after migration)
@@ -96,6 +97,7 @@ export const completeLessonAction = enhanceAction(
       status: 'completed',
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(), // Always update this for tracking
+      last_accessed: new Date().toISOString(), // Track this was the last accessed lesson
     };
     
     // Only add these if the columns exist (after migration)
@@ -241,6 +243,53 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
     console.error('Error in updateCourseProgress:', error);
   }
 }
+
+// Track lesson access (when user navigates to a lesson)
+const TrackLessonAccessSchema = z.object({
+  lessonId: z.string().uuid(),
+  courseId: z.string().uuid(),
+});
+
+export const trackLessonAccessAction = enhanceAction(
+  async function (data, user) {
+    const client = getSupabaseServerClient();
+
+    // Verify user is enrolled in the course
+    const { data: enrollment, error: enrollmentError } = await client
+      .from('course_enrollments')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('course_id', data.courseId)
+      .single();
+
+    if (enrollmentError || !enrollment) {
+      throw new Error('User not enrolled in this course');
+    }
+
+    // Update just the last_accessed timestamp
+    const { error: updateError } = await client
+      .from('lesson_progress')
+      .upsert({
+        user_id: user.id,
+        lesson_id: data.lessonId,
+        last_accessed: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_id,lesson_id',
+        ignoreDuplicates: false
+      });
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    return { success: true };
+  },
+  {
+    auth: true,
+    schema: TrackLessonAccessSchema,
+  }
+);
 
 // Get current lesson progress for a user
 const GetLessonProgressSchema = z.object({

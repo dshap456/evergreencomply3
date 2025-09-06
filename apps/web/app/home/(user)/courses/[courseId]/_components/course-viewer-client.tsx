@@ -153,7 +153,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   const processLessonLockStates = (courseData: CourseData): CourseData => {
     let previousLessonCompleted = true;
-    let allLessonsFlat: CourseLesson[] = [];
+    const allLessonsFlat: CourseLesson[] = [];
     
     // First, flatten all lessons to process them in order
     courseData.modules.forEach(module => {
@@ -412,62 +412,46 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         
         if (result.success && result.lessonId) {
           setLastAccessedLesson(result.lessonId);
-          // Check if this lesson is still available (not locked)
+          // Check if this lesson exists in the current course data
           const allLessons = course.modules.flatMap(m => m.lessons);
-          console.log('📚 All lessons in course (first 10):', allLessons.slice(0, 10).map(l => ({ 
-            id: l.id, 
-            title: l.title, 
-            locked: l.is_locked,
-            completed: l.completed 
-          })));
+          console.log('📚 Total lessons in course:', allLessons.length);
+          console.log('📚 First 3 lesson IDs:', allLessons.slice(0, 3).map(l => l.id));
           
           const lesson = allLessons.find(l => l.id === result.lessonId);
           
           console.log('🔍 Looking for lesson ID:', result.lessonId);
-          console.log('📖 Found lesson:', lesson ? {
-            id: lesson.id,
-            title: lesson.title,
-            is_locked: lesson.is_locked,
-            completed: lesson.completed
-          } : `NOT FOUND - Total lessons: ${allLessons.length}`);
+          console.log('🔍 Source:', result.source);
           
           if (lesson) {
-            // Always resume to last accessed, even if the gating would lock it
-            console.log('✅ Restoring last accessed lesson (ignoring lock):', lesson.title, lesson.id, 'locked:', lesson.is_locked);
+            console.log('✅ Successfully restored lesson:', {
+              id: lesson.id,
+              title: lesson.title,
+              is_locked: lesson.is_locked,
+              completed: lesson.completed
+            });
             setCurrentLessonId(result.lessonId);
             // Mark initial load as complete
             setIsInitialLoad(false);
             console.log('🎆 Initial load complete - saves enabled');
             
-            // Update last_accessed timestamp for restored lesson
-            try {
-              await fetch('/api/lessons/update-progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  lessonId: result.lessonId,
-                  courseId,
-                  language: selectedLanguage,
-                  updateLastAccessed: true
-                })
-              });
-            } catch (err) {
-              console.warn('Failed to persist restored last accessed:', err);
-            }
-            
+            // No need to update last_accessed here since we just restored from it
             return;
           } else {
-            console.log('❌ Lesson not found in course');
+            console.log('❌ WARNING: Saved lesson not found in current course data!');
+            console.log('This might be due to language mismatch or lesson deletion');
+            // Continue to fallback
           }
+        } else {
+          console.log('📭 No last accessed lesson found in database');
         }
       } catch (error) {
         console.error('Failed to fetch last accessed lesson:', error);
       }
       
-      // Fallback to first incomplete lesson if no valid last accessed lesson
+      // If no last accessed lesson was found/restored, fallback to first incomplete
       const nextLesson = getNextLesson();
       if (nextLesson) {
-        console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
+        console.log('📍 No last accessed found, falling back to first incomplete lesson:', nextLesson.lesson.title);
         setCurrentLessonId(nextLesson.lesson.id);
         // Mark initial load as complete
         setIsInitialLoad(false);
@@ -486,6 +470,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         }).catch(err => console.error('Failed to update last accessed:', err));
       } else {
         console.log('❌ No available lessons found');
+        // Still mark initial load as complete
+        setIsInitialLoad(false);
       }
     };
     

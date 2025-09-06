@@ -32,16 +32,24 @@ export async function GET(request: NextRequest) {
       .eq('course_id', courseId)
       .single();
 
+    console.log('[API] Enrollment lookup result:', { 
+      found: !enrollmentError && !!enrollment,
+      current_lesson_id: enrollment?.current_lesson_id,
+      current_lesson_language: enrollment?.current_lesson_language,
+      requested_language: language,
+      error: enrollmentError?.message
+    });
+
     if (!enrollmentError && enrollment?.current_lesson_id) {
-      // If we have a saved current lesson and it matches the requested language, return it
-      if (enrollment.current_lesson_language === language) {
-        console.log('[API] Found current lesson in enrollment:', enrollment.current_lesson_id);
-        return NextResponse.json({ 
-          success: true, 
-          lessonId: enrollment.current_lesson_id,
-          source: 'enrollment'
-        });
-      }
+      // Return the saved lesson regardless of language
+      // The user was on this lesson, so restore it
+      console.log('[API] Found current lesson in enrollment:', enrollment.current_lesson_id);
+      return NextResponse.json({ 
+        success: true, 
+        lessonId: enrollment.current_lesson_id,
+        source: 'enrollment',
+        language: enrollment.current_lesson_language
+      });
     }
 
     // Fallback to the original method if no current_lesson_id is set

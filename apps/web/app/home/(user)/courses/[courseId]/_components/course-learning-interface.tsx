@@ -12,7 +12,7 @@ import { CheckCircle, BookOpen } from 'lucide-react';
 import type { LearnerCourseDetails, CourseLesson } from '../_lib/server/learner-course-details.loader';
 import { LessonViewer } from './lesson-viewer';
 import { LessonNavigation } from './lesson-navigation';
-import { updateLessonProgressAction, completeLessonAction } from '../_lib/server/lesson-progress-actions';
+import { updateLessonProgressAction, completeLessonAction, trackLessonAccessAction } from '../_lib/server/lesson-progress-actions';
 
 interface CourseLearningInterfaceProps {
   course: LearnerCourseDetails;
@@ -26,21 +26,14 @@ export function CourseLearningInterface({ course }: CourseLearningInterfaceProps
   const currentLesson = getCurrentLesson(course, currentLessonId);
 
   // Restore last accessed lesson or get first available lesson on component mount
-  // This fixes the issue where refreshing the page would reset to the first incomplete lesson
-  // Now it remembers where the user was and restores their position
+  // This properly restores the user's position in the course
   useEffect(() => {
     if (!currentLessonId) {
-      // First, try to find the most recently accessed lesson that isn't completed
+      // Find the most recently accessed lesson (completed or not)
       const lastAccessedLesson = getLastAccessedLesson(course);
       
       if (lastAccessedLesson) {
         setCurrentLessonId(lastAccessedLesson.id);
-      } else {
-        // Fall back to first incomplete lesson if no recently accessed lesson
-        const firstAvailableLesson = getFirstAvailableLesson(course);
-        if (firstAvailableLesson) {
-          setCurrentLessonId(firstAvailableLesson.id);
-        }
       }
     }
   }, [currentLessonId, course]);
@@ -222,9 +215,18 @@ export function CourseLearningInterface({ course }: CourseLearningInterfaceProps
           currentLessonId={currentLessonId}
           onLessonSelect={(lessonId) => {
             setCurrentLessonId(lessonId);
-            // Update last_accessed when user selects a lesson
+            // Track that this lesson was accessed
             if (lessonId) {
-              handleProgressUpdate(lessonId, 0);
+              startTransition(async () => {
+                try {
+                  await trackLessonAccessAction({
+                    lessonId,
+                    courseId: course.id,
+                  });
+                } catch (error) {
+                  console.error('Failed to track lesson access:', error);
+                }
+              });
             }
           }}
         />
@@ -261,20 +263,26 @@ function getFirstAvailableLesson(course: LearnerCourseDetails): CourseLesson | n
 }
 
 function getLastAccessedLesson(course: LearnerCourseDetails): CourseLesson | null {
-  // Find the most recently accessed lesson that isn't completed
+  // Find the most recently accessed lesson, whether completed or not
+  // This ensures users return to where they actually were, not just incomplete lessons
   let mostRecentLesson: CourseLesson | null = null;
   let mostRecentTime: string | null = null;
   
   for (const module of course.modules) {
     for (const lesson of module.lessons) {
-      // Consider lessons that have been accessed but not completed
-      if (lesson.last_accessed && !lesson.completed) {
+      // Consider ANY lesson that has been accessed
+      if (lesson.last_accessed) {
         if (!mostRecentTime || lesson.last_accessed > mostRecentTime) {
           mostRecentTime = lesson.last_accessed;
           mostRecentLesson = lesson;
         }
       }
     }
+  }
+  
+  // If no lesson has been accessed yet, return the first incomplete lesson
+  if (!mostRecentLesson) {
+    return getFirstAvailableLesson(course);
   }
   
   return mostRecentLesson;
