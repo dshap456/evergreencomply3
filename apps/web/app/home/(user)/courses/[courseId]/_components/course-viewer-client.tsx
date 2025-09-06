@@ -247,12 +247,31 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     return null;
   };
 
-  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
+  const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== 'undefined' && courseId) {
+      const saved = localStorage.getItem(`course-${courseId}-current-lesson`);
+      console.log('💾 Initializing currentLessonId from localStorage:', saved);
+      return saved;
+    }
+    return null;
+  });
   
-  // Wrapper to debug lesson changes
+  // Wrapper to debug lesson changes AND save to localStorage
   const setCurrentLessonId = (id: string | null) => {
     console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}" (courseId: ${courseId})`);
     setCurrentLessonIdRaw(id);
+    
+    // Also save to localStorage for instant restoration
+    if (typeof window !== 'undefined' && courseId) {
+      if (id) {
+        localStorage.setItem(`course-${courseId}-current-lesson`, id);
+        console.log('💾 Saved to localStorage:', id);
+      } else {
+        localStorage.removeItem(`course-${courseId}-current-lesson`);
+        console.log('💾 Removed from localStorage');
+      }
+    }
   };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -389,14 +408,20 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         return;
       }
       
-      // Only skip restoration if we explicitly have a lesson selected
-      // (not if it's null from initialization)
-      if (currentLessonId && lastSavedLessonRef.current === currentLessonId) {
-        console.log('⏸️ Already have lesson selected and saved:', currentLessonId);
-        return;
-      }
-      
       const allLessons = course.modules.flatMap(m => m.lessons);
+      
+      // Check if we already have a lesson from localStorage
+      if (currentLessonId) {
+        // Verify this lesson exists in the course
+        const lessonExists = allLessons.some(l => l.id === currentLessonId);
+        if (lessonExists) {
+          console.log('✅ Already have valid lesson from localStorage:', currentLessonId);
+          setIsInitialLoad(false);
+          return;
+        } else {
+          console.log('⚠️ localStorage lesson not in current course, will try API');
+        }
+      }
       console.log('🔍 Attempting to restore lesson position...', {
         courseId,
         language: selectedLanguage,
@@ -412,17 +437,24 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         console.log('📡 Last accessed API response:', result);
         
         if (result.success && result.lessonId) {
+          console.log('🔍 Looking for lesson ID:', result.lessonId);
+          console.log('📚 Available lesson IDs:', allLessons.map(l => l.id));
+          
           // Check if this lesson exists in the current course data
           const lesson = allLessons.find(l => l.id === result.lessonId);
           
           if (lesson) {
             console.log('✅ Successfully restored to saved lesson:', lesson.title);
+            console.log('🎯 Setting currentLessonId to:', result.lessonId);
             setCurrentLessonId(result.lessonId);
             setIsInitialLoad(false);
             return;
           } else {
-            console.log('⚠️ Saved lesson ID not found in current course, will use fallback');
+            console.log('⚠️ Saved lesson ID not found in current course data');
+            console.log('❌ Lesson', result.lessonId, 'not in', allLessons.length, 'lessons');
           }
+        } else {
+          console.log('📭 No lesson ID in API response');
         }
       } catch (error) {
         console.error('❌ Error fetching last accessed lesson:', error);
