@@ -75,7 +75,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/courses/${courseId}?language=${language}`);
+      const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`);
       const result = await response.json();
       
       console.log('📚 API Response:', {
@@ -286,6 +286,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         } else {
           const result = await response.json();
           console.log('✅ Current lesson saved successfully:', result);
+          
+          // Verify by checking enrollment
+          const verifyResponse = await fetch('/api/test-course-progress');
+          const verifyResult = await verifyResponse.json();
+          console.log('🔍 Verification - current_lesson_id in DB:', 
+            verifyResult.enrollments?.find((e: any) => e.course_id === courseId)?.current_lesson_id
+          );
         }
       } catch (error) {
         console.error('❌ Network error saving current lesson:', error);
@@ -527,7 +534,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         }
         
         // Get fresh course data from server to ensure consistency
-        const courseResponse = await fetch(`/api/courses/${courseId}?language=${selectedLanguage}`);
+        const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}&language=${selectedLanguage}`);
         const courseResult = await courseResponse.json();
         
         if (courseResult.success) {

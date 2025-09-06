@@ -15,7 +15,7 @@ export default function DebugCoursePage({ params }: DebugPageProps) {
   const [error, setError] = useState<any>(null);
 
   useEffect(() => {
-    fetch(`/api/courses/${courseId}?language=en`)
+    fetch(`/api/debug-course?courseId=${courseId}`)
       .then(res => res.json())
       .then(data => {
         setResult(data);
