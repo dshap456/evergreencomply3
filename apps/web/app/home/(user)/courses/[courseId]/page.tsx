@@ -30,17 +30,23 @@ async function LearnerCoursePage({ params }: LearnerCoursePageProps) {
   const client = getSupabaseServerClient();
   const { data: { user } } = await client.auth.getUser();
   
+  console.log('[PAGE SERVER] Getting saved lesson for user:', user?.id);
+  console.log('[PAGE SERVER] Course ID:', courseId);
+  
   let savedLessonId = null;
   if (user) {
-    const { data: enrollment } = await client
+    const { data: enrollment, error } = await client
       .from('course_enrollments')
       .select('current_lesson_id')
       .eq('user_id', user.id)
       .eq('course_id', courseId)
       .single();
     
+    console.log('[PAGE SERVER] Enrollment query result:', { enrollment, error });
     savedLessonId = enrollment?.current_lesson_id;
-    console.log('[PAGE] Found saved lesson on server:', savedLessonId);
+    console.log('[PAGE SERVER] Found saved lesson on server:', savedLessonId);
+  } else {
+    console.log('[PAGE SERVER] No user found!');
   }
 
   return (

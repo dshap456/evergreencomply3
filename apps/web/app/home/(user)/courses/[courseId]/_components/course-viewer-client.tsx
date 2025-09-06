@@ -211,6 +211,7 @@ export function CourseViewerClient({ courseId, initialLessonId }: CourseViewerCl
 
   useEffect(() => {
     console.log('🚀 Initial load effect - loading course data for courseId:', courseId);
+    console.log('Current lesson at load time:', currentLessonId);
     // Don't reset currentLessonId here - let the restoration logic handle it
     
     // Load course data with the selected language (from localStorage or default)
@@ -263,17 +264,34 @@ export function CourseViewerClient({ courseId, initialLessonId }: CourseViewerCl
 
   // Initialize with the lesson passed from the server
   const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(() => {
+    console.log('🔴 STATE INITIALIZATION');
+    console.log('🔴 initialLessonId from props:', initialLessonId);
+    console.log('🔴 courseId:', courseId);
+    
     if (initialLessonId) {
       console.log('🎯 INITIALIZING WITH SERVER LESSON:', initialLessonId);
       return initialLessonId;
     }
+    
+    console.log('⚠️ NO INITIAL LESSON PROVIDED!');
     return null;
   });
   
   // Wrapper to debug lesson changes
   const setCurrentLessonId = (id: string | null) => {
-    console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}" (courseId: ${courseId})`);
-    console.trace('Call stack for setCurrentLessonId'); // Let's see WHO is calling this
+    console.log(`🚨🚨🚨 LESSON CHANGE DETECTED 🚨🚨🚨`);
+    console.log(`From: "${currentLessonId}"`);
+    console.log(`To: "${id}"`);
+    console.log(`CourseId: ${courseId}`);
+    
+    // Get the first lesson to see if it matches
+    const firstLesson = course?.modules?.[0]?.lessons?.[0];
+    if (firstLesson && id === firstLesson.id) {
+      console.log(`⚠️ WARNING: Setting to FIRST LESSON!`);
+      console.log(`First lesson title: ${firstLesson.title}`);
+    }
+    
+    console.trace('WHO IS CALLING setCurrentLessonId?');
     setCurrentLessonIdRaw(id);
   };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
@@ -397,15 +415,11 @@ export function CourseViewerClient({ courseId, initialLessonId }: CourseViewerCl
     };
   }, [currentLessonId, courseId, selectedLanguage, isInitialLoad]);
 
-  // Fetch last accessed lesson from database when course loads
+  // DISABLED - We now get the lesson from the server
+  /*
   useEffect(() => {
-    console.log('🔍 Restoration effect running:', {
-      hasCourse: !!course,
-      currentLessonId,
-      courseId,
-      selectedLanguage,
-      hasRestored: hasRestoredRef.current
-    });
+    console.log('🔍 DISABLED: Restoration effect (using server-side restore)');
+    return; // EXIT IMMEDIATELY
     
     const fetchLastAccessedLesson = async () => {
       if (!course || !course.modules || course.modules.length === 0) {
@@ -477,6 +491,7 @@ export function CourseViewerClient({ courseId, initialLessonId }: CourseViewerCl
     
     fetchLastAccessedLesson();
   }, [course, lessonRestorationKey, courseId, selectedLanguage]); // Include all dependencies
+  */
 
   const handleSelectLesson = async (lessonId: string) => {
     // Find the lesson to check if it's locked
