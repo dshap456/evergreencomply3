@@ -56,16 +56,18 @@ export async function POST(
     
     console.log('[COMPLETE] Existing progress records for this lesson:', existingProgress);
     
-    // Update or create lesson progress
+    // Update or create lesson progress WITH last_accessed timestamp
+    const now = new Date().toISOString();
     const { data: progress, error: progressError } = await client
       .from('lesson_progress')
       .upsert({
         user_id: user.id,
         lesson_id: lessonId,
         status: 'completed',
-        completed_at: new Date().toISOString(),
+        completed_at: now,
         time_spent: time_spent || 0,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
+        last_accessed: now,  // CRITICAL: Set last_accessed so we can restore to this lesson
         language: language
       }, {
         onConflict: 'user_id,lesson_id,language'
@@ -102,6 +104,24 @@ export async function POST(
       beforeProgress: beforeProgress?.progress_percentage
     });
 
+    // Update course enrollment to remember current lesson
+    const { data: courseInfo } = await client
+      .from('lessons')
+      .select('course_modules!inner(course_id)')
+      .eq('id', lessonId)
+      .single();
+    
+    if (courseInfo?.course_modules?.course_id) {
+      await client
+        .from('course_enrollments')
+        .update({ 
+          current_lesson_id: lessonId,
+          current_lesson_language: language
+        })
+        .eq('user_id', user.id)
+        .eq('course_id', courseInfo.course_modules.course_id);
+    }
+    
     // Update course enrollment progress WITH LANGUAGE PARAMETER
     console.log('[COMPLETE] Calling update_course_progress RPC with:', {
       p_user_id: user.id,
