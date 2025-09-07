@@ -91,6 +91,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           modules: result.course.modules?.length,
           progress: result.course.progress_percentage
         });
+        // Debug: Check lesson completion status from API
+        console.log('📊 Lesson completion status from API:');
+        result.course.modules?.forEach((m: any) => {
+          m.lessons?.forEach((l: any) => {
+            console.log(`  - ${l.title}: completed=${l.completed}`);
+          });
+        });
         // Process lessons to determine locked state
         const processedCourse = processLessonLockStates(result.course);
         setCourse(processedCourse);
@@ -197,13 +204,17 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   const getNextLesson = () => {
+    console.log('🔎 Getting next lesson - checking all lessons:');
     for (const module of course?.modules || []) {
       for (const lesson of module.lessons) {
+        console.log(`  - ${lesson.title}: completed=${lesson.completed}, locked=${lesson.is_locked}`);
         if (!lesson.completed && !lesson.is_locked) {
+          console.log(`  → Found incomplete unlocked lesson: ${lesson.title}`);
           return { module, lesson };
         }
       }
     }
+    console.log('  → No incomplete lessons found');
     return null;
   };
 
