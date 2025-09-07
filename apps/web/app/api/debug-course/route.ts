@@ -130,9 +130,10 @@ export async function GET(request: NextRequest) {
 
     // Get lesson progress for the user (language-agnostic)
     const lessonIds = lessons?.map(l => l.id) || [];
+    // Only select columns that exist in the current schema to avoid dropping all progress
     const { data: lessonProgress, error: progressError } = await client
       .from('lesson_progress')
-      .select('lesson_id, status, time_spent, video_progress, quiz_score, updated_at')
+      .select('lesson_id, status, time_spent, updated_at')
       .eq('user_id', user.id)
       .in('lesson_id', lessonIds);
 
@@ -142,12 +143,13 @@ export async function GET(request: NextRequest) {
 
     // Create progress map
     const progressMap = new Map<string, any>();
-    lessonProgress?.forEach(progress => {
+    lessonProgress?.forEach((progress: any) => {
       progressMap.set(progress.lesson_id, {
         completed: progress.status === 'completed',
         time_spent: progress.time_spent || 0,
-        video_progress: progress.video_progress || 0,
-        quiz_score: progress.quiz_score || null,
+        // These fields may not exist in schema; keep safe defaults in case UI reads them
+        video_progress: 0,
+        quiz_score: null,
         last_accessed: progress.updated_at
       });
     });

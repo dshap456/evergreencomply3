@@ -40,9 +40,11 @@ export async function POST(request: NextRequest) {
       .eq('id', enrollment.id)
       .select();
     
+    let enrollmentUpdateWarning: string | null = null;
     if (updateEnrollmentError) {
       console.error('Error updating enrollment current lesson:', updateEnrollmentError);
-      // Don't fail the request if enrollment update fails
+      // Keep request successful for non-breaking behavior, but surface the issue to the client
+      enrollmentUpdateWarning = updateEnrollmentError.message || 'Failed to update current_lesson_id on enrollment';
     } else {
       console.log('[API] Successfully updated enrollment:', updateData);
     }
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, enrollmentUpdateWarning });
 
   } catch (error) {
     console.error('Error in update-progress route:', error);
