@@ -395,22 +395,40 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             return;
           } else {
             console.log('🔒 Cannot restore - lesson is locked or not found');
+            // Only fallback if we couldn't restore
+            const nextLesson = getNextLesson();
+            if (nextLesson) {
+              console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
+              setCurrentLessonId(nextLesson.lesson.id);
+              // Mark initial load as complete
+              setIsInitialLoad(false);
+              console.log('🎆 Initial load complete - saves enabled');
+            } else {
+              console.log('❌ No available lessons found');
+            }
+          }
+        } else {
+          // No last accessed lesson from API, use fallback
+          const nextLesson = getNextLesson();
+          if (nextLesson) {
+            console.log('📍 No last accessed found - starting with first incomplete lesson:', nextLesson.lesson.title);
+            setCurrentLessonId(nextLesson.lesson.id);
+            // Mark initial load as complete
+            setIsInitialLoad(false);
+            console.log('🎆 Initial load complete - saves enabled');
+          } else {
+            console.log('❌ No available lessons found');
           }
         }
       } catch (error) {
         console.error('Failed to fetch last accessed lesson:', error);
-      }
-      
-      // Fallback to first incomplete lesson if no valid last accessed lesson
-      const nextLesson = getNextLesson();
-      if (nextLesson) {
-        console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
-        setCurrentLessonId(nextLesson.lesson.id);
-        // Mark initial load as complete
-        setIsInitialLoad(false);
-        console.log('🎆 Initial load complete - saves enabled');
-      } else {
-        console.log('❌ No available lessons found');
+        // Error fallback
+        const nextLesson = getNextLesson();
+        if (nextLesson) {
+          console.log('📍 Error fallback - using first incomplete lesson:', nextLesson.lesson.title);
+          setCurrentLessonId(nextLesson.lesson.id);
+          setIsInitialLoad(false);
+        }
       }
     };
     
