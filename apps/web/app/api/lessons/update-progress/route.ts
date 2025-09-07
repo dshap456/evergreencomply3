@@ -4,7 +4,7 @@ import { getSupabaseServerClient } from '@kit/supabase/server-client';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { lessonId, courseId, language = 'en', updateLastAccessed = false } = body;
+    const { lessonId, courseId } = body;
 
     if (!lessonId || !courseId) {
       return NextResponse.json({ success: false, error: 'Lesson ID and Course ID required' }, { status: 400 });
@@ -30,22 +30,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'User not enrolled in this course' }, { status: 403 });
     }
 
-    // Update current lesson in enrollment if requested
-    if (updateLastAccessed) {
-      console.log('[API] Updating enrollment current lesson:', { enrollmentId: enrollment.id, lessonId, language });
-      const { data: updateData, error: updateEnrollmentError } = await client
-        .from('course_enrollments')
-        .update({ 
-          current_lesson_id: lessonId,
-          current_lesson_language: language
-        })
-        .eq('id', enrollment.id)
-        .select();
-      
-      if (updateEnrollmentError) {
-        console.error('Error updating enrollment current lesson:', updateEnrollmentError);
-        return NextResponse.json({ success: false, error: 'Failed to update current lesson' }, { status: 500 });
-      }
+    // Update current lesson in enrollment
+    console.log('[API] Updating enrollment current lesson:', { enrollmentId: enrollment.id, lessonId });
+    const { data: updateData, error: updateEnrollmentError } = await client
+      .from('course_enrollments')
+      .update({ 
+        current_lesson_id: lessonId
+      })
+      .eq('id', enrollment.id)
+      .select();
+    
+    if (updateEnrollmentError) {
+      console.error('Error updating enrollment current lesson:', updateEnrollmentError);
+      // Don't fail the request if enrollment update fails
+    } else {
       console.log('[API] Successfully updated enrollment:', updateData);
     }
 
@@ -55,7 +53,6 @@ export async function POST(request: NextRequest) {
       .select('id, status')
       .eq('user_id', user.id)
       .eq('lesson_id', lessonId)
-      .eq('language', language)
       .single();
 
     const now = new Date().toISOString();
@@ -69,10 +66,6 @@ export async function POST(request: NextRequest) {
       // Only set to in_progress if not already completed
       if (existingProgress.status !== 'completed') {
         updateData.status = 'in_progress';
-      }
-      
-      if (updateLastAccessed) {
-        updateData.last_accessed = now;
       }
       
       const { error: updateError } = await client
@@ -89,15 +82,10 @@ export async function POST(request: NextRequest) {
       const insertData: any = {
         user_id: user.id,
         lesson_id: lessonId,
-        language,
         updated_at: now,
         created_at: now,
         status: 'in_progress'
       };
-      
-      if (updateLastAccessed) {
-        insertData.last_accessed = now;
-      }
       
       const { error: insertError } = await client
         .from('lesson_progress')

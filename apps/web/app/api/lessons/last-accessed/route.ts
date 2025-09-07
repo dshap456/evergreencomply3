@@ -5,9 +5,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const courseId = searchParams.get('courseId');
-    const language = searchParams.get('language') || 'en';
 
-    console.log('[API] last-accessed called with:', { courseId, language });
+    console.log('[API] last-accessed called with:', { courseId });
 
     if (!courseId) {
       return NextResponse.json({ success: false, error: 'Course ID required' }, { status: 400 });
@@ -27,21 +26,19 @@ export async function GET(request: NextRequest) {
     // First check if we have a current_lesson_id stored in the enrollment
     const { data: enrollment, error: enrollmentError } = await client
       .from('course_enrollments')
-      .select('current_lesson_id, current_lesson_language')
+      .select('current_lesson_id')
       .eq('user_id', user.id)
       .eq('course_id', courseId)
       .single();
 
     if (!enrollmentError && enrollment?.current_lesson_id) {
-      // If we have a saved current lesson and it matches the requested language, return it
-      if (enrollment.current_lesson_language === language) {
-        console.log('[API] Found current lesson in enrollment:', enrollment.current_lesson_id);
-        return NextResponse.json({ 
-          success: true, 
-          lessonId: enrollment.current_lesson_id,
-          source: 'enrollment'
-        });
-      }
+      // If we have a saved current lesson, return it
+      console.log('[API] Found current lesson in enrollment:', enrollment.current_lesson_id);
+      return NextResponse.json({ 
+        success: true, 
+        lessonId: enrollment.current_lesson_id,
+        source: 'enrollment'
+      });
     }
 
     // Fallback to the original method if no current_lesson_id is set
@@ -74,11 +71,9 @@ export async function GET(request: NextRequest) {
     // Now get the most recent progress for these lessons
     const { data: lessonProgress, error } = await client
       .from('lesson_progress')
-      .select('lesson_id, last_accessed, updated_at, status')
+      .select('lesson_id, updated_at, status')
       .eq('user_id', user.id)
-      .eq('language', language)
       .in('lesson_id', lessonIds)
-      .order('last_accessed', { ascending: false, nullsFirst: false })
       .order('updated_at', { ascending: false })
       .limit(1)
       .single();
@@ -96,7 +91,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ 
         success: true, 
         lessonId: lessonProgress.lesson_id,
-        lastAccessed: lessonProgress.last_accessed || lessonProgress.updated_at,
+        lastAccessed: lessonProgress.updated_at,
         source: 'progress'
       });
     }

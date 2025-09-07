@@ -16,8 +16,8 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Extract quiz score and language if provided
-    const { time_spent, quiz_score, is_quiz, language = 'en' } = body;
+    // Extract quiz score if provided
+    const { time_spent, quiz_score, is_quiz } = body;
 
     // Update or create lesson progress
     const { data: progress, error: progressError } = await client
@@ -28,10 +28,9 @@ export async function POST(
         status: 'completed',
         completed_at: new Date().toISOString(),
         time_spent: time_spent || 0,
-        updated_at: new Date().toISOString(),
-        language: language
+        updated_at: new Date().toISOString()
       }, {
-        onConflict: 'user_id,lesson_id,language'
+        onConflict: 'user_id,lesson_id'
       })
       .select()
       .single();
@@ -61,11 +60,10 @@ export async function POST(
       beforeProgress: beforeProgress?.progress_percentage
     });
 
-    // Update course enrollment progress WITH LANGUAGE PARAMETER
+    // Update course enrollment progress
     const { error: enrollmentError } = await client.rpc('update_course_progress', {
       p_user_id: user.id,
-      p_lesson_id: lessonId,
-      p_language: language  // Pass the language to calculate progress correctly
+      p_lesson_id: lessonId
     });
 
     if (enrollmentError) {
@@ -105,8 +103,7 @@ export async function POST(
           total_points: 100, // Assuming 100 point scale
           passed: quiz_score >= 80,
           answers: {}, // Empty for now
-          attempt_number: 1, // Can be enhanced to track multiple attempts
-          language: language
+          attempt_number: 1 // Can be enhanced to track multiple attempts
         });
 
       if (quizError) {
@@ -129,24 +126,21 @@ export async function POST(
           console.error('❌ Error updating enrollment final score:', enrollmentError);
         }
 
-        // Check if course is complete for current language
+        // Check if course is complete
         const { data: allProgress } = await client
           .from('lesson_progress')
           .select('lesson_id')
           .eq('user_id', user.id)
-          .eq('status', 'completed')
-          .eq('language', language);
+          .eq('status', 'completed');
 
         const { data: allLessons } = await client
           .from('lessons')
           .select('id, module_id')
-          .eq('language', language)
           .in('module_id', (
             await client
               .from('course_modules')
               .select('id')
               .eq('course_id', courseId)
-              .eq('language', language)
           ).data?.map(m => m.id) || []);
 
         const allLessonsCompleted = allLessons?.length === allProgress?.length;
@@ -154,12 +148,11 @@ export async function POST(
         if (allLessonsCompleted && quiz_score >= 80) {
           console.log('🎉 Course completed with passing final quiz score');
           
-          // Trigger course completion and update completed_language
+          // Trigger course completion
           const { error: completionError } = await client
             .from('course_enrollments')
             .update({
-              completed_at: new Date().toISOString(),
-              completed_language: language
+              completed_at: new Date().toISOString()
             })
             .eq('user_id', user.id)
             .eq('course_id', courseId);

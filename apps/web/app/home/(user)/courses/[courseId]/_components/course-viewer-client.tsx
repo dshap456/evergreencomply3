@@ -270,9 +270,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lessonId: currentLessonId,
-            courseId,
-            language: selectedLanguage,
-            updateLastAccessed: true
+            courseId
           })
         });
         
@@ -315,18 +313,14 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             lessonId: currentLessonId,
-            courseId,
-            language: selectedLanguage,
-            updateLastAccessed: true
+            courseId
           }),
           keepalive: true // This helps with unmount saves
         }).catch(() => {
           // Fallback to sendBeacon if fetch fails
           const data = JSON.stringify({
             lessonId: currentLessonId,
-            courseId,
-            language: selectedLanguage,
-            updateLastAccessed: true
+            courseId
           });
           navigator.sendBeacon('/api/lessons/update-progress', new Blob([data], { type: 'application/json' }));
         });
@@ -358,13 +352,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       
       console.log('🔍 Fetching last accessed lesson...', {
         courseId,
-        language: selectedLanguage,
-        url: `/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`,
+        url: `/api/lessons/last-accessed?courseId=${courseId}`,
         totalModules: course.modules.length,
         totalLessons: course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
       });
       try {
-        const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}&language=${selectedLanguage}`);
+        const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}`);
         const result = await response.json();
         
         console.log('📡 Last accessed API response:', {
@@ -507,8 +500,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         body: JSON.stringify({ 
           time_spent: timeSpent,
           quiz_score: quizScore,
-          is_quiz: quizScore !== undefined,
-          language: selectedLanguage
+          is_quiz: quizScore !== undefined
         })
       });
 
