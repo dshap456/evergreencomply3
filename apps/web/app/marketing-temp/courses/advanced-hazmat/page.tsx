@@ -141,7 +141,7 @@ function DOTHazmatAdvancedPage() {
                       size="lg"
                       className="w-full sm:w-auto bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
                     >
-                      Buy Seats - $179 per seat
+                      Buy Seats - $149 per seat
                     </Button>
                   </Link>
                 </div>

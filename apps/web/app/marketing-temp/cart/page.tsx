@@ -15,21 +15,21 @@ const AVAILABLE_COURSES = [
   {
     id: 'dot-hazmat-general',
     name: 'DOT HAZMAT - General Awareness',
-    price: 79,
+    price: 119,
     duration: '3-year certification',
     slug: 'dot-hazmat',
   },
   {
     id: 'dot-hazmat-advanced',
     name: 'DOT HAZMAT - Advanced Awareness',
-    price: 179,
+    price: 149,
     duration: '3-year certification',
     slug: 'advanced-hazmat',
   },
   {
     id: 'epa-rcra',
     name: 'EPA RCRA Hazardous Waste - Annual',
-    price: 129,
+    price: 119,
     duration: '1-year certification',
     slug: 'epa-rcra',
   }

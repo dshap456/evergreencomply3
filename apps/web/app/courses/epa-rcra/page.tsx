@@ -131,7 +131,7 @@ function EPARCRAPage() {
                 <div className="pt-4">
                   <AddToCartButton
                     courseId="epa-rcra"
-                    price={129}
+                    price={119}
                     size="lg"
                     className="w-full sm:w-auto"
                   />
@@ -247,7 +247,7 @@ function EPARCRAPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="text-center">
-                      <div className="text-5xl font-bold text-primary">$129</div>
+                      <div className="text-5xl font-bold text-primary">$119</div>
                       <p className="text-muted-foreground">per employee / 1-year cert</p>
                     </div>
                     <div className="space-y-3 text-sm pt-2">
@@ -270,7 +270,7 @@ function EPARCRAPage() {
                     </div>
                     <AddToCartButton
                       courseId="epa-rcra"
-                      price={129}
+                      price={119}
                       size="lg"
                       className="w-full mt-2"
                     >

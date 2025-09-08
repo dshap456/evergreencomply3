@@ -131,7 +131,7 @@ function DOTHazmatGeneralPage() {
                 <div className="pt-4">
                   <AddToCartButton
                     courseId="dot-hazmat-general"
-                    price={79}
+                    price={119}
                     size="lg"
                     className="w-full sm:w-auto"
                   />
@@ -248,7 +248,7 @@ function DOTHazmatGeneralPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="text-center">
-                      <div className="text-5xl font-bold text-primary">$79</div>
+                      <div className="text-5xl font-bold text-primary">$119</div>
                       <p className="text-muted-foreground">per employee / 3-year cert</p>
                     </div>
                     <div className="space-y-3 text-sm pt-2">
@@ -271,7 +271,7 @@ function DOTHazmatGeneralPage() {
                     </div>
                     <AddToCartButton
                       courseId="dot-hazmat-general"
-                      price={79}
+                      price={119}
                       size="lg"
                       className="w-full mt-2"
                     >

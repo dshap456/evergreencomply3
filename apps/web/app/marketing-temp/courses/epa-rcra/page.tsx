@@ -140,7 +140,7 @@ function EPARCRAPage() {
                       size="lg"
                       className="w-full sm:w-auto bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
                     >
-                      Buy Seats - $129 per seat
+                      Buy Seats - $119 per seat
                     </Button>
                   </Link>
                 </div>
