@@ -16,6 +16,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
+    // Super admin or account owner only (prefer narrow scope: team owner already checked below)
+    const { data: isSuperAdmin } = await client.rpc('is_super_admin');
+
     // Check if user is account owner
     const { data: account, error: accountError } = await client
       .from('accounts')

@@ -12,6 +12,15 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Enforce super admin guard before using admin client
+    const { data: isSuperAdmin, error: guardError } = await client.rpc('is_super_admin');
+    if (guardError) {
+      return NextResponse.json({ error: 'Failed to verify privileges' }, { status: 500 });
+    }
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     // Get accounts using admin client
     const adminClient = getSupabaseServerAdminClient();
     const { data: accounts, error } = await adminClient

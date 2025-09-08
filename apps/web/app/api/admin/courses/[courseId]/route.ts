@@ -8,12 +8,9 @@ interface RouteContext {
 
 export async function GET(request: Request, context: RouteContext) {
   try {
-    console.log('🔍 Admin course API called');
     const { courseId } = await context.params;
-    console.log('📋 Course ID:', courseId);
     
     if (!courseId) {
-      console.error('❌ No courseId provided');
       return NextResponse.json({ error: 'courseId is required' }, { status: 400 });
     }
 
@@ -21,13 +18,19 @@ export async function GET(request: Request, context: RouteContext) {
     const authClient = getSupabaseServerClient();
     const { data: { user } } = await authClient.auth.getUser();
     if (!user) {
-      console.error('❌ User not authenticated');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('🔧 Creating admin client...');
+    // Enforce super admin guard before using admin client (bypass RLS)
+    const { data: isSuperAdmin, error: superAdminError } = await authClient.rpc('is_super_admin');
+    if (superAdminError) {
+      return NextResponse.json({ error: 'Failed to verify privileges' }, { status: 500 });
+    }
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const client = getSupabaseServerAdminClient();
-    console.log('✅ Admin client created');
 
     // Load course data - RLS will handle permissions
     const { data: course, error: courseError } = await client
@@ -37,10 +40,7 @@ export async function GET(request: Request, context: RouteContext) {
       .single();
 
     if (courseError) {
-      return NextResponse.json({ 
-        error: 'Failed to load course',
-        details: courseError.message
-      }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to load course' }, { status: 500 });
     }
 
     // Load modules with lessons - RLS will handle permissions
@@ -56,10 +56,7 @@ export async function GET(request: Request, context: RouteContext) {
       .order('order_index');
 
     if (modulesError) {
-      return NextResponse.json({ 
-        error: 'Failed to load modules',
-        details: modulesError.message
-      }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to load modules' }, { status: 500 });
     }
 
     // Format the data
@@ -85,7 +82,6 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
   } catch (error) {
-    console.error('Error in admin course API:', error);
     return NextResponse.json({ 
       error: 'Unexpected error',
       details: error instanceof Error ? error.message : 'Unknown error'
@@ -103,15 +99,22 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Enforce super admin guard before using admin client
+    const { data: isSuperAdmin, error: superAdminError } = await authClient.rpc('is_super_admin');
+    if (superAdminError) {
+      return NextResponse.json({ error: 'Failed to verify privileges' }, { status: 500 });
+    }
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     
     // Use admin client for consistency
     const client = getSupabaseServerAdminClient();
     
     const body = await request.json();
 
-    console.log('🔄 Updating course:', { courseId, body });
-
-    // First check what schema the database is using
+    // First check current course exists
     const { data: currentCourse } = await client
       .from('courses')
       .select('*')
@@ -132,7 +135,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     // Handle status update
     if (body.status !== undefined) {
       updateData.status = body.status;
-      console.log('📝 Setting status column:', updateData.status);
     }
 
     const { data, error } = await client
@@ -143,14 +145,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       .single();
 
     if (error) {
-      console.error('❌ Error updating course:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log('✅ Course updated successfully:', data);
     return NextResponse.json({ success: true, course: data });
   } catch (error) {
-    console.error('❌ Error updating course:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

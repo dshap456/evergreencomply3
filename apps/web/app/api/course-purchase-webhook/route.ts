@@ -30,12 +30,8 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const webhookTimestamp = new Date().toISOString();
   
-  // CRITICAL: Log immediately to prove webhook is being called
-  console.error('🔴🔴🔴 COURSE WEBHOOK ACTUALLY CALLED 🔴🔴🔴');
-  console.error('🔴 Timestamp:', webhookTimestamp);
-  console.error('🔴 URL:', request.url);
-  console.error('🔴 Headers:', Object.fromEntries(request.headers.entries()));
-  console.error('🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴');
+  // Minimal log to indicate webhook call without exposing headers/body
+  console.info('[COURSE-WEBHOOK] Called at', webhookTimestamp, 'URL:', request.url);
   
   // IMMEDIATELY write to database to prove webhook was called
   const adminClient = getSupabaseServerAdminClient();
@@ -56,12 +52,8 @@ export async function POST(request: NextRequest) {
     // 2. Read the raw body for signature verification
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
-    
-    console.error('[COURSE-WEBHOOK] Body received, length:', body.length);
-    console.error('[COURSE-WEBHOOK] First 100 chars of body:', body.substring(0, 100));
-    console.error('[COURSE-WEBHOOK] Signature present:', !!signature);
-    // Not logging signature or secret values for security
-    console.error('[COURSE-WEBHOOK] Webhook secret configured:', !!process.env.STRIPE_WEBHOOK_SECRET);
+    // Only minimal diagnostics; never log raw headers/body/signature
+    console.info('[COURSE-WEBHOOK] Body length:', body.length, 'Signature present:', !!signature);
     
     // Log this attempt to database for debugging
     try {
@@ -69,8 +61,8 @@ export async function POST(request: NextRequest) {
         webhook_name: 'course-purchase-webhook',
         called_at: new Date().toISOString(),
         url: request.url,
-        headers: Object.fromEntries(request.headers.entries()),
-        body: body && body.length > 0 ? body.substring(0, 5000) : null,
+        headers: null,
+        body: null,
       });
       
       if (logResult.error) {
@@ -81,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (!signature) {
-      console.error('[COURSE-WEBHOOK] ❌ No signature provided - returning error');
+      console.error('[COURSE-WEBHOOK] No signature provided - returning error');
       return NextResponse.json({ error: 'No signature' }, { status: 400 });
     }
     
@@ -96,7 +88,7 @@ export async function POST(request: NextRequest) {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET!
       );
-      console.error('[COURSE-WEBHOOK] ✅ Signature verified successfully');
+      console.info('[COURSE-WEBHOOK] Signature verified successfully');
     } catch (err: any) {
       console.error('[COURSE-WEBHOOK] ❌ Signature verification failed:', err.message);
       console.error('[COURSE-WEBHOOK] Error type:', err.type);
@@ -112,11 +104,10 @@ export async function POST(request: NextRequest) {
     }
     
     // 2. Only process checkout.session.completed
-    console.error('[COURSE-WEBHOOK] Event type:', event.type);
-    console.error('[COURSE-WEBHOOK] Event ID:', event.id);
+    console.info('[COURSE-WEBHOOK] Event:', { type: event.type, id: event.id });
     
     if (event.type !== 'checkout.session.completed') {
-      console.error('[COURSE-WEBHOOK] Not a checkout completion, ignoring');
+      console.info('[COURSE-WEBHOOK] Not a checkout completion, ignoring');
       return NextResponse.json({ received: true });
     }
     
