@@ -67,7 +67,8 @@ function Home() {
           </nav>
           <div className="flex items-center gap-4">
             <CartCount />
-            <Link href={pathsConfig.auth.signIn}>
+            {/** Use absolute URL for login to ensure correct host */}
+            <Link href={`${(process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/,'') || 'https://www.evergreencomply.com')}${pathsConfig.auth.signIn}`}>
               <Button variant="outline">Log In</Button>
             </Link>
           </div>
