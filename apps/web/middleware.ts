@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
   }
   
   // Allow all auth routes and webhooks to pass through without modification
+  // and ensure they are never cached by CDNs/browsers
   if (
     url.pathname.startsWith('/auth/') || 
     url.pathname.startsWith('/update-password') || 
@@ -22,7 +23,10 @@ export async function middleware(request: NextRequest) {
     url.pathname.startsWith('/api/course-purchase-webhook') ||
     url.pathname.startsWith('/api/webhook')
   ) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    // Prevent stale cached responses for sensitive routes
+    res.headers.set('Cache-Control', 'no-store, private, max-age=0, must-revalidate');
+    return res;
   }
 
   let response = NextResponse.next({
