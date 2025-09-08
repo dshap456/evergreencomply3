@@ -55,7 +55,6 @@ interface CourseData {
 }
 
 export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
-  console.log('🚀 CourseViewerClient initialized with courseId:', courseId);
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +69,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   });
 
   const loadCourseData = async (language: 'en' | 'es' = selectedLanguage) => {
-    console.log('📚 Loading course data for courseId:', courseId, 'language:', language, 'type:', typeof courseId);
     try {
       setLoading(true);
       setError(null);
@@ -78,32 +76,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`);
       const result = await response.json();
       
-      console.log('📚 API Response:', {
-        status: response.status,
-        success: result.success,
-        error: result.error,
-        hasCourse: !!result.course
-      });
-      
       if (result.success && result.course) {
-        console.log('📚 Course data loaded successfully:', {
-          title: result.course.title,
-          modules: result.course.modules?.length,
-          progress: result.course.progress_percentage
-        });
-        // Debug: Check lesson completion status from API
-        console.log('📊 Lesson completion status from API:');
-        result.course.modules?.forEach((m: any) => {
-          m.lessons?.forEach((l: any) => {
-            console.log(`  - ${l.title}: completed=${l.completed}`);
-          });
-        });
         // Process lessons to determine locked state
         const processedCourse = processLessonLockStates(result.course);
         setCourse(processedCourse);
       } else {
         const errorMsg = result.error || 'Failed to load course data';
-        console.error('❌ Failed to load course:', errorMsg);
+        console.error('Failed to load course:', errorMsg);
         
         // Check if it's an enrollment issue
         if (errorMsg.includes('not enrolled')) {
@@ -113,7 +92,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         }
       }
     } catch (err) {
-      console.error('❌ Exception loading course:', err);
+      console.error('Exception loading course:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
@@ -165,7 +144,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   useEffect(() => {
-    console.log('🚀 Initial load effect - loading course data');
     // Don't reset currentLessonId here - let the restoration logic handle it
     
     // Load course data with the selected language (from localStorage or default)
@@ -204,17 +182,13 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   const getNextLesson = () => {
-    console.log('🔎 Getting next lesson - checking all lessons:');
     for (const module of course?.modules || []) {
       for (const lesson of module.lessons) {
-        console.log(`  - ${lesson.title}: completed=${lesson.completed}, locked=${lesson.is_locked}`);
         if (!lesson.completed && !lesson.is_locked) {
-          console.log(`  → Found incomplete unlocked lesson: ${lesson.title}`);
           return { module, lesson };
         }
       }
     }
-    console.log('  → No incomplete lessons found');
     return null;
   };
 
@@ -235,11 +209,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   // Save current lesson when it changes and on unmount
   useEffect(() => {
-    console.log('📍 Save effect running - currentLessonId:', currentLessonId, 'courseId:', courseId, 'isInitialLoad:', isInitialLoad);
     
     // Don't save during initial load/restoration
     if (isInitialLoad) {
-      console.log('⏸️ Skipping save - initial load/restoration');
       return;
     }
 
@@ -251,30 +223,20 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
     // Save current lesson whenever it changes (not just on unmount)
     const saveCurrentLesson = async () => {
-      console.log('🔍 Checking if should save - current:', currentLessonId, 'lastSaved:', lastSavedLessonRef.current);
       
       // Skip if no lesson selected
       if (!currentLessonId) {
-        console.log('🚫 No lesson to save');
         return;
       }
       
       // Skip if already saved
       if (lastSavedLessonRef.current === currentLessonId) {
-        console.log('🔄 Already saved this lesson');
         return;
       }
       
-      console.log('💾 Auto-saving current lesson:', currentLessonId, 'for course:', courseId);
       lastSavedLessonRef.current = currentLessonId;
       
       try {
-        console.log('📡 Sending save request with:', {
-          lessonId: currentLessonId,
-          courseId,
-          language: selectedLanguage,
-          updateLastAccessed: true
-        });
         
         const response = await fetch('/api/lessons/update-progress', {
           method: 'POST',
@@ -285,27 +247,20 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           })
         });
         
-        console.log('📨 Response received:', response.status, response.statusText);
-        
         if (!response.ok) {
           const error = await response.json();
-          console.error('❌ Failed to save current lesson:', error);
+          console.error('Failed to save current lesson:', error);
           // Reset lastSavedLessonRef on error so it can retry
           lastSavedLessonRef.current = null;
         } else {
           const result = await response.json();
-          console.log('✅ Current lesson saved successfully:', result);
-          
-          // Verify by checking enrollment
-          const verifyResponse = await fetch('/api/test-course-progress');
-          const verifyResult = await verifyResponse.json();
-          console.log('🔍 Verification - current_lesson_id in DB:', 
-            verifyResult.enrollments?.find((e: any) => e.course_id === courseId)?.current_lesson_id
-          );
+          if (result?.enrollmentUpdateWarning) {
+            // keep silent unless there is a warning
+            console.warn('Enrollment update warning:', result.enrollmentUpdateWarning);
+          }
         }
       } catch (error) {
-        console.error('❌ Network error saving current lesson:', error);
-        console.error('Full error details:', error);
+        console.error('Network error saving current lesson:', error);
         // Reset lastSavedLessonRef on error so it can retry
         lastSavedLessonRef.current = null;
       }
@@ -317,7 +272,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     // Also save on unmount as backup
     return () => {
       if (currentLessonId) {
-        console.log('🚪 Component unmounting - final save for lesson:', currentLessonId);
         // Try regular fetch first
         fetch('/api/lessons/update-progress', {
           method: 'POST',
@@ -341,16 +295,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   // Fetch last accessed lesson from database when course loads
   useEffect(() => {
-    console.log('🔍 Restoration effect running:', {
-      hasCourse: !!course,
-      currentLessonId,
-      courseId,
-      selectedLanguage
-    });
     
     const fetchLastAccessedLesson = async () => {
       if (!course || !course.modules || course.modules.length === 0) {
-        console.log('⏸️ No course data yet, waiting...');
         return;
       }
       
@@ -361,74 +308,40 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         return;
       }
       
-      console.log('🔍 Fetching last accessed lesson...', {
-        courseId,
-        url: `/api/lessons/last-accessed?courseId=${courseId}`,
-        totalModules: course.modules.length,
-        totalLessons: course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
-      });
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}`);
         const result = await response.json();
-        
-        console.log('📡 Last accessed API response:', {
-          status: response.status,
-          result
-        });
         
         if (result.success && result.lessonId) {
           setLastAccessedLesson(result.lessonId);
           // Check if this lesson is still available (not locked)
           const allLessons = course.modules.flatMap(m => m.lessons);
-          console.log('📚 All lessons in course (first 10):', allLessons.slice(0, 10).map(l => ({ 
-            id: l.id, 
-            title: l.title, 
-            locked: l.is_locked,
-            completed: l.completed 
-          })));
           
           const lesson = allLessons.find(l => l.id === result.lessonId);
           
-          console.log('🔍 Looking for lesson ID:', result.lessonId);
-          console.log('📖 Found lesson:', lesson ? {
-            id: lesson.id,
-            title: lesson.title,
-            is_locked: lesson.is_locked,
-            completed: lesson.completed
-          } : `NOT FOUND - Total lessons: ${allLessons.length}`);
-          
           if (lesson && !lesson.is_locked) {
-            console.log('✅ Restoring last accessed lesson:', lesson.title, lesson.id);
             setCurrentLessonId(result.lessonId);
             // Mark initial load as complete
             setIsInitialLoad(false);
-            console.log('🎆 Initial load complete - saves enabled');
             return;
           } else {
-            console.log('🔒 Cannot restore - lesson is locked or not found');
             // Only fallback if we couldn't restore
             const nextLesson = getNextLesson();
             if (nextLesson) {
-              console.log('📍 Falling back to first incomplete lesson:', nextLesson.lesson.title);
               setCurrentLessonId(nextLesson.lesson.id);
               // Mark initial load as complete
               setIsInitialLoad(false);
-              console.log('🎆 Initial load complete - saves enabled');
             } else {
-              console.log('❌ No available lessons found');
             }
           }
         } else {
           // No last accessed lesson from API, use fallback
           const nextLesson = getNextLesson();
           if (nextLesson) {
-            console.log('📍 No last accessed found - starting with first incomplete lesson:', nextLesson.lesson.title);
             setCurrentLessonId(nextLesson.lesson.id);
             // Mark initial load as complete
             setIsInitialLoad(false);
-            console.log('🎆 Initial load complete - saves enabled');
           } else {
-            console.log('❌ No available lessons found');
           }
         }
       } catch (error) {
@@ -436,7 +349,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         // Error fallback
         const nextLesson = getNextLesson();
         if (nextLesson) {
-          console.log('📍 Error fallback - using first incomplete lesson:', nextLesson.lesson.title);
           setCurrentLessonId(nextLesson.lesson.id);
           setIsInitialLoad(false);
         }
@@ -512,11 +424,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const handleNextLesson = () => {
     const nextLesson = getNextLessonInSequence();
     if (nextLesson) {
-      console.log('🎯 Manual navigation to next lesson:', nextLesson.lesson.title);
       setCurrentLessonId(nextLesson.lesson.id);
       // No need to save here - the useEffect will auto-save when currentLessonId changes
     } else {
-      console.log('❌ No next lesson available');
     }
   };
 
@@ -535,11 +445,9 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('✅ Lesson completion saved to database:', responseData);
         
         // If this was a final quiz with a passing score, redirect to My Learning
         if (isFinalQuiz && quizScore && quizScore >= 80) {
-          console.log('🎉 Final quiz passed! Redirecting to My Learning...');
           // Add a small delay to ensure database operations complete
           await new Promise(resolve => setTimeout(resolve, 1000));
           
@@ -547,7 +455,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             // Use router.push for cleaner navigation within Next.js
             await router.push('/home/courses');
           } catch (navError) {
-            console.error('❌ Navigation error:', navError);
+            console.error('Navigation error:', navError);
             // Try alternative navigation
             window.location.href = '/home/courses';
           }
@@ -580,13 +488,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             
             // Auto-advance to next lesson after a short delay
             setTimeout(() => {
-              console.log('🚀 Auto-advancing to next lesson:', nextLessonData.lesson.title);
               setCurrentLessonId(nextLessonData.lesson.id);
               // No need to save here - the useEffect will auto-save when currentLessonId changes
             }, 1500); // 1.5 second delay to show completion
           }
         } else {
-          console.error('❌ Failed to refresh course data after completion:', courseResult.error);
+          console.error('Failed to refresh course data after completion:', courseResult.error);
           // Still mark the lesson as completed in the UI even if refresh fails
           const updatedModules = course.modules.map(module => ({
             ...module,
@@ -601,10 +508,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('❌ Failed to save lesson completion:', errorData);
+        console.error('Failed to save lesson completion:', errorData);
       }
     } catch (error) {
-      console.error('❌ Error saving lesson completion:', error);
+      console.error('Error saving lesson completion:', error);
     }
   };
 

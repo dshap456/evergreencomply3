@@ -68,7 +68,6 @@ export function VideoJSPlayer({
     };
 
     const player = playerRef.current = videojs(videoElement, options, function onPlayerReady() {
-      console.log('🎥 Video.js player ready');
       
       // Set up mobile attributes
       const videoEl = player.el().querySelector('video');
@@ -118,7 +117,6 @@ export function VideoJSPlayer({
         // Check if trying to seek beyond watched portion
         if (currentTime > maxWatchedTime + 1) { // 1 second buffer
           player.currentTime(maxWatchedTime);
-          console.log('⏪ Prevented forward skip beyond', maxWatchedTime);
           
           // Show message to user
           player.one('seeked', () => {
@@ -162,26 +160,14 @@ export function VideoJSPlayer({
     });
 
     // Mobile play handling
-    player.on('play', () => {
-      console.log('▶️ Video playing');
-    });
+    player.on('play', () => {});
     
     // Handle waiting/buffering
-    player.on('waiting', () => {
-      console.log('⏳ Video buffering...');
-    });
+    player.on('waiting', () => {});
     
-    player.on('playing', () => {
-      console.log('▶️ Video resumed after buffering');
-    });
+    player.on('playing', () => {});
 
-    player.on('loadedmetadata', () => {
-      console.log('📊 Video metadata loaded:', {
-        duration: player.duration(),
-        width: player.videoWidth(),
-        height: player.videoHeight()
-      });
-    });
+    player.on('loadedmetadata', () => {});
 
     // Cleanup
     return () => {
