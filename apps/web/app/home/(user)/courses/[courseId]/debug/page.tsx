@@ -9,6 +9,9 @@ interface DebugPageProps {
 }
 
 export default function DebugCoursePage({ params }: DebugPageProps) {
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
   const { courseId } = use(params);
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
