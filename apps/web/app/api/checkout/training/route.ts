@@ -123,10 +123,11 @@ export async function POST(request: NextRequest) {
     console.log('Creating Stripe checkout with line items:', lineItems);
     console.log('Purchase account ID:', purchaseAccountId);
 
-    // Determine success URL - use smart redirect that checks user's account type
+    // Determine success URL
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
-    // Redirect to handler that determines personal vs team routing
-    const successPath = `/home/purchase-success?session_id={CHECKOUT_SESSION_ID}`;
+    // 80/20: send users to a dedicated success page that fires GA4 purchase
+    // (team vs personal routing can happen from there if needed)
+    const successPath = `/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
     
     // Create Stripe checkout session with proper account reference
     const sessionParams: Stripe.Checkout.SessionCreateParams = {

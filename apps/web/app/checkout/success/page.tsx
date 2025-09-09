@@ -11,17 +11,120 @@ import { CustomShieldIcon } from '../../_components/custom-icons';
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const simulate = searchParams.get('simulate');
+  const simValue = searchParams.get('value');
+  const simCurrency = searchParams.get('currency');
+  const simTid = searchParams.get('transaction_id');
   const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     // Clear the cart after successful purchase
     if (sessionId && !isClearing) {
       setIsClearing(true);
-      localStorage.removeItem('training-cart');
-      // Dispatch custom event to update cart count
-      window.dispatchEvent(new Event('cart-updated'));
+      try {
+        localStorage.removeItem('training-cart');
+        // Dispatch custom event to update cart count
+        window.dispatchEvent(new Event('cart-updated'));
+      } catch {}
     }
   }, [sessionId, isClearing]);
+
+  // Fire GA4/Google Ads conversion once per session_id
+  useEffect(() => {
+    // Simulator: allow manual firing without Stripe session (guarded by env flag)
+    const simEnabled =
+      typeof process !== 'undefined' &&
+      process.env.NEXT_PUBLIC_ENABLE_PURCHASE_SIMULATOR === 'true';
+
+    const maybeFireSimulated = () => {
+      if (!simEnabled || simulate !== '1') return false;
+
+      const tid = simTid || `sim-${Date.now()}`;
+      const value = simValue ? Number(simValue) : 0;
+      const currency = (simCurrency || 'USD').toUpperCase();
+
+      const simKey = `conv-sim-${tid}`;
+      if (sessionStorage.getItem(simKey)) return true;
+
+      // Prefer GTM dataLayer (so GA4 in GTM picks it up); also emit gtag if present
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const w: any = window as any;
+        // dataLayer path (for GTM)
+        w.dataLayer = w.dataLayer || [];
+        w.dataLayer.push({
+          event: 'ec_purchase',
+          transaction_id: tid,
+          value,
+          currency,
+        });
+
+        if (typeof w.gtag === 'function') {
+          w.gtag('event', 'purchase', {
+            transaction_id: tid,
+            value,
+            currency,
+          });
+        }
+
+        sessionStorage.setItem(simKey, '1');
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    if (maybeFireSimulated()) return;
+
+    const fireConversion = async () => {
+      if (!sessionId) return;
+
+      const firedKey = `conv-fired-${sessionId}`;
+      if (sessionStorage.getItem(firedKey)) return;
+
+      try {
+        const res = await fetch(`/api/checkout/session?session_id=${encodeURIComponent(sessionId)}`);
+        if (!res.ok) return;
+        const data: { id: string; amount_total: number; currency: string } = await res.json();
+
+        const value = (data.amount_total || 0) / 100;
+        const currency = data.currency || 'USD';
+        const transaction_id = data.id || sessionId;
+
+        // GA4 purchase event (if GA4 gtag is present)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const w = window as any;
+        if (typeof w.gtag === 'function') {
+          try {
+            w.gtag('event', 'purchase', {
+              transaction_id,
+              value,
+              currency,
+            });
+          } catch {}
+
+          // Optional: Google Ads conversion if configured via globals
+          const sendTo = process.env.NEXT_PUBLIC_GOOGLE_ADS_SEND_TO || undefined;
+          if (sendTo) {
+            try {
+              w.gtag('event', 'conversion', {
+                send_to: sendTo,
+                value,
+                currency,
+                transaction_id,
+              });
+            } catch {}
+          }
+        }
+
+        sessionStorage.setItem(firedKey, '1');
+      } catch (e) {
+        console.warn('[checkout/success] conversion not fired:', e);
+      }
+    };
+
+    fireConversion();
+  }, [sessionId, simulate, simValue, simCurrency, simTid]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
