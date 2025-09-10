@@ -56,7 +56,8 @@ export function SiteHeaderAccountSection() {
 
 function AuthButtons() {
   return (
-    <div className={'animate-in fade-in flex gap-x-2.5 duration-500'}>
+    <div className={'animate-in fade-in flex items-center gap-2 md:gap-3 duration-500'}>
+      {/* Theme toggle (optional) */}
       <div className={'hidden md:flex'}>
         <If condition={features.enableThemeToggle}>
           <ModeToggle />
@@ -69,14 +70,24 @@ function AuthButtons() {
         </If>
       </div>
 
-      <div className={'flex gap-x-2.5'}>
-        <Button className={'hidden md:block'} asChild variant={'ghost'}>
+      {/* Primary CTAs: DOT and EPA */}
+      <div className={'flex items-center gap-2 md:gap-3'}>
+        <Button asChild className="text-xs md:text-sm" variant={'default'}>
+          <Link href={'/courses/dot-hazmat'}>DOT HAZMAT Training</Link>
+        </Button>
+        <Button asChild className="text-xs md:text-sm" variant={'outline'}>
+          <Link href={'/courses/epa-rcra'}>EPA RCRA Training</Link>
+        </Button>
+      </div>
+
+      {/* Auth links */}
+      <div className={'hidden md:flex items-center gap-2 md:gap-3 ml-1'}>
+        <Button asChild variant={'ghost'}>
           <Link href={pathsConfig.auth.signIn}>
             <Trans i18nKey={'auth:signIn'} />
           </Link>
         </Button>
-
-        <Button asChild className="text-xs md:text-sm" variant={'default'}>
+        <Button asChild variant={'secondary'}>
           <Link href={pathsConfig.auth.signUp}>
             <Trans i18nKey={'auth:signUp'} />
           </Link>
