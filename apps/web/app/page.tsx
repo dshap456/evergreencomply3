@@ -192,6 +192,57 @@ function Home() {
           </div>
         </section>
 
+        {/* Client Logos Section */}
+        <section className="w-full py-8 md:py-12 bg-background">
+          <div className="container px-4 md:px-6">
+            <div className="text-center mb-8">
+              <p className="text-sm text-muted-foreground uppercase tracking-wider">Trusted by Industry Leaders</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 grayscale">
+              <div className="h-16 w-32 relative">
+                <Image
+                  src="/images/clients/metro.png"
+                  alt="Metro Recycling Solutions"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="h-16 w-32 relative">
+                <Image
+                  src="/images/clients/green-valley.png"
+                  alt="Green Valley Environmental Services"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="h-16 w-32 relative">
+                <Image
+                  src="/images/clients/allied.png"
+                  alt="Allied Battery Systems"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="h-16 w-32 relative">
+                <Image
+                  src="/images/clients/pioneer.png"
+                  alt="Pioneer Dedicated Carriers"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="h-16 w-32 relative">
+                <Image
+                  src="/images/clients/gateway.png"
+                  alt="Gateway Freight Systems"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="courses" className="w-full py-12 md:py-16 lg:py-20 bg-muted">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
