@@ -118,9 +118,9 @@ function Home() {
                 <div className="inline-block rounded-lg px-3 py-1 text-sm text-primary-foreground bg-[rgba(58,92,81,1)]">
                   Key Features
                 </div>
-                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Training That Fits Your Life</h2>
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">Get Certified Today - 100% Online</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed">
-                  For those who actually want to learn the material, avoid costly mistakes, and comply with the law.
+                  Pass your certification exam in 90 minutes. Avoid fines up to $75,000. Start training instantly on any device.
                 </p>
               </div>
             </div>
