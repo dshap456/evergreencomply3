@@ -102,13 +102,13 @@ export async function POST(request: NextRequest) {
       switch (courseId) {
         case 'dot-hazmat':
         case 'dot-hazmat-general':  // Both map to the same DOT HAZMAT course
-          priceId = 'price_1RsDQh97cNCBYOcXZBML0Cwf';
+          priceId = 'price_1S5Cnq97cNCBYOcXYjFFdmEm';  // $119 price
           break;
         case 'advanced-hazmat':
-          priceId = 'price_1RsDev97cNCBYOcX008NiFR8';
+          priceId = 'price_1S5CnD97cNCBYOcX4ehVBpo6';  // $149 price  
           break;
         case 'epa-rcra':
-          priceId = 'price_1RsDf697cNCBYOcXkMlo2mPt';
+          priceId = 'price_1S5CmP97cNCBYOcXEKzqDOJs';  // $119 price
           break;
         default:
           throw new Error(`Unknown course: ${item.courseId}`);
