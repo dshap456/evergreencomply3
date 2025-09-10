@@ -193,34 +193,34 @@ function Home() {
 
         {/* Client Logos Section */}
         <section className="w-full border-t bg-background">
-          <div className="container mx-auto max-w-7xl px-4 md:px-6 py-12 md:py-14">
-            <p className="text-center text-sm md:text-base font-medium text-muted-foreground mb-6 md:mb-8">
+          <div className="container mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-10">
+            <p className="text-center text-sm md:text-base font-medium text-muted-foreground mb-8 md:mb-10">
               Trusted by teams like yours
             </p>
-            <ul className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-10 gap-y-10 md:gap-x-14 md:gap-y-12 items-center justify-items-center grayscale">
+            <ul className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-12 gap-y-12 md:gap-x-16 md:gap-y-14 items-center justify-items-center grayscale-[50%]">
               <li className="w-full flex items-center justify-center">
-                <a href="#" aria-label="Metro Recycling Solutions" className="block h-20 md:h-24 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
-                  <Image src="/images/clients/metro.png" alt="Metro Recycling Solutions" width={320} height={96} className="h-full w-auto object-contain" />
+                <a href="#" aria-label="Metro Recycling Solutions" className="block h-24 md:h-32 opacity-90 transition-all duration-200 hover:opacity-100 hover:scale-[1.05] hover:grayscale-0">
+                  <Image src="/images/clients/metro.png" alt="Metro Recycling Solutions" width={400} height={120} className="h-full w-auto object-contain" />
                 </a>
               </li>
               <li className="w-full flex items-center justify-center">
-                <a href="#" aria-label="Green Valley Environmental Services" className="block h-20 md:h-24 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
-                  <Image src="/images/clients/green-valley.png" alt="Green Valley Environmental Services" width={320} height={96} className="h-full w-auto object-contain" />
+                <a href="#" aria-label="Green Valley Environmental Services" className="block h-24 md:h-32 opacity-90 transition-all duration-200 hover:opacity-100 hover:scale-[1.05] hover:grayscale-0">
+                  <Image src="/images/clients/green-valley.png" alt="Green Valley Environmental Services" width={400} height={120} className="h-full w-auto object-contain" />
                 </a>
               </li>
               <li className="w-full flex items-center justify-center">
-                <a href="#" aria-label="Allied Battery Systems" className="block h-20 md:h-24 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
-                  <Image src="/images/clients/allied.png" alt="Allied Battery Systems" width={320} height={96} className="h-full w-auto object-contain" />
+                <a href="#" aria-label="Allied Battery Systems" className="block h-24 md:h-32 opacity-90 transition-all duration-200 hover:opacity-100 hover:scale-[1.05] hover:grayscale-0">
+                  <Image src="/images/clients/allied.png" alt="Allied Battery Systems" width={400} height={120} className="h-full w-auto object-contain" />
                 </a>
               </li>
               <li className="w-full flex items-center justify-center">
-                <a href="#" aria-label="Pioneer Dedicated Carriers" className="block h-20 md:h-24 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
-                  <Image src="/images/clients/pioneer.png" alt="Pioneer Dedicated Carriers" width={320} height={96} className="h-full w-auto object-contain" />
+                <a href="#" aria-label="Pioneer Dedicated Carriers" className="block h-24 md:h-32 opacity-90 transition-all duration-200 hover:opacity-100 hover:scale-[1.05] hover:grayscale-0">
+                  <Image src="/images/clients/pioneer.png" alt="Pioneer Dedicated Carriers" width={400} height={120} className="h-full w-auto object-contain" />
                 </a>
               </li>
               <li className="w-full flex items-center justify-center">
-                <a href="#" aria-label="Gateway Freight Systems" className="block h-20 md:h-24 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
-                  <Image src="/images/clients/gateway.png" alt="Gateway Freight Systems" width={320} height={96} className="h-full w-auto object-contain" />
+                <a href="#" aria-label="Gateway Freight Systems" className="block h-24 md:h-32 opacity-90 transition-all duration-200 hover:opacity-100 hover:scale-[1.05] hover:grayscale-0">
+                  <Image src="/images/clients/gateway.png" alt="Gateway Freight Systems" width={400} height={120} className="h-full w-auto object-contain" />
                 </a>
               </li>
             </ul>
