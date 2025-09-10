@@ -89,11 +89,10 @@ function Home() {
             <div className="max-w-3xl mx-auto text-center text-white">
               <div className="space-y-6">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                  Training for Movers and Doers
+                  DOT and EPA Compliant Training
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-200 leading-relaxed">
-                  Modern, mobile, and 100% online training for shipping, HAZMAT, and more. Fully compliant and designed
-                  for the way you work.
+                  Get your team certified today. 100% online. 100% compliant.
                 </p>
                 <div className="pt-4">
                   <Link href="#courses">
