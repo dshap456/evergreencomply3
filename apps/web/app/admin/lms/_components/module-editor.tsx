@@ -19,6 +19,7 @@ import { Spinner } from '@kit/ui/spinner';
 
 import { CreateLessonDialog } from './create-lesson-dialog';
 import { updateModuleAction, updateLessonOrderAction } from '../_lib/server/module-actions';
+import { deleteLessonAction } from '../_lib/server/lesson-actions';
 
 interface Module {
   id: string;
@@ -154,13 +155,39 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
     toast.success('Lesson added to module successfully');
   };
 
-  const handleLessonDelete = (lessonId: string) => {
-    const updatedModule = {
-      ...moduleData,
-      lessons: moduleData.lessons.filter(lesson => lesson.id !== lessonId)
-    };
-    setModuleData(updatedModule);
-    setIsDirty(true);
+  const handleLessonDelete = async (lessonId: string) => {
+    try {
+      // Delete from database using admin action (bypasses RLS)
+      const result = await deleteLessonAction({ id: lessonId });
+      if (!result?.success) {
+        throw new Error('Delete action failed');
+      }
+
+      // Remove from local state for immediate feedback
+      const remaining = moduleData.lessons.filter(lesson => lesson.id !== lessonId);
+      // Reindex order to keep UI tidy; DB constraints allow non-sequential, but UI shows index
+      const reindexed = remaining
+        .sort((a, b) => a.order_index - b.order_index)
+        .map((l, idx) => ({ ...l, order_index: idx }));
+
+      setModuleData({
+        ...moduleData,
+        lessons: reindexed,
+      });
+
+      // Persist new order so subsequent visits reflect updated indices
+      if (reindexed.length > 0) {
+        await updateLessonOrderAction({
+          moduleId: moduleData.id,
+          lessons: reindexed.map(l => ({ id: l.id, order_index: l.order_index })),
+        });
+      }
+
+      toast.success('Lesson deleted');
+    } catch (error) {
+      console.error('Failed to delete lesson:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete lesson');
+    }
   };
 
   const moveLesson = (lessonId: string, direction: 'up' | 'down') => {
