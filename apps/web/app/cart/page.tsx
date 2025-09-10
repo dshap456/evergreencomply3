@@ -56,7 +56,7 @@ async function CartPage() {
       'EPA - RCRA': 'epa-rcra'
     };
     
-    // Map known prices based on course titles (temporary until DB is updated)
+    // Map known prices based on course titles (all courses are $119)
     const priceMapping: Record<string, string> = {
       'DOT HAZMAT - 3': '119',
       'DOT HAZMAT - General Awareness': '119',
