@@ -192,53 +192,38 @@ function Home() {
         </section>
 
         {/* Client Logos Section */}
-        <section className="w-full py-12 md:py-16 bg-background">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-10">
-              <p className="text-sm text-muted-foreground uppercase tracking-wider">Trusted by Industry Leaders</p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 lg:gap-20 opacity-60 grayscale">
-              <div className="h-20 w-40 md:h-24 md:w-48 relative">
-                <Image
-                  src="/images/clients/metro.png"
-                  alt="Metro Recycling Solutions"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="h-20 w-40 md:h-24 md:w-48 relative">
-                <Image
-                  src="/images/clients/green-valley.png"
-                  alt="Green Valley Environmental Services"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="h-20 w-40 md:h-24 md:w-48 relative">
-                <Image
-                  src="/images/clients/allied.png"
-                  alt="Allied Battery Systems"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="h-20 w-40 md:h-24 md:w-48 relative">
-                <Image
-                  src="/images/clients/pioneer.png"
-                  alt="Pioneer Dedicated Carriers"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="h-20 w-40 md:h-24 md:w-48 relative">
-                <Image
-                  src="/images/clients/gateway.png"
-                  alt="Gateway Freight Systems"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-            </div>
+        <section className="w-full border-t bg-background">
+          <div className="container mx-auto max-w-6xl px-4 md:px-6 py-10 md:py-12">
+            <p className="text-center text-xs md:text-sm tracking-wide text-muted-foreground mb-6 md:mb-8 uppercase">
+              Trusted by teams like yours
+            </p>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-6 md:gap-x-10 md:gap-y-8 items-center justify-items-center grayscale">
+              <li className="w-full flex items-center justify-center">
+                <a href="#" aria-label="Metro Recycling Solutions" className="block h-10 md:h-12 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
+                  <Image src="/images/clients/metro.png" alt="Metro Recycling Solutions" width={160} height={48} className="h-full w-auto object-contain" />
+                </a>
+              </li>
+              <li className="w-full flex items-center justify-center">
+                <a href="#" aria-label="Green Valley Environmental Services" className="block h-10 md:h-12 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
+                  <Image src="/images/clients/green-valley.png" alt="Green Valley Environmental Services" width={160} height={48} className="h-full w-auto object-contain" />
+                </a>
+              </li>
+              <li className="w-full flex items-center justify-center">
+                <a href="#" aria-label="Allied Battery Systems" className="block h-10 md:h-12 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
+                  <Image src="/images/clients/allied.png" alt="Allied Battery Systems" width={160} height={48} className="h-full w-auto object-contain" />
+                </a>
+              </li>
+              <li className="w-full flex items-center justify-center">
+                <a href="#" aria-label="Pioneer Dedicated Carriers" className="block h-10 md:h-12 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
+                  <Image src="/images/clients/pioneer.png" alt="Pioneer Dedicated Carriers" width={160} height={48} className="h-full w-auto object-contain" />
+                </a>
+              </li>
+              <li className="w-full flex items-center justify-center">
+                <a href="#" aria-label="Gateway Freight Systems" className="block h-10 md:h-12 opacity-80 transition-transform duration-200 hover:opacity-90 hover:scale-[1.02]">
+                  <Image src="/images/clients/gateway.png" alt="Gateway Freight Systems" width={160} height={48} className="h-full w-auto object-contain" />
+                </a>
+              </li>
+            </ul>
           </div>
         </section>
 
