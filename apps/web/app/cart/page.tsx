@@ -58,14 +58,14 @@ async function CartPage() {
     
     // Map known prices based on course titles (temporary until DB is updated)
     const priceMapping: Record<string, string> = {
-      'DOT HAZMAT - 3': '79',
-      'DOT HAZMAT - General Awareness': '79',
-      'DOT HAZMAT - General Awareness ': '79', // With trailing space
-      'DOT HAZMAT - Advanced Awareness': '1',
-      'Advanced HAZMAT': '179',
-      'Advanced Awareness': '179',
-      'EPA RCRA': '129',
-      'EPA - RCRA': '129'
+      'DOT HAZMAT - 3': '119',
+      'DOT HAZMAT - General Awareness': '119',
+      'DOT HAZMAT - General Awareness ': '119', // With trailing space
+      'DOT HAZMAT - Advanced Awareness': '119',
+      'Advanced HAZMAT': '119',
+      'Advanced Awareness': '119',
+      'EPA RCRA': '119',
+      'EPA - RCRA': '119'
     };
     
     // If the course has a slug mapping, add it as an alias
