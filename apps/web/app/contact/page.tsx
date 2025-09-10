@@ -5,6 +5,7 @@ import { SitePageHeader } from '../marketing-temp/_components/site-page-header';
 import { ContactForm } from './_components/contact-form';
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
+import { SiteHeader } from '../_components/site-header';
 
 export async function generateMetadata() {
   const { t } = await createI18nServerInstance();
@@ -19,6 +20,7 @@ async function ContactPage() {
 
   return (
     <div>
+      <SiteHeader />
       <SitePageHeader
         title={t(`marketing:contact`)}
         subtitle={t(`marketing:contactDescription`)}

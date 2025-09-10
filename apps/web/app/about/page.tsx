@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { SitePageHeader } from '../marketing-temp/_components/site-page-header';
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
+import { SiteHeader } from '../_components/site-header';
 
 export async function generateMetadata() {
   const { t } = await createI18nServerInstance();
@@ -20,6 +21,7 @@ export async function generateMetadata() {
 async function AboutPage() {
   return (
     <div>
+      <SiteHeader />
       <SitePageHeader
         title="About Evergreen Comply"
         subtitle="Empowering blue-collar professionals with modern, accessible safety training"
