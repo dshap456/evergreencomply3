@@ -15,7 +15,7 @@ export function SitePageHeader({
 
   return (
     <div className={cn('border-b py-8 xl:py-10 2xl:py-12', className)}>
-      <div className={cn('flex flex-col gap-y-3 lg:gap-y-4', containerClass)}>
+      <div className={cn('flex flex-col gap-y-3 lg:gap-y-4 text-center', containerClass)}>
         <h1
           className={
             'font-heading text-3xl font-medium tracking-tighter xl:text-5xl dark:text-white'
