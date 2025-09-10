@@ -111,7 +111,7 @@ function Home() {
         </div>
       </section>
 
-        <section id="features" className="w-full py-12 md:py-16 lg:py-20">
+        <section id="features" className="w-full py-12 md:py-16 lg:py-20 pb-8 md:pb-10">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -193,13 +193,13 @@ function Home() {
         </section>
 
         {/* Client Logos Section */}
-        <section className="w-full py-8 md:py-12 bg-background">
+        <section className="w-full py-12 md:py-16 bg-background">
           <div className="container px-4 md:px-6">
-            <div className="text-center mb-8">
+            <div className="text-center mb-10">
               <p className="text-sm text-muted-foreground uppercase tracking-wider">Trusted by Industry Leaders</p>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 grayscale">
-              <div className="h-16 w-32 relative">
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 lg:gap-20 opacity-60 grayscale">
+              <div className="h-20 w-40 md:h-24 md:w-48 relative">
                 <Image
                   src="/images/clients/metro.png"
                   alt="Metro Recycling Solutions"
@@ -207,7 +207,7 @@ function Home() {
                   className="object-contain"
                 />
               </div>
-              <div className="h-16 w-32 relative">
+              <div className="h-20 w-40 md:h-24 md:w-48 relative">
                 <Image
                   src="/images/clients/green-valley.png"
                   alt="Green Valley Environmental Services"
@@ -215,7 +215,7 @@ function Home() {
                   className="object-contain"
                 />
               </div>
-              <div className="h-16 w-32 relative">
+              <div className="h-20 w-40 md:h-24 md:w-48 relative">
                 <Image
                   src="/images/clients/allied.png"
                   alt="Allied Battery Systems"
@@ -223,7 +223,7 @@ function Home() {
                   className="object-contain"
                 />
               </div>
-              <div className="h-16 w-32 relative">
+              <div className="h-20 w-40 md:h-24 md:w-48 relative">
                 <Image
                   src="/images/clients/pioneer.png"
                   alt="Pioneer Dedicated Carriers"
@@ -231,7 +231,7 @@ function Home() {
                   className="object-contain"
                 />
               </div>
-              <div className="h-16 w-32 relative">
+              <div className="h-20 w-40 md:h-24 md:w-48 relative">
                 <Image
                   src="/images/clients/gateway.png"
                   alt="Gateway Freight Systems"
