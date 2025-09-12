@@ -18,6 +18,16 @@ import {
 import { toast } from '@kit/ui/sonner';
 import { Spinner } from '@kit/ui/spinner';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@kit/ui/alert-dialog';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -30,6 +40,7 @@ import { ModuleEditor } from './module-editor';
 import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
+import { deleteCourseAction } from '../_lib/server/delete-course-action';
 import { createModuleAction } from '../_lib/server/module-actions';
 import {
   UICourse,
@@ -63,6 +74,8 @@ export function CourseEditorClient({
     description: '',
     language: 'en' as 'en' | 'es',
   });
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // If editing a specific lesson
   if (selectedLesson && selectedModule) {
@@ -244,6 +257,12 @@ export function CourseEditorClient({
               )}
             </Button>
           )}
+          <Button 
+            variant="destructive"
+            onClick={() => setDeleteOpen(true)}
+          >
+            Delete
+          </Button>
         </div>
       </div>
 
@@ -522,6 +541,44 @@ export function CourseEditorClient({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Course Dialog */}
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{courseData.title}" including all modules, lessons, quizzes, and media. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+              onClick={async () => {
+                setIsDeleting(true);
+                try {
+                  const res = await deleteCourseAction({ courseId: courseData.id });
+                  if (res?.success) {
+                    toast.success('Course deleted');
+                    setDeleteOpen(false);
+                    onBack();
+                  } else {
+                    toast.error(res?.message || 'Failed to delete course');
+                  }
+                } catch (err: any) {
+                  toast.error(err?.message || 'Failed to delete course');
+                } finally {
+                  setIsDeleting(false);
+                }
+              }}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Course'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Add Module Dialog */}
       <Dialog open={isAddModuleOpen} onOpenChange={setIsAddModuleOpen}>
