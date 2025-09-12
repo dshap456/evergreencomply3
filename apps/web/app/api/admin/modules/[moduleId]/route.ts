@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 
 export async function PUT(
@@ -7,7 +8,22 @@ export async function PUT(
 ) {
   try {
     const { moduleId } = await params;
-    const client = getSupabaseServerClient();
+    // Enforce super admin guard before using admin client
+    const authClient = getSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { data: isSuperAdmin, error: guardError } = await authClient.rpc('is_super_admin');
+    if (guardError) {
+      return NextResponse.json({ error: 'Failed to verify privileges' }, { status: 500 });
+    }
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Use admin client so super admins can bypass RLS when managing course content
+    const client = getSupabaseServerAdminClient();
     const body = await request.json();
 
     const { data: module, error } = await client
@@ -38,9 +54,24 @@ export async function DELETE(
 ) {
   try {
     const { moduleId } = await params;
-    const client = getSupabaseServerClient();
+    // Enforce super admin guard before using admin client
+    const authClient = getSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const { data: isSuperAdmin, error: guardError } = await authClient.rpc('is_super_admin');
+    if (guardError) {
+      return NextResponse.json({ error: 'Failed to verify privileges' }, { status: 500 });
+    }
+    if (!isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
-    // First delete all lessons in this module
+    // Use admin client to reliably delete module and its lessons regardless of RLS
+    const client = getSupabaseServerAdminClient();
+
+    // First delete all lessons in this module (cascades remove quiz data, progress, etc.)
     const { error: lessonsError } = await client
       .from('lessons')
       .delete()
