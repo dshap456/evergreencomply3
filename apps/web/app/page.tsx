@@ -92,17 +92,32 @@ function Home() {
                   DOT and EPA Compliant Training
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-200 leading-relaxed">
-                  Get your team certified today. 100% online. 100% compliant.
+                  Inspector‑ready certificate in 60–90 minutes. From $119 per seat.
                 </p>
-                <div className="pt-4">
-                  <Link href="#courses">
+                <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link href="/courses/dot-hazmat">
                     <Button
                       size="lg"
-                      className="px-12 py-4 text-lg bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold"
+                      className="px-6 py-4 text-lg bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold"
                     >
-                      Browse Courses
+                      DOT General — $119
                     </Button>
                   </Link>
+                  <Link href="/courses/epa-rcra">
+                    <Button size="lg" variant="outline" className="px-6 py-4 text-lg text-white border-white/60 hover:bg-white/10">
+                      EPA RCRA — $119
+                    </Button>
+                  </Link>
+                  <Link href="/courses/advanced-hazmat">
+                    <Button size="lg" variant="secondary" className="px-6 py-4 text-lg">
+                      DOT Advanced — $149
+                    </Button>
+                  </Link>
+                </div>
+                <div className="flex flex-col md:flex-row items-center justify-center gap-4 text-sm text-gray-200/90">
+                  <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-[rgba(233,195,81,1)]" /> Instant certificate</div>
+                  <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-[rgba(233,195,81,1)]" /> English + Spanish</div>
+                  <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-[rgba(233,195,81,1)]" /> 100% online, inspector‑approved</div>
                 </div>
               </div>
             </div>
