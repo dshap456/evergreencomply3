@@ -95,21 +95,29 @@ function Home() {
                   Inspector‑ready certificate in 60–90 minutes. From $119 per seat.
                 </p>
                 <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link href="/courses/dot-hazmat">
+                  <Link href="/courses/dot-hazmat" className="w-full sm:w-auto">
                     <Button
                       size="lg"
-                      className="px-6 py-4 text-lg bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold"
+                      className="w-full sm:w-auto min-w-[260px] px-6 py-4 text-lg bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold shadow"
                     >
                       DOT General — $119
                     </Button>
                   </Link>
-                  <Link href="/courses/epa-rcra">
-                    <Button size="lg" variant="outline" className="px-6 py-4 text-lg text-white border-white/60 hover:bg-white/10">
+                  <Link href="/courses/epa-rcra" className="w-full sm:w-auto">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="w-full sm:w-auto min-w-[260px] px-6 py-4 text-lg text-black bg-white/90 hover:bg-white shadow"
+                    >
                       EPA RCRA — $119
                     </Button>
                   </Link>
-                  <Link href="/courses/advanced-hazmat">
-                    <Button size="lg" variant="secondary" className="px-6 py-4 text-lg">
+                  <Link href="/courses/advanced-hazmat" className="w-full sm:w-auto">
+                    <Button
+                      size="lg"
+                      variant="secondary"
+                      className="w-full sm:w-auto min-w-[260px] px-6 py-4 text-lg text-black bg-white/90 hover:bg-white shadow"
+                    >
                       DOT Advanced — $149
                     </Button>
                   </Link>
