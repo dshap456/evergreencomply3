@@ -7,6 +7,7 @@ import { getFontsClassName } from '~/lib/fonts';
 import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { generateRootMetadata } from '~/lib/root-metdata';
 import { getRootTheme } from '~/lib/root-theme';
+import Script from 'next/script';
 
 import '../styles/globals.css';
 
@@ -27,6 +28,17 @@ export default async function RootLayout({
   return (
     <html lang={language} className={className}>
       <head>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-T7Q6Q5HM0B"
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" nonce={nonce} strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);} 
+          gtag('js', new Date());
+          gtag('config', 'G-T7Q6Q5HM0B');
+        `}</Script>
       </head>
       <body>
         {/* ClickCease.com tracking */}
