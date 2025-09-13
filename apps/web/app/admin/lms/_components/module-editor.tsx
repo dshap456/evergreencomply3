@@ -44,11 +44,12 @@ interface Lesson {
 interface ModuleEditorProps {
   module: Module;
   onBack: () => void;
-  onSave: (module: Module) => void;
+  onSave: (module: Module) => void; // used when clicking Save Module
   onEditLesson: (lesson: Lesson) => void;
+  onModuleChange?: (module: Module) => void; // update parent without closing editor
 }
 
-export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEditorProps) {
+export function ModuleEditor({ module, onBack, onSave, onEditLesson, onModuleChange }: ModuleEditorProps) {
   const [moduleData, setModuleData] = useState(module);
   const [showCreateLesson, setShowCreateLesson] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -148,8 +149,8 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
     console.log('handleLessonCreated: Updated module with new lesson count:', updatedModule.lessons.length);
     setModuleData(updatedModule);
     
-    // Call onSave immediately to persist and update parent component
-    onSave(updatedModule);
+    // Update parent list without exiting the editor
+    onModuleChange?.(updatedModule);
     
     setShowCreateLesson(false);
     toast.success('Lesson added to module successfully');
@@ -170,10 +171,12 @@ export function ModuleEditor({ module, onBack, onSave, onEditLesson }: ModuleEdi
         .sort((a, b) => a.order_index - b.order_index)
         .map((l, idx) => ({ ...l, order_index: idx }));
 
-      setModuleData({
+      const updated = {
         ...moduleData,
         lessons: reindexed,
-      });
+      };
+      setModuleData(updated);
+      onModuleChange?.(updated);
 
       // Persist new order so subsequent visits reflect updated indices
       if (reindexed.length > 0) {
