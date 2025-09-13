@@ -41,7 +41,7 @@ import { LessonEditor } from './lesson-editor';
 import { CourseSettings } from './course-settings';
 import { updateCourseAction } from '../_lib/server/course-actions';
 import { deleteCourseAction } from '../_lib/server/delete-course-action';
-import { createModuleAction } from '../_lib/server/module-actions';
+import { createModuleAction, deleteModuleAction } from '../_lib/server/module-actions';
 import {
   UICourse,
   UIModule,
@@ -76,6 +76,8 @@ export function CourseEditorClient({
   });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [moduleToDelete, setModuleToDelete] = useState<UIModule | null>(null);
+  const [isDeletingModule, setIsDeletingModule] = useState(false);
 
   // If editing a specific lesson
   if (selectedLesson && selectedModule) {
@@ -411,7 +413,13 @@ export function CourseEditorClient({
                       >
                         Edit
                       </Button>
-                      <Button variant="ghost" size="sm">⋮</Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => setModuleToDelete(module)}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -498,7 +506,13 @@ export function CourseEditorClient({
                       >
                         Edit
                       </Button>
-                      <Button variant="ghost" size="sm">⋮</Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => setModuleToDelete(module)}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -575,6 +589,47 @@ export function CourseEditorClient({
               }}
             >
               {isDeleting ? 'Deleting...' : 'Delete Course'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Module Dialog */}
+      <AlertDialog open={!!moduleToDelete} onOpenChange={(open) => !open && setModuleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Module</AlertDialogTitle>
+            <AlertDialogDescription>
+              {moduleToDelete ? (
+                <>This will permanently delete "{moduleToDelete.title}" and all of its lessons. This action cannot be undone.</>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingModule}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeletingModule}
+              onClick={async () => {
+                if (!moduleToDelete) return;
+                setIsDeletingModule(true);
+                try {
+                  const res = await deleteModuleAction({ id: moduleToDelete.id });
+                  if (res?.success) {
+                    setModules(prev => prev.filter(m => m.id !== moduleToDelete.id));
+                    toast.success('Module deleted');
+                    setModuleToDelete(null);
+                  } else {
+                    toast.error('Failed to delete module');
+                  }
+                } catch (err: any) {
+                  toast.error(err?.message || 'Failed to delete module');
+                } finally {
+                  setIsDeletingModule(false);
+                }
+              }}
+            >
+              {isDeletingModule ? 'Deleting...' : 'Delete Module'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
