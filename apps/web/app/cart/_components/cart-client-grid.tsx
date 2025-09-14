@@ -313,11 +313,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
                   })}
                 </div>
               ) : (
-                <Card className="bg-gradient-to-b from-primary/5 to-background border-primary/20">
+                <Card className="bg-gradient-to-b from-primary/15 to-background border-primary/30">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       Available Courses
-                      <Badge className="hidden md:inline-flex bg-primary/10 text-primary border border-primary/20">Team-ready</Badge>
+                      <Badge className="hidden md:inline-flex bg-accent text-accent-foreground border border-accent/40">Team-ready</Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
@@ -330,7 +330,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           key={course.id} 
                           className={`p-3 border rounded-lg transition-all ${
                             quantity > 0 
-                              ? 'bg-primary/5 border-primary/20 shadow-sm border-l-4 border-l-primary' 
+                              ? 'bg-primary/15 border-primary/40 shadow-sm border-l-4 border-l-primary' 
                               : 'hover:border-gray-300'
                           }`}
                         >
@@ -389,7 +389,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24 border-primary/20 bg-gradient-to-b from-primary/5 to-background">
+              <Card className="sticky top-24 border-primary/40 bg-gradient-to-b from-primary/15 to-background">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Order Summary</CardTitle>
                 </CardHeader>

@@ -319,11 +319,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Course Selection */}
             <div className="lg:col-span-2">
-              <Card className="bg-gradient-to-b from-primary/10 to-background border-primary/30">
+              <Card className="bg-gradient-to-b from-primary/20 to-background border-primary/40">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     Available Courses
-                    <Badge className="hidden md:inline-flex bg-primary/10 text-primary border border-primary/20">Team-ready</Badge>
+                    <Badge className="hidden md:inline-flex bg-accent text-accent-foreground border border-accent/40">Team-ready</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
@@ -341,7 +341,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           key={course.id} 
                           className={`p-2 border rounded-lg transition-all ${
                             quantity > 0 
-                              ? 'bg-primary/10 border-primary/30 shadow-sm border-l-4 border-l-primary' 
+                              ? 'bg-primary/15 border-primary/40 shadow-sm border-l-4 border-l-primary' 
                               : 'hover:border-gray-300'
                           }`}
                         >
@@ -369,7 +369,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                   <Button
                                     size="icon"
                                     variant="outline"
-                                    className="h-9 w-9"
+                                    className={`h-9 w-9 ${quantity > 0 ? 'bg-primary/10 text-primary hover:bg-primary/20' : ''}`}
                                     onClick={() => updateQuantity(course.id, Math.max(0, quantity - 1))}
                                     aria-label={`Decrease ${course.title} seats`}
                                   >
@@ -386,7 +386,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                   <Button
                                     size="icon"
                                     variant="outline"
-                                    className="h-9 w-9"
+                                    className="h-9 w-9 bg-primary text-primary-foreground hover:bg-primary/90"
                                     onClick={() => updateQuantity(course.id, quantity + 1)}
                                     aria-label={`Increase ${course.title} seats`}
                                   >
@@ -418,7 +418,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24 border-primary/30 bg-gradient-to-b from-primary/10 to-background">
+              <Card className="sticky top-24 border-primary/40 bg-gradient-to-b from-primary/15 to-background">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg text-primary">Order Summary</CardTitle>
                 </CardHeader>
