@@ -15,6 +15,19 @@ export const metadata: Metadata = {
   title: 'Bulk Orders — Team Training Pricing and Sales',
   description:
     'Discounts for large volume orders, centralized reporting, seat assignment, and near‑instant onboarding. Talk to sales or request a quote for team training.',
+  openGraph: {
+    title: 'Bulk Orders — Evergreen Comply',
+    description:
+      'Discounts for large volume orders, centralized reporting, seat assignment, and near‑instant onboarding.',
+    images: [
+      {
+        url: '/images/bulk-orders-warehouse.png',
+        width: 1200,
+        height: 630,
+        alt: 'Warehouse team outside loading docks at sunrise',
+      },
+    ],
+  },
 };
 
 async function BulkOrdersPage() {

@@ -42,6 +42,7 @@ const config = {
     '/*': ['./content/**/*'],
   },
   redirects: getRedirects,
+  rewrites: getRewrites,
   turbopack: {
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx'],
     resolveAlias: getModulesAliases(),
@@ -100,6 +101,16 @@ async function getRedirects() {
       source: '/server-sitemap.xml',
       destination: '/sitemap.xml',
       permanent: true,
+    },
+  ];
+}
+
+async function getRewrites() {
+  return [
+    // Static alias so we can reference a clean slug while the file has a space in its name
+    {
+      source: '/images/bulk-orders-warehouse.png',
+      destination: '/images/team%20picture.png',
     },
   ];
 }
