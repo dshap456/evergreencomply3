@@ -422,7 +422,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                       <p className="text-xs text-muted-foreground -mt-2">Estimated tax calculated at checkout</p>
 
                       <Button 
-                        className="hidden md:inline-flex w-full" 
+                        className="hidden md:inline-flex w-full bg-primary text-primary-foreground hover:bg-primary/90" 
                         size="sm"
                         onClick={handleCheckout}
                         disabled={isCheckingOut || totalItems === 0}
@@ -463,7 +463,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
               <div className="font-semibold">Total ${calculateSubtotal().toFixed(2)}</div>
               <div className="text-muted-foreground text-xs">{getTotalItems()} {getTotalItems() === 1 ? 'seat' : 'seats'}</div>
             </div>
-            <Button size="sm" onClick={handleCheckout} className="min-w-[140px]">
+            <Button size="sm" onClick={handleCheckout} className="min-w-[140px] bg-primary text-primary-foreground hover:bg-primary/90">
               Checkout
             </Button>
           </div>

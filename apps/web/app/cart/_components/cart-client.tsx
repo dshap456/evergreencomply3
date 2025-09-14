@@ -49,6 +49,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   // Load initial quantities from localStorage and check auth
   useEffect(() => {
     const savedCart = localStorage.getItem('training-cart');
+    const savedName = localStorage.getItem('checkout-customer-name');
     if (savedCart) {
       try {
         const cartItems = JSON.parse(savedCart);
@@ -72,6 +73,13 @@ export function CartClient({ availableCourses }: CartClientProps) {
         setQuantities(newQuantities);
       } catch (e) {
         console.error('Error loading cart:', e);
+      }
+    }
+    if (savedName) {
+      try {
+        setCustomerName(JSON.parse(savedName));
+      } catch {
+        setCustomerName(savedName);
       }
     }
     
@@ -311,7 +319,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Course Selection */}
             <div className="lg:col-span-2">
-              <Card className="bg-gradient-to-b from-primary/5 to-background border-primary/20">
+              <Card className="bg-gradient-to-b from-primary/10 to-background border-primary/30">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     Available Courses
@@ -333,7 +341,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           key={course.id} 
                           className={`p-2 border rounded-lg transition-all ${
                             quantity > 0 
-                              ? 'bg-primary/5 border-primary/20 shadow-sm border-l-4 border-l-primary' 
+                              ? 'bg-primary/10 border-primary/30 shadow-sm border-l-4 border-l-primary' 
                               : 'hover:border-gray-300'
                           }`}
                         >
@@ -349,6 +357,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                               {quantity === 0 ? (
                                 <Button
                                   size="sm"
+                                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                                   onClick={() => updateQuantity(course.id, 1)}
                                   aria-label={`Add ${course.title} to cart`}
                                 >
@@ -409,9 +418,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24 border-primary/20 bg-gradient-to-b from-primary/5 to-background">
+              <Card className="sticky top-24 border-primary/30 bg-gradient-to-b from-primary/10 to-background">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Order Summary</CardTitle>
+                  <CardTitle className="text-lg text-primary">Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {totalItems > 0 ? (
@@ -440,6 +449,32 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         </div>
                         <p className="text-[11px] text-muted-foreground">Estimated tax calculated at checkout</p>
                       </div>
+
+                      {/* Name field for single-seat purchases (shown regardless of auth) */}
+                      {totalItems === 1 && (
+                        <div className="space-y-2 border-t pt-3">
+                          <Label htmlFor="customer-name" className="text-xs font-medium">
+                            Name for Certificate <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="customer-name"
+                            type="text"
+                            placeholder="Enter full legal name"
+                            value={customerName}
+                            onChange={(e) => {
+                              setCustomerName(e.target.value);
+                              try {
+                                localStorage.setItem('checkout-customer-name', JSON.stringify(e.target.value));
+                              } catch {}
+                            }}
+                            className="h-8 text-xs"
+                            required
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            This name will appear on your completion certificate
+                          </p>
+                        </div>
+                      )}
                       
                       {/* Authentication Check */}
                       {!isAuthenticated ? (
@@ -452,9 +487,16 @@ export function CartClient({ availableCourses }: CartClientProps) {
                             </p>
                             <div className="space-y-2">
                               <Button 
-                                className="hidden md:inline-flex w-full" 
+                                className="hidden md:inline-flex w-full bg-primary text-primary-foreground hover:bg-primary/90" 
                                 size="sm"
-                                onClick={() => router.push(`${pathsConfig.auth.signUp}?redirect=/cart`)}
+                                onClick={() => {
+                                  try {
+                                    if (totalItems === 1 && customerName.trim()) {
+                                      localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim()));
+                                    }
+                                  } catch {}
+                                  router.push(`${pathsConfig.auth.signUp}?redirect=/cart`);
+                                }}
                               >
                                 Create Account to Checkout
                               </Button>
@@ -471,27 +513,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         </div>
                       ) : (
                         <>
-                          {/* Name Field - Show only for single-seat purchases */}
-                          {totalItems === 1 && (
-                            <div className="space-y-2 border-t pt-3">
-                              <Label htmlFor="customer-name" className="text-xs font-medium">
-                                Name for Certificate <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                id="customer-name"
-                                type="text"
-                                placeholder="Enter your full legal name"
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                                className="h-8 text-xs"
-                                required
-                              />
-                              <p className="text-xs text-muted-foreground">
-                                This name will appear on your completion certificate
-                              </p>
-                            </div>
-                          )}
-                          
                           {/* Multi-seat purchase notice */}
                           {totalItems > 1 && (
                             <div className="border-t pt-3 space-y-2">
@@ -514,7 +535,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                       
                       {isAuthenticated ? (
                         <Button 
-                          className="hidden md:inline-flex w-full" 
+                          className="hidden md:inline-flex w-full bg-primary text-primary-foreground hover:bg-primary/90" 
                           size="sm"
                           onClick={handleCheckout}
                           disabled={isCheckingOut || totalItems === 0}
@@ -558,11 +579,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
               <div className="text-muted-foreground text-xs">{totalItems} {totalItems === 1 ? 'seat' : 'seats'}</div>
             </div>
             {isAuthenticated ? (
-              <Button size="sm" onClick={handleCheckout} className="min-w-[140px]">
+              <Button size="sm" onClick={handleCheckout} className="min-w-[140px] bg-primary text-primary-foreground hover:bg-primary/90">
                 Checkout
               </Button>
             ) : (
-              <Button size="sm" onClick={() => router.push(`${pathsConfig.auth.signUp}?redirect=/cart`)} className="min-w-[200px]">
+              <Button size="sm" onClick={() => { try { if (totalItems === 1 && customerName.trim()) { localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim())); } } catch {} ; router.push(`${pathsConfig.auth.signUp}?redirect=/cart`); }} className="min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90">
                 Create Account to Checkout
               </Button>
             )}
