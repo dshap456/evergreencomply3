@@ -45,14 +45,21 @@ async function BulkOrdersPage() {
                 Save with volume discounts and manage training at scale — assign seats, track progress, and get audit‑ready reports, all from one place.
               </p>
 
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Link href="/contact">
-                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <div className="mt-6 flex flex-col sm:flex-row gap-3 items-center sm:items-start">
+                <Link href="/contact" className="w-full max-w-xs sm:w-auto sm:max-w-none mx-auto sm:mx-0">
+                  <Button
+                    size="lg"
+                    className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
                     Request Team Pricing
                   </Button>
                 </Link>
-                <Link href="tel:9709190034" aria-label="Call sales (970) 919-0034">
-                  <Button size="lg" variant="outline">
+                <Link
+                  href="tel:9709190034"
+                  aria-label="Call sales (970) 919-0034"
+                  className="w-full max-w-xs sm:w-auto sm:max-w-none mx-auto sm:mx-0"
+                >
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
                     <Phone className="h-4 w-4 mr-2" /> (970) 919-0034
                   </Button>
                 </Link>
@@ -78,9 +85,9 @@ async function BulkOrdersPage() {
       <section>
         <div className="container py-10 grid gap-4 md:grid-cols-2">
           <Card>
-            <CardContent className="p-6 flex gap-4">
-              <div className="h-10 w-10 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                <Users className="h-5 w-5" />
+            <CardContent className="p-6 flex items-start gap-6">
+              <div className="h-12 w-12 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <Users className="h-6 w-6" />
               </div>
               <div>
                 <Heading level={3}>Volume discounts</Heading>
@@ -91,9 +98,9 @@ async function BulkOrdersPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 flex gap-4">
-              <div className="h-10 w-10 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                <BarChart3 className="h-5 w-5" />
+            <CardContent className="p-6 flex items-start gap-6">
+              <div className="h-12 w-12 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <BarChart3 className="h-6 w-6" />
               </div>
               <div>
                 <Heading level={3}>Centralized reporting</Heading>
@@ -104,9 +111,9 @@ async function BulkOrdersPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 flex gap-4">
-              <div className="h-10 w-10 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                <ClipboardCheck className="h-5 w-5" />
+            <CardContent className="p-6 flex items-start gap-6">
+              <div className="h-12 w-12 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <ClipboardCheck className="h-6 w-6" />
               </div>
               <div>
                 <Heading level={3}>Seat assignment</Heading>
@@ -117,9 +124,9 @@ async function BulkOrdersPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="p-6 flex gap-4">
-              <div className="h-10 w-10 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
-                <Rocket className="h-5 w-5" />
+            <CardContent className="p-6 flex items-start gap-6">
+              <div className="h-12 w-12 rounded-md bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                <Rocket className="h-6 w-6" />
               </div>
               <div>
                 <Heading level={3}>Start instantly</Heading>

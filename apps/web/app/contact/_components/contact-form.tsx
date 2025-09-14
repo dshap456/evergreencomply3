@@ -111,7 +111,7 @@ export function ContactForm() {
             return (
               <FormItem>
                 <FormLabel>
-                  <Trans i18nKey={'marketing:contactName'} />
+                  Name
                 </FormLabel>
 
                 <FormControl>
@@ -130,7 +130,7 @@ export function ContactForm() {
             return (
               <FormItem>
                 <FormLabel>
-                  <Trans i18nKey={'marketing:contactEmail'} />
+                  Email
                 </FormLabel>
 
                 <FormControl>
@@ -149,7 +149,7 @@ export function ContactForm() {
             return (
               <FormItem>
                 <FormLabel>
-                  <Trans i18nKey={'marketing:contactMessage'} />
+                  Message
                 </FormLabel>
 
                 <FormControl>
@@ -167,7 +167,7 @@ export function ContactForm() {
         />
 
         <Button disabled={pending} type={'submit'}>
-          <Trans i18nKey={'marketing:sendMessage'} />
+          Send Message
         </Button>
       </form>
     </Form>
