@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown, User, Users, Lock } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown, User, Users, Lock, Phone } from 'lucide-react';
 import { Badge } from '@kit/ui/badge';
 import { toast } from '@kit/ui/sonner';
 import {
@@ -280,12 +280,16 @@ export function CartClient({ availableCourses }: CartClientProps) {
               Contact
             </Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Link href={pathsConfig.auth.signIn}>
-              <Button variant="ghost" size="sm">Sign in</Button>
+          <div className="flex items-center gap-3">
+            <Link href="tel:9709190034" aria-label="Call sales (970) 919-0034">
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                <Phone className="h-4 w-4 mr-2" /> (970) 919-0034
+              </Button>
             </Link>
-            <Link href={pathsConfig.auth.signUp}>
-              <Button size="sm">Get Started</Button>
+            <Link href="/contact">
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Contact Sales
+              </Button>
             </Link>
           </div>
         </div>
