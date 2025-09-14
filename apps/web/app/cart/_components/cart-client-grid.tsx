@@ -232,12 +232,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
                   Select the courses and number of seats you need for your team
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                >
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+              >
                   <Grid className="h-4 w-4" />
                 </Button>
                 <Button
@@ -264,14 +264,14 @@ export function CartClient({ availableCourses }: CartClientProps) {
                       <Card key={course.id} className={`transition-all ${
                         quantity > 0 ? 'ring-2 ring-primary/20 shadow-sm' : ''
                       }`}>
-                        <CardContent className="p-4">
-                          <div className="space-y-3">
-                            <div>
+                         <CardContent className="p-4">
+                           <div className="space-y-3">
+                             <div>
                               <h4 className="font-semibold text-sm">{course.title}</h4>
                               <p className="text-sm text-muted-foreground mt-1">
                                 ${course.price} per seat
                               </p>
-                            </div>
+                             </div>
                             
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <div className="flex items-center gap-1">
@@ -313,9 +313,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
                   })}
                 </div>
               ) : (
-                <Card>
+                <Card className="bg-gradient-to-b from-primary/5 to-background border-primary/20">
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Available Courses</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      Available Courses
+                      <Badge className="hidden md:inline-flex bg-primary/10 text-primary border border-primary/20">Team-ready</Badge>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {publishedCourses.map((course) => {
@@ -326,7 +329,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         <div 
                           key={course.id} 
                           className={`p-3 border rounded-lg transition-all ${
-                            quantity > 0 ? 'bg-primary/5 border-primary/20 shadow-sm' : 'hover:border-gray-300'
+                            quantity > 0 
+                              ? 'bg-primary/5 border-primary/20 shadow-sm border-l-4 border-l-primary' 
+                              : 'hover:border-gray-300'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -384,7 +389,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24">
+              <Card className="sticky top-24 border-primary/20 bg-gradient-to-b from-primary/5 to-background">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Order Summary</CardTitle>
                 </CardHeader>

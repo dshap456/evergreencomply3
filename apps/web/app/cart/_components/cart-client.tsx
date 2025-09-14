@@ -300,7 +300,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
               <span>Success</span>
             </div>
             <h1 className="text-2xl font-bold flex items-center gap-3">
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingCart className="h-6 w-6 text-primary" />
               Shopping Cart
             </h1>
             <p className="text-muted-foreground mt-1 text-sm">
@@ -311,9 +311,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Course Selection */}
             <div className="lg:col-span-2">
-              <Card>
+              <Card className="bg-gradient-to-b from-primary/5 to-background border-primary/20">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Available Courses</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Available Courses
+                    <Badge className="hidden md:inline-flex bg-primary/10 text-primary border border-primary/20">Team-ready</Badge>
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   {publishedCourses.length === 0 ? (
@@ -329,7 +332,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         <div 
                           key={course.id} 
                           className={`p-2 border rounded-lg transition-all ${
-                            quantity > 0 ? 'bg-primary/5 border-primary/20 shadow-sm' : 'hover:border-gray-300'
+                            quantity > 0 
+                              ? 'bg-primary/5 border-primary/20 shadow-sm border-l-4 border-l-primary' 
+                              : 'hover:border-gray-300'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -404,7 +409,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24">
+              <Card className="sticky top-24 border-primary/20 bg-gradient-to-b from-primary/5 to-background">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Order Summary</CardTitle>
                 </CardHeader>
@@ -546,7 +551,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
       {/* Mobile bottom CTA */}
       {totalItems > 0 && (
-        <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+        <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-gradient-to-t from-primary/10 to-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm">
               <div className="font-semibold">Total ${total.toFixed(2)}</div>

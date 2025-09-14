@@ -142,6 +142,9 @@ export async function POST(request: NextRequest) {
       // Still try to process with email fallback
     }
     
+    // Prefer explicitly provided certificate name for single-seat purchases
+    const providedCustomerName = (session.metadata?.customerName || '').trim();
+
     // 6. Get line items
     console.log('[COURSE-WEBHOOK] Fetching line items...');
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
@@ -272,9 +275,34 @@ export async function POST(request: NextRequest) {
     } else {
       console.error('[COURSE-WEBHOOK] 👤 Single seat purchase or no user ID, using personal account');
     }
-    
+
     // 9. Process each item with the determined account
-    
+
+    // If single-seat purchase and a customer name was explicitly provided,
+    // update the personal account name so it flows to certificates.
+    if (totalQuantity === 1 && providedCustomerName && session.client_reference_id) {
+      try {
+        const { data: acct } = await adminClient
+          .from('accounts')
+          .select('id, is_personal_account, name')
+          .eq('id', session.client_reference_id)
+          .single();
+        if (acct?.is_personal_account) {
+          const { error: nameErr } = await adminClient
+            .from('accounts')
+            .update({ name: providedCustomerName })
+            .eq('id', session.client_reference_id);
+          if (nameErr) {
+            console.error('[COURSE-WEBHOOK] Failed to update personal account name:', nameErr);
+          } else {
+            console.error('[COURSE-WEBHOOK] ✅ Updated personal account name for certificate:', providedCustomerName);
+          }
+        }
+      } catch (e) {
+        console.error('[COURSE-WEBHOOK] Error while updating certificate name:', e);
+      }
+    }
+
     for (const item of lineItems.data) {
       const priceId = item.price?.id;
       console.log('[COURSE-WEBHOOK] Processing item:', {
@@ -360,7 +388,6 @@ export async function POST(request: NextRequest) {
         p_account_id: finalAccountId,
         p_payment_id: session.id,
         p_quantity: item.quantity || 1,
-        p_customer_name: session.customer_details?.name || session.customer_email || null,
       });
       
       if (error) {
