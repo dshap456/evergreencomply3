@@ -61,6 +61,9 @@ function Home() {
             <Link href="/about" className="text-sm font-medium hover:text-primary">
               About
             </Link>
+            <Link href="/bulk-orders" className="text-sm font-medium hover:text-primary">
+              Bulk Orders
+            </Link>
             <Link href="/contact" className="text-sm font-medium hover:text-primary">
               Contact
             </Link>
@@ -110,6 +113,14 @@ function Home() {
                       className="w-full sm:w-auto min-w-[260px] px-6 py-4 text-lg text-black bg-white/90 hover:bg-white shadow"
                     >
                       EPA RCRA — $119
+                    </Button>
+                  </Link>
+                  <Link href="/bulk-orders" className="w-full sm:w-auto">
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto min-w-[220px] px-6 py-4 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      Team Pricing (Bulk)
                     </Button>
                   </Link>
                   <Link href="/courses/advanced-hazmat" className="w-full sm:w-auto">
@@ -396,6 +407,11 @@ function Home() {
                     <li>
                       <Link href="/#courses" className="text-sm text-muted-foreground hover:text-foreground">
                         Courses
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/bulk-orders" className="text-sm text-muted-foreground hover:text-foreground">
+                        Bulk Orders
                       </Link>
                     </li>
                   </ul>
