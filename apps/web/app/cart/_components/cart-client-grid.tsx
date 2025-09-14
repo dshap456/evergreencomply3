@@ -313,7 +313,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                   })}
                 </div>
               ) : (
-                <Card className="bg-gradient-to-b from-primary/15 to-background border-primary/30">
+                <Card className="border-primary/30 bg-card">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       Available Courses
@@ -389,7 +389,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
             {/* Order Summary */}
             <div>
-              <Card className="sticky top-24 border-primary/40 bg-gradient-to-b from-primary/15 to-background">
+              <Card className="sticky top-24 border-primary/30 bg-card">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Order Summary</CardTitle>
                 </CardHeader>
