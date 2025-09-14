@@ -184,7 +184,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   const totalItems = getTotalItems();
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background overflow-x-hidden">
       <header className="sticky top-0 z-40 border-b bg-background">
         <div className="container flex h-16 items-center justify-between py-4">
           <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
       <main className="flex-1 py-8">
         <div className="container">
           <div className="mb-6">
-            <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
+            <Link href="/" className="hidden md:inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
               <ArrowLeft className="h-4 w-4" />
               Continue Shopping
             </Link>
@@ -273,7 +273,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                               </p>
                             </div>
                             
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
                               <div className="flex items-center gap-1">
                                 <Button
                                   size="icon"
@@ -301,7 +301,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                 </Button>
                               </div>
                               {quantity > 0 && (
-                                <p className="font-semibold text-sm">
+                                <p className="font-semibold text-sm ml-auto">
                                   ${lineTotal.toFixed(2)}
                                 </p>
                               )}
@@ -329,7 +329,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                             quantity > 0 ? 'bg-primary/5 border-primary/20 shadow-sm' : 'hover:border-gray-300'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center justify-between gap-4 flex-wrap">
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold text-base truncate">{course.title}</h4>
                               <p className="text-sm font-medium mt-1">
@@ -362,7 +362,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
-                              <span className="text-xs text-muted-foreground ml-1">
+                              <span className="hidden sm:inline text-xs text-muted-foreground ml-1">
                                 seats
                               </span>
                               {quantity > 0 && (
@@ -407,20 +407,17 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           <span>Subtotal</span>
                           <span>${subtotal.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Tax</span>
-                          <span>${tax.toFixed(2)}</span>
-                        </div>
-                        <div className="border-t pt-2">
+                        <div className="border-t pt-2 hidden md:block">
                           <div className="flex justify-between font-semibold">
                             <span>Total</span>
                             <span className="text-lg">${total.toFixed(2)}</span>
                           </div>
                         </div>
                       </div>
-                      
+                      <p className="text-xs text-muted-foreground -mt-2">Estimated tax calculated at checkout</p>
+
                       <Button 
-                        className="w-full" 
+                        className="hidden md:inline-flex w-full" 
                         size="sm"
                         onClick={handleCheckout}
                         disabled={isCheckingOut || totalItems === 0}
@@ -434,7 +431,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           `Checkout (${totalItems} ${totalItems === 1 ? 'seat' : 'seats'})`
                         )}
                       </Button>
-                      
+
                       <p className="text-xs text-muted-foreground text-center">
                         Secure checkout powered by Stripe
                       </p>
@@ -453,6 +450,20 @@ export function CartClient({ availableCourses }: CartClientProps) {
           </div>
         </div>
       </main>
+
+      {getTotalItems() > 0 && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-3 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm">
+              <div className="font-semibold">Total ${calculateSubtotal().toFixed(2)}</div>
+              <div className="text-muted-foreground text-xs">{getTotalItems()} {getTotalItems() === 1 ? 'seat' : 'seats'}</div>
+            </div>
+            <Button size="sm" onClick={handleCheckout} className="min-w-[140px]">
+              Checkout
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
