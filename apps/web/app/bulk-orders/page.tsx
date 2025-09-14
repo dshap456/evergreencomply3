@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Metadata } from 'next';
 import { Phone, Users, BarChart3, ClipboardCheck, Rocket } from 'lucide-react';
 
@@ -24,23 +25,37 @@ async function BulkOrdersPage() {
       {/* Hero */}
       <section className="border-b bg-card">
         <div className="container py-10 md:py-14">
-          <div className="max-w-3xl">
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Bulk Orders for Teams</h1>
-            <p className="mt-3 text-muted-foreground text-lg">
-              Save with volume discounts and manage training at scale — assign seats, track progress, and get audit‑ready reports, all from one place.
-            </p>
+          <div className="grid gap-8 md:grid-cols-2 items-center">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Bulk Orders for Teams</h1>
+              <p className="mt-3 text-muted-foreground text-lg">
+                Save with volume discounts and manage training at scale — assign seats, track progress, and get audit‑ready reports, all from one place.
+              </p>
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link href="/contact">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  Request Team Pricing
-                </Button>
-              </Link>
-              <Link href="tel:9709190034" aria-label="Call sales (970) 919-0034">
-                <Button size="lg" variant="outline">
-                  <Phone className="h-4 w-4 mr-2" /> (970) 919-0034
-                </Button>
-              </Link>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Link href="/contact">
+                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    Request Team Pricing
+                  </Button>
+                </Link>
+                <Link href="tel:9709190034" aria-label="Call sales (970) 919-0034">
+                  <Button size="lg" variant="outline">
+                    <Phone className="h-4 w-4 mr-2" /> (970) 919-0034
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Hero image */}
+            <div className="relative aspect-[16/10] md:aspect-[5/3] rounded-xl overflow-hidden shadow">
+              <Image
+                src="/images/bulk-orders-warehouse.png"
+                alt="Warehouse team in safety vests outside loading docks at sunrise"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+              />
             </div>
           </div>
         </div>
@@ -124,4 +139,3 @@ async function BulkOrdersPage() {
 }
 
 export default withI18n(BulkOrdersPage);
-

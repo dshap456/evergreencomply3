@@ -47,9 +47,6 @@ export function SiteHeader() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link href="/about" className="text-sm font-medium hover:text-primary">
-            About
-          </Link>
           <Link href="/bulk-orders" className="text-sm font-medium hover:text-primary">
             Bulk Orders
           </Link>
