@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown, User, Users } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, ChevronDown, User, Users, Lock } from 'lucide-react';
 import { Badge } from '@kit/ui/badge';
 import { toast } from '@kit/ui/sonner';
 import {
@@ -290,6 +290,15 @@ export function CartClient({ availableCourses }: CartClientProps) {
               <ArrowLeft className="h-4 w-4" />
               Continue Shopping
             </Link>
+            <div className="text-xs text-muted-foreground mb-2">
+              <span className="font-medium text-foreground">Cart</span>
+              <span className="mx-2">→</span>
+              <span>Account</span>
+              <span className="mx-2">→</span>
+              <span>Checkout</span>
+              <span className="mx-2">→</span>
+              <span>Success</span>
+            </div>
             <h1 className="text-2xl font-bold flex items-center gap-3">
               <ShoppingCart className="h-6 w-6" />
               Shopping Cart
@@ -331,37 +340,57 @@ export function CartClient({ availableCourses }: CartClientProps) {
                               </p>
                             </div>
                             
-                            <div className="flex items-center gap-1">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-6 w-6"
-                                onClick={() => updateQuantity(course.id, Math.max(0, quantity - 1))}
-                                disabled={quantity === 0}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <Input
-                                type="number"
-                                value={quantity}
-                                onChange={(e) => updateQuantity(course.id, parseInt(e.target.value) || 0)}
-                                className="w-12 text-center h-6 px-1 text-xs"
-                                min="0"
-                              />
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-6 w-6"
-                                onClick={() => updateQuantity(course.id, quantity + 1)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                              {quantity > 0 && (
-                                <div className="text-right min-w-[50px]">
-                                  <p className="font-semibold text-xs">
-                                    ${lineTotal.toFixed(2)}
-                                  </p>
-                                </div>
+                            <div className="flex items-center gap-2">
+                              {quantity === 0 ? (
+                                <Button
+                                  size="sm"
+                                  onClick={() => updateQuantity(course.id, 1)}
+                                  aria-label={`Add ${course.title} to cart`}
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add
+                                </Button>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-9 w-9"
+                                    onClick={() => updateQuantity(course.id, Math.max(0, quantity - 1))}
+                                    aria-label={`Decrease ${course.title} seats`}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <Input
+                                    type="number"
+                                    value={quantity}
+                                    readOnly
+                                    className="w-14 text-center h-9 px-1"
+                                    min="0"
+                                    aria-label={`${course.title} quantity`}
+                                  />
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-9 w-9"
+                                    onClick={() => updateQuantity(course.id, quantity + 1)}
+                                    aria-label={`Increase ${course.title} seats`}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 px-2 text-xs text-muted-foreground"
+                                    onClick={() => updateQuantity(course.id, 0)}
+                                    aria-label={`Remove ${course.title} from cart`}
+                                  >
+                                    Remove
+                                  </Button>
+                                  <div className="text-right min-w-[60px]">
+                                    <p className="font-semibold text-sm">${lineTotal.toFixed(2)}</p>
+                                  </div>
+                                </>
                               )}
                             </div>
                           </div>
@@ -398,16 +427,13 @@ export function CartClient({ availableCourses }: CartClientProps) {
                           <span>Subtotal</span>
                           <span>${subtotal.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-xs">
-                          <span>Tax</span>
-                          <span>${tax.toFixed(2)}</span>
-                        </div>
                         <div className="border-t pt-1">
                           <div className="flex justify-between font-semibold">
                             <span>Total</span>
                             <span className="text-base">${total.toFixed(2)}</span>
                           </div>
                         </div>
+                        <p className="text-[11px] text-muted-foreground">Estimated tax calculated at checkout</p>
                       </div>
                       
                       {/* Authentication Check */}
@@ -415,7 +441,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         <div className="border-t pt-3 space-y-3">
                           <div className="text-center py-4">
                             <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                            <h3 className="text-sm font-medium mb-1">Sign in to Purchase</h3>
+                            <h3 className="text-sm font-medium mb-1">Create Account to Checkout</h3>
                             <p className="text-xs text-muted-foreground mb-4">
                               Create a free account to complete your purchase
                             </p>
@@ -425,7 +451,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                 size="sm"
                                 onClick={() => router.push(`${pathsConfig.auth.signUp}?redirect=/cart`)}
                               >
-                                Create Account
+                                Create Account to Checkout
                               </Button>
                               <Button 
                                 className="w-full" 
@@ -481,26 +507,26 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         </>
                       )}
                       
-                      <Button 
-                        className="w-full" 
-                        size="sm"
-                        onClick={handleCheckout}
-                        disabled={isCheckingOut || totalItems === 0 || !isAuthenticated}
-                      >
-                        {isCheckingOut ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : !isAuthenticated ? (
-                          'Sign in to Checkout'
-                        ) : (
-                          `Checkout (${totalItems} ${totalItems === 1 ? 'seat' : 'seats'})`
-                        )}
-                      </Button>
+                      {isAuthenticated ? (
+                        <Button 
+                          className="w-full" 
+                          size="sm"
+                          onClick={handleCheckout}
+                          disabled={isCheckingOut || totalItems === 0}
+                        >
+                          {isCheckingOut ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            `Checkout (${totalItems} ${totalItems === 1 ? 'seat' : 'seats'})`
+                          )}
+                        </Button>
+                      ) : null}
                       
-                      <p className="text-xs text-muted-foreground text-center">
-                        Secure checkout powered by Stripe
+                      <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                        <Lock className="h-3 w-3" /> Secure checkout powered by Stripe • 30-day refund
                       </p>
                     </>
                   ) : (
@@ -517,6 +543,27 @@ export function CartClient({ availableCourses }: CartClientProps) {
           </div>
         </div>
       </main>
+
+      {/* Mobile bottom CTA */}
+      {totalItems > 0 && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm">
+              <div className="font-semibold">Total ${total.toFixed(2)}</div>
+              <div className="text-muted-foreground text-xs">{totalItems} {totalItems === 1 ? 'seat' : 'seats'}</div>
+            </div>
+            {isAuthenticated ? (
+              <Button size="sm" onClick={handleCheckout} className="min-w-[140px]">
+                Checkout
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => router.push(`${pathsConfig.auth.signUp}?redirect=/cart`)} className="min-w-[200px]">
+                Create Account to Checkout
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
