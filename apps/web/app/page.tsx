@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRightIcon, CheckCircle, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowRightIcon, CheckCircle, ArrowRight, ArrowLeft, ChevronDown, Menu } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kit/ui/card';
@@ -58,14 +58,54 @@ function Home() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link href="/bulk-orders" className="text-sm font-medium hover:text-primary">
-              Bulk Orders
-            </Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-primary">
-              Contact
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium hover:text-primary">
+                Contact
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem asChild>
+                  <Link href="/contact" className="cursor-pointer">
+                    Contact
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/bulk-orders" className="cursor-pointer">
+                    Bulk Orders
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
           <div className="flex items-center gap-4">
+            {/* Mobile menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="md:hidden">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuItem asChild>
+                  <Link href="/#features" className="cursor-pointer">Features</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/courses/dot-hazmat" className="cursor-pointer">DOT HAZMAT - General</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/courses/advanced-hazmat" className="cursor-pointer">DOT HAZMAT - Advanced</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/courses/epa-rcra" className="cursor-pointer">EPA RCRA</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/contact" className="cursor-pointer">Contact</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/bulk-orders" className="cursor-pointer">Bulk Orders</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <CartCount />
             {/** Point to /login alias to avoid any cached 404 on /auth/sign-in */}
             <Link href={`${(process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/,'') || 'https://www.evergreencomply.com')}/login`}>
@@ -112,14 +152,7 @@ function Home() {
                       EPA RCRA — $119
                     </Button>
                   </Link>
-                  <Link href="/bulk-orders" className="w-full sm:w-auto">
-                    <Button
-                      size="lg"
-                      className="w-full sm:w-auto min-w-[220px] px-6 py-4 text-lg bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      Team Pricing (Bulk)
-                    </Button>
-                  </Link>
+                  
                   <Link href="/courses/advanced-hazmat" className="w-full sm:w-auto">
                     <Button
                       size="lg"

@@ -148,9 +148,13 @@ async function BulkOrdersPage() {
               Tell us about your team and we’ll follow up with a tailored quote.
             </p>
             <ContactForm />
-            <p className="text-xs text-muted-foreground mt-3 text-center">
-              Prefer email? sales@evergreencomply.com • Prefer phone? <a className="underline" href="tel:9709190034">(970) 919‑0034</a>
-            </p>
+            <div className="mt-6 flex justify-center">
+              <Link href="tel:9709190034" aria-label="Call sales (970) 919-0034">
+                <Button variant="outline" size="lg" className="min-w-[240px]">
+                  <Phone className="h-4 w-4 mr-2" /> (970) 919‑0034
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
