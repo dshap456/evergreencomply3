@@ -10,6 +10,7 @@ import { Heading } from '@kit/ui/heading';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { SiteHeader } from '../_components/site-header';
 import { ContactForm } from '../contact/_components/contact-form';
+import { SiteFooter } from '../_components/site-footer';
 
 export const metadata: Metadata = {
   title: 'Bulk Orders — Team Training Pricing and Sales',
@@ -158,6 +159,8 @@ async function BulkOrdersPage() {
           </div>
         </div>
       </section>
+
+      <SiteFooter />
     </div>
   );
 }
