@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       mode: 'payment',
       success_url: success_url + '?session_id={CHECKOUT_SESSION_ID}',
       cancel_url,
+      allow_promotion_codes: true,
       // Set user ID if authenticated, otherwise webhook will create account
       client_reference_id: userId || null,
       metadata: {

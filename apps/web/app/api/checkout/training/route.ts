@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       success_url: `${baseUrl}${successPath}`,
       cancel_url: `${baseUrl}/cart`,
+      allow_promotion_codes: true,
       invoice_creation: {
         enabled: true,
         invoice_data: {
