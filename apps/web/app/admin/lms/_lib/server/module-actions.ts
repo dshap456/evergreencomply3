@@ -69,7 +69,7 @@ export async function createModuleAction(data: z.infer<typeof CreateModuleSchema
       title: validated.title,
       description: validated.description,
       order_index: validated.order_index,
-      language: validated.language,
+      // language intentionally not stored (no column in schema)
     })
     .select()
     .single();

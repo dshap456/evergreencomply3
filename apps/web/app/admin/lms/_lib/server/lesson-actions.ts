@@ -41,10 +41,7 @@ export const updateLessonAction = enhanceAction(
       updated_at: new Date().toISOString(),
     };
 
-    // Include language if provided
-    if (data.language !== undefined) {
-      updateData.language = data.language;
-    }
+    // NOTE: Do not persist language — column not present in DB schema
 
     // Only include video fields if they're provided (preserves existing data)
     if (data.video_url !== undefined) {
@@ -102,7 +99,7 @@ export const createLessonAction = enhanceAction(
         content_type: data.content_type,
         order_index: data.order_index,
         is_final_quiz: data.is_final_quiz || false,
-        language: data.language,
+        // language intentionally not stored (no column in schema)
       })
       .select()
       .single();
@@ -306,7 +303,7 @@ export const saveQuizDataAction = enhanceAction(
             correct_answer: correct_answer || '',
             points: question.points,
             order_index: question.order_index,
-            language: data.language || 'en',
+            // language intentionally omitted (no column in schema)
           };
         });
 
