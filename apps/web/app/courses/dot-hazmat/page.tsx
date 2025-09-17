@@ -116,8 +116,13 @@ function DOTHazmatGeneralPage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
+                    <span className="text-lg leading-none" role="img" aria-label="United States flag">🇺🇸</span>
+                    <span className="text-lg leading-none" role="img" aria-label="Mexico flag">🇲🇽</span>
+                    <span>English & Spanish included</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />
-                    <span>2-3 hours</span>
+                    <span>1-2 hours</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />

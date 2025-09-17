@@ -352,7 +352,7 @@ function getCourseContent(slug: string) {
     'dot-hazmat': {
       badge: 'DOT Compliance',
       description: 'Master the essentials of DOT HAZMAT regulations with our comprehensive general awareness training.',
-      duration: '2-3 hours',
+      duration: '1-2 hours',
       students: '10,000+ enrolled',
       certification: '3-year certification',
       image: '/images/dot-hazmat-training.jpg',
