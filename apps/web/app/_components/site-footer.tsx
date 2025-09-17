@@ -51,12 +51,12 @@ export function SiteFooter() {
               <h3 className="text-sm font-medium">Legal</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link href="/terms-of-service" className="text-sm text-muted-foreground hover:text-foreground">
                     Terms
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground">
                     Privacy
                   </Link>
                 </li>
@@ -73,4 +73,3 @@ export function SiteFooter() {
     </footer>
   );
 }
-
