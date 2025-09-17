@@ -148,6 +148,13 @@ function DOTHazmatGeneralPage() {
                       Buy Seats - $119 per seat
                     </Button>
                   </Link>
+                  <div className="mt-3">
+                    <Link href="/bulk-orders">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                        Team & Bulk Pricing
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
               <div className="relative h-64 md:h-full w-full overflow-hidden rounded-lg shadow-lg">

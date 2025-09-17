@@ -134,6 +134,11 @@ function EPARCRAPage() {
                     <span>Annual certification</span>
                   </div>
                 </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                  <span className="text-lg leading-none" role="img" aria-label="United States flag">🇺🇸</span>
+                  <span className="text-lg leading-none" role="img" aria-label="Mexico flag">🇲🇽</span>
+                  <span>English & Spanish included</span>
+                </div>
                 <div className="pt-4">
                   <Link href="/marketing-temp/cart">
                     <Button
@@ -143,6 +148,13 @@ function EPARCRAPage() {
                       Buy Seats - $119 per seat
                     </Button>
                   </Link>
+                  <div className="mt-3">
+                    <Link href="/bulk-orders">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                        Team & Bulk Pricing
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
               <div className="relative h-64 md:h-full w-full overflow-hidden rounded-lg shadow-lg">
