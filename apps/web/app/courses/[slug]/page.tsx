@@ -355,7 +355,7 @@ function getCourseContent(slug: string) {
       duration: '1-2 hours',
       students: '10,000+ enrolled',
       certification: '3-year certification',
-      image: '/images/dot-hazmat-training.jpg',
+      image: '/images/taller guy.png',
       features: [
         {
           title: 'DOT Regulations Overview',
