@@ -243,12 +243,13 @@ async function AboutPage() {
               >
                 Contact Us
               </a>
-              <a 
-                href="tel:9709190034" 
-                className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
-              >
-                Call (970) 919-0034
-              </a>
+              <div className="inline-flex items-center justify-center px-8 py-3 text-base font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 transition-colors">
+                <span>
+                  Call or text{' '}
+                  <a href="tel:9709190034" className="underline">(970) 919‑0034</a>{' '}
+                  or <a href="sms:9709190034" className="underline">text us</a>
+                </span>
+              </div>
             </div>
           </div>
         </section>

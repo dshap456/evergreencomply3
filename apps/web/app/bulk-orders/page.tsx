@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Metadata } from 'next';
-import { Phone, Users, BarChart3, ClipboardCheck, Rocket } from 'lucide-react';
+import { Users, BarChart3, ClipboardCheck, Rocket } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent } from '@kit/ui/card';
@@ -55,15 +55,11 @@ async function BulkOrdersPage() {
                     Request Team Pricing
                   </Button>
                 </Link>
-                <Link
-                  href="tel:9709190034"
-                  aria-label="Call sales (970) 919-0034"
-                  className="w-full max-w-xs sm:w-auto sm:max-w-none mx-auto sm:mx-0"
-                >
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    <Phone className="h-4 w-4 mr-2" /> (970) 919-0034
-                  </Button>
-                </Link>
+                <div className="w-full max-w-xs sm:w-auto sm:max-w-none mx-auto sm:mx-0 text-center text-sm text-muted-foreground">
+                  Call or text <a href="tel:9709190034" className="underline">(970) 919‑0034</a>
+                  <span className="mx-1">·</span>
+                  <a href="sms:9709190034" className="underline">Text us</a>
+                </div>
               </div>
             </div>
 
@@ -149,13 +145,11 @@ async function BulkOrdersPage() {
               Tell us about your team and we’ll follow up with a tailored quote.
             </p>
             <ContactForm />
-            <div className="mt-6 flex justify-center">
-              <Link href="tel:9709190034" aria-label="Call sales (970) 919-0034">
-                <Button variant="outline" size="lg" className="min-w-[240px]">
-                  <Phone className="h-4 w-4 mr-2" /> (970) 919‑0034
-                </Button>
-              </Link>
-            </div>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Call or text{' '}
+              <a href="tel:9709190034" className="underline">(970) 919‑0034</a>{' '}
+              or <a href="sms:9709190034" className="underline">text us</a>.
+            </p>
           </div>
         </div>
       </section>

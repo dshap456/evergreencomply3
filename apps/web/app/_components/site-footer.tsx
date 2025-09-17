@@ -64,6 +64,21 @@ export function SiteFooter() {
             </div>
           </div>
         </div>
+
+        {/* Contact actions: single-line call/text */}
+        <div className="flex flex-col items-center gap-1 md:flex-row md:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Questions? Call or text{' '}
+            <a href="tel:9709190034" className="underline underline-offset-2">
+              (970) 919‑0034
+            </a>{' '}
+            or{' '}
+            <a href="sms:9709190034" className="underline underline-offset-2">
+              text us
+            </a>
+            .
+          </p>
+        </div>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <p className="text-xs text-muted-foreground">
             &copy; {new Date().getFullYear()} Evergreen Comply, LLC. All rights reserved.

@@ -175,8 +175,9 @@ export default function PrivacyPolicyPage() {
           <p>
             Questions about this policy or your data? Contact us at{' '}
             <a className="underline" href="mailto:support@evergreencomply.com">support@evergreencomply.com</a>{' '}
-            or call{' '}
-            <a className="underline" href="tel:9709190034">(970) 919‑0034</a>.
+            or call or text{' '}
+            <a className="underline" href="tel:9709190034">(970) 919‑0034</a>{' '} 
+            or <a className="underline" href="sms:9709190034">text us</a>.
           </p>
         </section>
 
@@ -193,4 +194,3 @@ export default function PrivacyPolicyPage() {
     </div>
   );
 }
-

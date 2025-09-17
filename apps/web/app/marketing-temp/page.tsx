@@ -304,10 +304,11 @@ function Home() {
                   </Button>
                 </Link>
                 <p className="text-base font-medium text-muted-foreground mt-3">
-                  Or call us directly at{' '}
-                  <a href="tel:9709190034" className="text-lg font-semibold text-foreground hover:text-primary transition-colors">
-                    (970) 919-0034
-                  </a>
+                  Call or text{' '}
+                  <a href="tel:9709190034" className="font-semibold text-foreground hover:text-primary transition-colors">
+                    (970) 919‑0034
+                  </a>{' '}
+                  or <a href="sms:9709190034" className="underline">text us</a>.
                 </p>
               </div>
             </div>
