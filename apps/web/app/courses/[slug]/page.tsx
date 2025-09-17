@@ -339,9 +339,30 @@ async function CoursePage({ params }: CoursePageProps) {
             </div>
           </div>
         </section>
+
+        {/* Spacer for mobile sticky CTA */}
+        {slug === 'dot-hazmat' && (
+          <div className="h-16 md:hidden" />
+        )}
       </main>
-    </div>
-    </>
+
+      {/* Mobile Sticky CTA for DOT HAZMAT */}
+      {slug === 'dot-hazmat' && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex items-center justify-between py-3">
+            <div className="text-sm font-medium">
+              DOT HAZMAT Training - ${Number(course.price).toFixed(0)}/seat
+            </div>
+            <AddToCartButton
+              courseId={course.slug}
+              price={Number(course.price)}
+              size="sm"
+            />
+          </div>
+        </div>
+      )}
+      </div>
+      </>
   );
 }
 
