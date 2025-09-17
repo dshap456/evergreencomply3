@@ -147,6 +147,7 @@ function DOTHazmatGeneralPage() {
                         size="lg" 
                         className="w-full sm:w-[260px] rounded-md font-semibold py-3 px-5 bg-white border border-gray-300 text-black hover:bg-gray-50"
                       >
+                        <Users className="h-4 w-4 mr-2" />
                         Team & Bulk Pricing
                       </Button>
                     </Link>

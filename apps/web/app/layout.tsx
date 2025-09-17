@@ -8,6 +8,8 @@ import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { generateRootMetadata } from '~/lib/root-metdata';
 import { getRootTheme } from '~/lib/root-theme';
 import Script from 'next/script';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/react';
 
 import '../styles/globals.css';
 
@@ -63,6 +65,8 @@ export default async function RootLayout({
         </RootProviders>
 
         <Toaster richColors={true} theme={theme} position="top-center" />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

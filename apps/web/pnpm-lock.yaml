@@ -1,0 +1,106 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@kit/accounts':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/features/accounts
+      '@kit/admin':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/features/admin
+      '@kit/analytics':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/analytics
+      '@kit/auth':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/features/auth
+      '@kit/billing':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/billing/core
+      '@kit/billing-gateway':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/billing/gateway
+      '@kit/cms':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/cms/core
+      '@kit/database-webhooks':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/database-webhooks
+      '@kit/email-templates':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/email-templates
+      '@kit/i18n':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/i18n
+      '@kit/mailers':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/mailers/core
+      '@kit/monitoring':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/monitoring/api
+      '@kit/next':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/next
+      '@kit/notifications':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/features/notifications
+      '@kit/shared':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/shared
+      '@kit/supabase':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/supabase
+      '@kit/team-accounts':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/features/team-accounts
+      '@kit/ui':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/packages/ui
+      '@vercel/speed-insights':
+        specifier: ^1.2.0
+        version: 1.2.0
+    devDependencies:
+      '@kit/eslint-config':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/tooling/eslint
+      '@kit/prettier-config':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/tooling/prettier
+      '@kit/tsconfig':
+        specifier: workspace:*
+        version: link:../../../../../../../../evergreencomply3/tooling/typescript
+
+packages:
+
+  '@vercel/speed-insights@1.2.0':
+    resolution: {integrity: sha512-y9GVzrUJ2xmgtQlzFP2KhVRoCglwfRQgjyfY607aU0hh0Un6d0OUyrJkjuAlsV18qR4zfoFPs/BiIj9YDS6Wzw==}
+    peerDependencies:
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
+
+snapshots:
+
+  '@vercel/speed-insights@1.2.0': {}
