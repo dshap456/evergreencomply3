@@ -116,11 +116,6 @@ function DOTHazmatGeneralPage() {
                 </p>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <span className="text-lg leading-none" role="img" aria-label="United States flag">🇺🇸</span>
-                    <span className="text-lg leading-none" role="img" aria-label="Mexico flag">🇲🇽</span>
-                    <span>English & Spanish included</span>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />
                     <span>1-2 hours</span>
                   </div>
@@ -132,6 +127,11 @@ function DOTHazmatGeneralPage() {
                     <Award className="h-4 w-4 text-primary" />
                     <span>Certificate included</span>
                   </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                  <span className="text-lg leading-none" role="img" aria-label="United States flag">🇺🇸</span>
+                  <span className="text-lg leading-none" role="img" aria-label="Mexico flag">🇲🇽</span>
+                  <span>English & Spanish included</span>
                 </div>
                 <div className="pt-4">
                   <AddToCartButton
