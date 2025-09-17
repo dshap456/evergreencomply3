@@ -143,14 +143,18 @@ function DOTHazmatGeneralPage() {
                   <Link href="/marketing-temp/cart">
                     <Button
                       size="lg"
-                      className="w-full sm:w-auto bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
+                      className="w-full sm:w-[260px] rounded-md font-semibold py-3 px-5 bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)]"
                     >
                       Buy Seats - $119 per seat
                     </Button>
                   </Link>
-                  <div className="mt-3">
+                  <div className="mt-4">
                     <Link href="/bulk-orders">
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                      <Button 
+                        variant="outline" 
+                        size="lg" 
+                        className="w-full sm:w-[260px] rounded-md font-semibold py-3 px-5 bg-white border border-gray-300 text-black hover:bg-gray-50"
+                      >
                         Team & Bulk Pricing
                       </Button>
                     </Link>

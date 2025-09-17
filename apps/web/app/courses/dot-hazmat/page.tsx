@@ -138,11 +138,15 @@ function DOTHazmatGeneralPage() {
                     courseId="dot-hazmat-general"
                     price={119}
                     size="lg"
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-[260px] rounded-md font-semibold py-3 px-5"
                   />
-                  <div className="mt-3">
+                  <div className="mt-4">
                     <Link href="/bulk-orders">
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                      <Button 
+                        variant="outline" 
+                        size="lg" 
+                        className="w-full sm:w-[260px] rounded-md font-semibold py-3 px-5 bg-white border border-gray-300 text-black hover:bg-gray-50"
+                      >
                         Team & Bulk Pricing
                       </Button>
                     </Link>
