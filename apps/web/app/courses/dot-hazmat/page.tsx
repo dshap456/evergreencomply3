@@ -150,55 +150,55 @@ function DOTHazmatGeneralPage() {
         </section>
 
         {/* Client Logos Section */}
-        <section className="border-t bg-muted/30">
-          <div className="container py-10 md:py-12">
+        <section className="border-t bg-white">
+          <div className="container py-12 md:py-14">
             <p className="text-center text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-[0.2em] mb-8">
               Trusted by teams like yours
             </p>
-            <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-10 gap-y-8 items-center justify-items-center grayscale-[55%]">
+            <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-12 gap-y-10 items-center justify-items-center grayscale-[45%]">
               <li className="flex w-full items-center justify-center">
                 <Image
                   src="/images/clients/metro.png"
                   alt="Metro Recycling Solutions"
-                  width={220}
-                  height={90}
-                  className="h-16 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
+                  width={260}
+                  height={110}
+                  className="h-20 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
                 />
               </li>
               <li className="flex w-full items-center justify-center">
                 <Image
                   src="/images/clients/green-valley.png"
                   alt="Green Valley Environmental Services"
-                  width={220}
-                  height={90}
-                  className="h-16 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
+                  width={260}
+                  height={110}
+                  className="h-20 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
                 />
               </li>
               <li className="flex w-full items-center justify-center">
                 <Image
                   src="/images/clients/allied.png"
                   alt="Allied Battery Systems"
-                  width={220}
-                  height={90}
-                  className="h-16 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
+                  width={260}
+                  height={110}
+                  className="h-20 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
                 />
               </li>
               <li className="flex w-full items-center justify-center">
                 <Image
                   src="/images/clients/pioneer.png"
                   alt="Pioneer Dedicated Carriers"
-                  width={220}
-                  height={90}
-                  className="h-16 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
+                  width={260}
+                  height={110}
+                  className="h-20 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
                 />
               </li>
               <li className="flex w-full items-center justify-center">
                 <Image
                   src="/images/clients/gateway.png"
                   alt="Gateway Freight Systems"
-                  width={220}
-                  height={90}
-                  className="h-16 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
+                  width={260}
+                  height={110}
+                  className="h-20 w-auto object-contain opacity-90 transition hover:opacity-100 hover:scale-[1.04]"
                 />
               </li>
             </ul>
