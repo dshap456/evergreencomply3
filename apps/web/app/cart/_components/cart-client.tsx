@@ -492,7 +492,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                             </p>
                             <div className="space-y-2">
                               <Button 
-                                className="hidden md:inline-flex w-full bg-primary text-primary-foreground hover:bg-primary/90" 
+                                className="hidden md:inline-flex w-full bg-[#F4C542] text-[#17472D] hover:bg-[#E0B63B] focus-visible:ring-[#17472D]/40" 
                                 size="sm"
                                 onClick={() => {
                                   try {
