@@ -20,12 +20,9 @@ export async function POST(request: NextRequest) {
 
     const { error } = await client
       .from('lead_magnet_signups')
-      .upsert(
-        { email, source_slug: source },
-        { onConflict: 'email,source_slug', returning: 'minimal' }
-      );
+      .insert({ email, source_slug: source, metadata: {} }, { returning: 'minimal' });
 
-    if (error) {
+    if (error && error.code !== '23505') {
       console.error('lead-magnet signup insert error', error);
       return NextResponse.json(
         { success: false, error: 'Unable to save your request right now. Please try again.' },
