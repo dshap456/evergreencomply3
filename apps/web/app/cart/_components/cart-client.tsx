@@ -505,14 +505,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
                               >
                                 Create Account to Checkout
                               </Button>
-                              <Button 
-                                className="w-full" 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => router.push(`${pathsConfig.auth.signIn}?redirect=/cart`)}
-                              >
-                                Sign In
-                              </Button>
                             </div>
                           </div>
                         </div>
