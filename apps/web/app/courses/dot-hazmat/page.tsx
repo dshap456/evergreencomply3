@@ -32,6 +32,7 @@ import { withI18n } from '~/lib/i18n/with-i18n';
 import { CustomShieldIcon } from '../../_components/custom-icons';
 import { AddToCartButton } from '../../_components/add-to-cart-button';
 import { CartCount } from '../../_components/cart-count';
+import { LeadMagnetDownloadButton } from '../../_components/lead-magnet-download';
 
 function DOTHazmatGeneralPage() {
   return (
@@ -400,7 +401,11 @@ function DOTHazmatGeneralPage() {
                         <span>Handy summary for HR or auditors</span>
                       </div>
                     </div>
-                    <Button className="w-full bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black font-semibold">Download Free Guide</Button>
+                    <LeadMagnetDownloadButton
+                      buttonClassName="bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black"
+                    >
+                      Download Free Guide
+                    </LeadMagnetDownloadButton>
                     <p className="text-xs text-muted-foreground text-center">No spam, just compliance insights</p>
                   </CardContent>
                 </Card>
