@@ -18,6 +18,7 @@ import {
   Play,
   ChevronDown,
   ShoppingCart,
+  Shield,
 } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@kit/ui/accordion"
 import {
@@ -116,6 +117,10 @@ function DOTHazmatGeneralPage() {
                   <span className="text-lg leading-none" role="img" aria-label="United States flag">🇺🇸</span>
                   <span className="text-lg leading-none" role="img" aria-label="Mexico flag">🇲🇽</span>
                   <span>English & Spanish included</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <span>Security Awareness included</span>
                 </div>
                 <div className="pt-4">
                   <AddToCartButton
@@ -265,7 +270,7 @@ function DOTHazmatGeneralPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <CheckCircle className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="font-medium">24/7 access</span>
+                        <span className="font-medium">Security Awareness included</span>
                       </div>
                     </div>
                     <AddToCartButton
@@ -373,7 +378,7 @@ function DOTHazmatGeneralPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border border-secondary/30 bg-white/70 shadow-sm">
+                <Card className="border border-secondary/30 bg-white/80 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-center flex items-center justify-center gap-2">
                       <Award className="h-4 w-4 text-secondary" />
@@ -386,20 +391,20 @@ function DOTHazmatGeneralPage() {
                     </p>
                     <ul className="space-y-2 text-sm text-foreground">
                       <li className="flex items-start gap-2">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary/80" />
                         <span>Clause-by-clause alignment</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary/80" />
                         <span>Covers all hazmat employee basics</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary/80" />
                         <span>Handy summary for HR and auditors</span>
                       </li>
                     </ul>
                     <LeadMagnetDownloadButton
-                      buttonClassName="mx-auto w-fit rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
+                      buttonClassName="flex justify-center mx-auto w-[180px] rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
                     >
                       Open Cross-Walk
                     </LeadMagnetDownloadButton>
