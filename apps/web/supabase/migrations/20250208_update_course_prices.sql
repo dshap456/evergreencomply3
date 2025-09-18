@@ -5,7 +5,7 @@ UPDATE public.courses
 SET price = 79
 WHERE title = 'DOT HAZMAT - 3' OR slug = 'dot-hazmat';
 
--- DOT HAZMAT - General Awareness: $79 (assuming same as regular DOT HAZMAT)
+-- DOT HAZMAT - General and Security Awareness: $79 (assuming same as regular DOT HAZMAT)
 UPDATE public.courses 
 SET price = 79
 WHERE title ILIKE '%DOT HAZMAT%General%' OR slug = 'dot-hazmat-general';

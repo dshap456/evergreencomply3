@@ -312,7 +312,7 @@ function Home() {
                           src="/images/general-hazmat-training.png"
                           width={320}
                           height={160}
-                          alt="DOT HAZMAT General Awareness Training - Warehouse employee in business attire walking through warehouse aisle"
+                          alt="DOT HAZMAT General and Security Awareness Training - Warehouse employee in business attire walking through warehouse aisle"
                           className="h-full w-full object-cover"
                           style={{ objectPosition: "50% 30%" }}
                         />
@@ -423,7 +423,7 @@ export default withI18n(Home);
 
 const courses = [
   {
-    title: "DOT HAZMAT - General Awareness",
+    title: "DOT HAZMAT - General and Security Awareness",
     slug: "dot-hazmat",
     description: "Training for employees involved in handling or shipping hazardous materials",
     features: [

@@ -103,7 +103,7 @@ function DOTHazmatGeneralPage() {
                 Courses
               </Link>
               <span>/</span>
-              <span className="text-foreground">DOT HAZMAT - General Awareness</span>
+              <span className="text-foreground">DOT HAZMAT - General and Security Awareness</span>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@ function DOTHazmatGeneralPage() {
               <div className="space-y-4">
                 <Badge className="bg-primary text-primary-foreground">49 CFR §172 Compliant</Badge>
                 <h1 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-                  DOT HAZMAT General Awareness Training
+                  DOT HAZMAT General and Security Awareness Training
                 </h1>
                 <p className="text-lg text-muted-foreground">
                   Essential training for employees involved in handling or shipping hazardous materials.
@@ -182,7 +182,7 @@ function DOTHazmatGeneralPage() {
                 <div>
                   <h2 className="text-2xl font-bold mb-4 text-primary">Course Overview</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    This comprehensive DOT HAZMAT General Awareness training course provides essential knowledge for
+                    This comprehensive DOT HAZMAT General and Security Awareness training course provides essential knowledge for
                     employees who handle, ship, or work around hazardous materials. Designed to meet 49 CFR §172 Subpart
                     H requirements, this course covers fundamental safety procedures, classification systems, and
                     regulatory compliance necessary for safe hazmat operations.
@@ -382,7 +382,7 @@ function DOTHazmatGeneralPage() {
                   <CardHeader>
                     <CardTitle className="text-center flex items-center justify-center gap-2">
                       <Award className="h-5 w-5 text-secondary" />
-                      Free General Awareness Cross-Walk
+                      Free General and Security Awareness Cross-Walk
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -422,7 +422,7 @@ function DOTHazmatGeneralPage() {
               <div className="text-center mb-10">
                 <h2 className="text-3xl font-bold mb-2">Frequently Asked Questions</h2>
                 <p className="text-muted-foreground">
-                  Common questions about our DOT HAZMAT General Awareness training.
+                  Common questions about our DOT HAZMAT General and Security Awareness training.
                 </p>
               </div>
               <Accordion type="single" collapsible className="w-full">

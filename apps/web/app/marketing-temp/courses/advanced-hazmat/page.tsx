@@ -554,16 +554,16 @@ const faqItems = [
   {
     question: "What are the prerequisites for the Advanced Awareness course?",
     answer:
-      "None. If you need Advanced Awareness, you do NOT need to buy General Awareness separately. This course is enough for both General + Advanced.",
+      "None. If you need Advanced Awareness, you do NOT need to buy General and Security Awareness separately. This course is enough for both General + Advanced.",
   },
   {
-    question: "How does this differ from the General Awareness course?",
+    question: "How does this differ from the General and Security Awareness course?",
     answer:
-      "The big difference between the two courses is the function-specific procedures, which covers rail, vessel, and air in greater depth, plus new information on shipping lithium ion batteries. This course also has ad longer section on security awareness and incident reporting.",
+      "The big difference between the two courses is the function-specific procedures, which covers rail, vessel, and air in greater depth, plus new information on shipping lithium ion batteries. This course also has a longer section on security awareness and incident reporting.",
   },
   {
     question: "Is Security Awareness training included?",
     answer:
-      "Yes, security awareness principles is included and goes beyond what is in the General Course, covering threat recognition, security planning, and incident reporting procedures.",
+      "Yes, security awareness principles is included and goes beyond what is in the General and Security Awareness course, covering threat recognition, security planning, and incident reporting procedures.",
   },
 ]

@@ -24,8 +24,9 @@ async function CartPage() {
       'Advanced HAZMAT': 'advanced-hazmat',
       'Advanced Awareness': 'advanced-hazmat',
       'DOT HAZMAT - Advanced Awareness': 'advanced-hazmat',
+      'DOT HAZMAT - General and Security Awareness': 'dot-hazmat-general',
       'DOT HAZMAT - General Awareness': 'dot-hazmat-general',
-      'DOT HAZMAT - General Awareness ': 'dot-hazmat-general', // With trailing space
+      'DOT HAZMAT - General Awareness ': 'dot-hazmat-general', // Legacy name with trailing space
       'EPA RCRA': 'epa-rcra',
       'EPA - RCRA': 'epa-rcra'
     };
@@ -33,8 +34,9 @@ async function CartPage() {
     // Map known prices based on course titles (all courses are $119)
     const priceMapping: Record<string, string> = {
       'DOT HAZMAT - 3': '119',
+      'DOT HAZMAT - General and Security Awareness': '119',
       'DOT HAZMAT - General Awareness': '119',
-      'DOT HAZMAT - General Awareness ': '119', // With trailing space
+      'DOT HAZMAT - General Awareness ': '119', // Legacy name with trailing space
       'DOT HAZMAT - Advanced Awareness': '119',
       'Advanced HAZMAT': '119',
       'Advanced Awareness': '119',

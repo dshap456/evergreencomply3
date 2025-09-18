@@ -14,7 +14,7 @@ import { CustomShieldIcon } from '../_components/custom-icons';
 const AVAILABLE_COURSES = [
   {
     id: 'dot-hazmat-general',
-    name: 'DOT HAZMAT - General Awareness',
+    name: 'DOT HAZMAT - General and Security Awareness',
     price: 119,
     duration: '3-year certification',
     slug: 'dot-hazmat',
