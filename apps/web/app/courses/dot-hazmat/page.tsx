@@ -373,36 +373,33 @@ function DOTHazmatGeneralPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-2 border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10">
+                <Card className="border border-secondary/30 bg-white/70 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-center flex items-center justify-center gap-2">
-                      <Award className="h-5 w-5 text-secondary" />
+                      <Award className="h-4 w-4 text-secondary" />
                       Free General Awareness Cross-Walk
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Get a clear table showing how this course meets every baseline requirement in 49 CFR §172
-                        Subpart H.
-                      </p>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-secondary" />
+                  <CardContent className="space-y-5">
+                    <p className="text-sm text-muted-foreground text-center leading-relaxed">
+                      Unlock a detailed table that maps this course to every baseline requirement in 49 CFR §172 Subpart H.
+                    </p>
+                    <ul className="space-y-2 text-sm text-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
                         <span>Clause-by-clause alignment</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-secondary" />
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
                         <span>Covers all hazmat employee basics</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-secondary" />
-                        <span>Handy summary for HR or auditors</span>
-                      </div>
-                    </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
+                        <span>Handy summary for HR and auditors</span>
+                      </li>
+                    </ul>
                     <LeadMagnetDownloadButton
-                      buttonClassName="mx-auto w-auto bg-[rgba(233,195,81,1)] px-4 py-2 text-sm text-black hover:bg-[rgba(233,195,81,0.9)]"
+                      buttonClassName="mx-auto w-fit rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
                     >
                       Open Cross-Walk
                     </LeadMagnetDownloadButton>
@@ -439,30 +436,30 @@ function DOTHazmatGeneralPage() {
         </section>
 
         {/* Desktop CTA Reinforcement */}
-        <section className="hidden md:block py-16">
+        <section className="hidden md:block py-14">
           <div className="container">
-            <div className="mx-auto max-w-3xl rounded-2xl border border-primary/30 bg-primary/5 px-10 py-12 text-center shadow-sm">
-              <h3 className="text-3xl font-bold text-primary">Ready to get certified?</h3>
-              <p className="mt-3 text-base text-muted-foreground">
+            <div className="mx-auto max-w-2xl rounded-2xl border border-primary/20 bg-primary/5 px-8 py-10 text-center shadow-sm">
+              <h3 className="text-2xl font-bold text-primary">Ready to get certified?</h3>
+              <p className="mt-3 text-sm text-muted-foreground">
                 Complete in 1–2 hours. Certificate included today.
               </p>
-              <div className="mt-8 flex flex-col items-center gap-4">
+              <div className="mt-7 flex flex-col items-center gap-3">
                 <AddToCartButton
                   courseId="dot-hazmat-general"
                   price={119}
                   size="lg"
-                  className="w-full max-w-sm rounded-md px-6 py-3 font-semibold"
+                  className="w-full max-w-xs rounded-full px-6 py-3 font-semibold"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <ShoppingCart className="h-4 w-4" aria-hidden="true" />
                     Start Training – $119 per seat
                   </span>
                 </AddToCartButton>
-                <Link href="/bulk-orders" className="w-full max-w-sm">
+                <Link href="/bulk-orders" className="w-full max-w-xs">
                   <Button
                     variant="outline"
                     size="lg"
-                    className="w-full rounded-md px-6 py-3 font-semibold"
+                    className="w-full rounded-full px-6 py-3 font-semibold"
                   >
                     <Users className="mr-2 h-4 w-4" aria-hidden="true" />
                     Team & Bulk Pricing
