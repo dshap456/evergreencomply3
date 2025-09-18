@@ -451,7 +451,24 @@ function DOTHazmatGeneralPage() {
             </div>
           </div>
         </section>
+
+        {/* Spacer for mobile sticky CTA */}
+        <div className="h-16 md:hidden" />
       </main>
+
+      {/* Mobile Sticky CTA */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex items-center justify-between py-3">
+          <div className="text-sm font-medium">
+            DOT HAZMAT Training - $119/seat
+          </div>
+          <AddToCartButton
+            courseId="dot-hazmat-general"
+            price={119}
+            size="sm"
+          />
+        </div>
+      </div>
 
       <footer className="border-t bg-muted">
         <div className="container flex flex-col gap-6 py-8 md:py-10">
