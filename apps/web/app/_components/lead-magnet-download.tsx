@@ -96,7 +96,7 @@ export function LeadMagnetDownloadButton({
         <Button
           type="button"
           variant={buttonVariant}
-          className={cn('w-auto rounded-md font-semibold', buttonClassName)}
+          className={cn('rounded-md font-semibold', buttonClassName)}
         >
           {children}
         </Button>

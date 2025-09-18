@@ -398,7 +398,7 @@ function DOTHazmatGeneralPage() {
                       </li>
                     </ul>
                     <LeadMagnetDownloadButton
-                      buttonClassName="mx-auto inline-flex w-[180px] justify-center rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
+                      buttonClassName="mx-auto flex w-[180px] justify-center rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
                     >
                       Open Cross-Walk
                     </LeadMagnetDownloadButton>
