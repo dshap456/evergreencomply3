@@ -9,7 +9,6 @@ import {
   Users,
   Award,
   ShieldCheck,
-  ArrowLeft,
   BookOpen,
   ArrowRight,
   Monitor,
@@ -18,6 +17,7 @@ import {
   Globe,
   Play,
   ChevronDown,
+  ShoppingCart,
 } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@kit/ui/accordion"
 import {
@@ -85,23 +85,6 @@ function DOTHazmatGeneralPage() {
       </header>
 
       <main className="flex-1">
-        {/* Breadcrumb */}
-        <div className="border-b bg-muted/40">
-          <div className="container py-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-foreground">
-                Home
-              </Link>
-              <span>/</span>
-              <Link href="/#courses" className="hover:text-foreground">
-                Courses
-              </Link>
-              <span>/</span>
-              <span className="text-foreground">DOT HAZMAT - General Awareness</span>
-            </div>
-          </div>
-        </div>
-
         {/* Hero Section */}
         <section className="py-12 md:py-16 bg-gradient-to-b from-muted/20 to-background">
           <div className="container">
@@ -255,34 +238,6 @@ function DOTHazmatGeneralPage() {
                   </Accordion>
                 </div>
 
-                <div className="hidden md:block rounded-xl border border-primary/30 bg-primary/5 p-8 shadow-sm">
-                  <h3 className="text-2xl font-bold text-primary mb-3">Ready to get certified?</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Complete in 1–2 hours. Certificate included today.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <AddToCartButton
-                      courseId="dot-hazmat-general"
-                      price={119}
-                      size="lg"
-                      className="rounded-md px-6 py-3 font-semibold"
-                    >
-                      Start Training – $119 per seat
-                    </AddToCartButton>
-                    <Link href="/bulk-orders">
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        className="rounded-md px-6 py-3 font-semibold"
-                      >
-                        <span role="img" aria-label="team" className="mr-2">
-                          👥
-                        </span>
-                        Team & Bulk Pricing
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
               </div>
 
               {/* Sidebar */}
@@ -477,6 +432,41 @@ function DOTHazmatGeneralPage() {
                   </AccordionItem>
                 ))}
               </Accordion>
+            </div>
+          </div>
+        </section>
+
+        {/* Desktop CTA Reinforcement */}
+        <section className="hidden md:block py-16">
+          <div className="container">
+            <div className="mx-auto max-w-3xl rounded-2xl border border-primary/30 bg-primary/5 px-10 py-12 text-center shadow-sm">
+              <h3 className="text-3xl font-bold text-primary">Ready to get certified?</h3>
+              <p className="mt-3 text-base text-muted-foreground">
+                Complete in 1–2 hours. Certificate included today.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-4">
+                <AddToCartButton
+                  courseId="dot-hazmat-general"
+                  price={119}
+                  size="lg"
+                  className="w-full max-w-sm rounded-md px-6 py-3 font-semibold"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <ShoppingCart className="h-4 w-4" aria-hidden="true" />
+                    Start Training – $119 per seat
+                  </span>
+                </AddToCartButton>
+                <Link href="/bulk-orders" className="w-full max-w-sm">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full rounded-md px-6 py-3 font-semibold"
+                  >
+                    <Users className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Team & Bulk Pricing
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
