@@ -18,7 +18,6 @@ import {
   Play,
   ChevronDown,
   ShoppingCart,
-  Shield,
 } from "lucide-react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@kit/ui/accordion"
 import {
@@ -92,7 +91,10 @@ function DOTHazmatGeneralPage() {
           <div className="container">
             <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
               <div className="space-y-4">
-                <Badge className="bg-primary text-primary-foreground">49 CFR §172 Compliant</Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="bg-primary text-primary-foreground">49 CFR §172 Compliant</Badge>
+                  <Badge className="bg-blue-600 text-white/90">Security Awareness included</Badge>
+                </div>
                 <h1 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
                   DOT HAZMAT General Awareness Training
                 </h1>
@@ -105,10 +107,6 @@ function DOTHazmatGeneralPage() {
                     <span>1-2 hours</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span>All skill levels</span>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <Award className="h-4 w-4 text-primary" />
                     <span>Certificate included</span>
                   </div>
@@ -117,10 +115,6 @@ function DOTHazmatGeneralPage() {
                   <span className="text-lg leading-none" role="img" aria-label="United States flag">🇺🇸</span>
                   <span className="text-lg leading-none" role="img" aria-label="Mexico flag">🇲🇽</span>
                   <span>English & Spanish included</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Shield className="h-4 w-4 text-primary" />
-                  <span>Security Awareness included</span>
                 </div>
                 <div className="pt-4">
                   <AddToCartButton
@@ -391,20 +385,20 @@ function DOTHazmatGeneralPage() {
                     </p>
                     <ul className="space-y-2 text-sm text-foreground">
                       <li className="flex items-start gap-2">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary/80" />
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
                         <span>Clause-by-clause alignment</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary/80" />
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
                         <span>Covers all hazmat employee basics</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary/80" />
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-secondary" />
                         <span>Handy summary for HR and auditors</span>
                       </li>
                     </ul>
                     <LeadMagnetDownloadButton
-                      buttonClassName="flex justify-center mx-auto w-[180px] rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
+                      buttonClassName="mx-auto inline-flex w-[180px] justify-center rounded-full bg-[rgba(233,195,81,1)] px-5 py-2 text-sm font-semibold text-black shadow-sm transition hover:bg-[rgba(233,195,81,0.9)]"
                     >
                       Open Cross-Walk
                     </LeadMagnetDownloadButton>
