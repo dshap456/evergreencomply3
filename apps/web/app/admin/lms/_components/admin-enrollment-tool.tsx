@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@kit/ui/sonner';
 import { Spinner } from '@kit/ui/spinner';
 
-import { adminEnrollUserAction, listUsersForEnrollmentAction } from '../_lib/server/admin-enrollment-actions';
 import { loadCoursesAction } from '../_lib/server/load-courses-action';
 import { simpleEnrollUserAction } from '../_lib/server/simple-enrollment-action';
 
@@ -18,16 +17,8 @@ interface Course {
   status: string;
 }
 
-interface User {
-  id: string;
-  email: string | null;
-  name: string;
-  created_at?: string | null;
-}
-
 export function AdminEnrollmentTool() {
   const [courses, setCourses] = useState<Course[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -41,23 +32,17 @@ export function AdminEnrollmentTool() {
     try {
       console.log('AdminEnrollmentTool: Starting to load data...');
       
-      const [coursesData, usersData] = await Promise.all([
-        loadCoursesAction({}),
-        listUsersForEnrollmentAction({})
-      ]);
+      const coursesData = await loadCoursesAction({});
       
       console.log('AdminEnrollmentTool: Raw data loaded:', {
         coursesCount: coursesData?.length || 0,
-        usersCount: usersData?.length || 0,
-        courses: coursesData?.map(c => ({ id: c.id, title: c.title, status: c.status })),
-        users: usersData?.map(u => ({ email: u.email, name: u.name }))
+        courses: coursesData?.map((c) => ({ id: c.id, title: c.title, status: c.status })),
       });
       
       const publishedCourses = coursesData.filter((c: Course) => c.status === 'published');
       console.log('AdminEnrollmentTool: Published courses:', publishedCourses.length);
       
       setCourses(publishedCourses);
-      setUsers(usersData);
       
       console.log('AdminEnrollmentTool: Data loaded successfully');
     } catch (error) {
@@ -90,9 +75,17 @@ export function AdminEnrollmentTool() {
       
       if (result.success) {
         console.log('AdminEnrollmentTool: Enrollment successful:', result);
-        toast.success(result.message);
+        if (result.message) {
+          toast.success(result.message);
+        } else {
+          toast.success('Enrollment completed');
+        }
+
+        if (result.warning) {
+          toast.warning(result.warning);
+        }
+
         setUserEmail('');
-        setSelectedCourse('');
       } else {
         throw new Error(result.error || 'Enrollment failed');
       }
