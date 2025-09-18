@@ -485,14 +485,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
                       {!isAuthenticated ? (
                         <div className="border-t pt-3 space-y-3">
                           <div className="text-center py-4">
-                            <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                            <h3 className="hidden md:block text-sm font-medium mb-1">Create Account to Checkout</h3>
                             <p className="hidden md:block text-xs text-muted-foreground mb-4">
                               Create a free account to complete your purchase
                             </p>
                             <div className="space-y-2">
                               <Button 
-                                className="hidden md:inline-flex w-full bg-[#F4C542] text-[#17472D] hover:bg-[#E0B63B] focus-visible:ring-[#17472D]/40" 
+                                className="hidden md:inline-flex w-full bg-[#F4C542] text-[#17472D] font-semibold hover:bg-[#E0B63B] focus-visible:ring-[#17472D]/40" 
                                 size="sm"
                                 onClick={() => {
                                   try {
