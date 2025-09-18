@@ -402,9 +402,9 @@ function DOTHazmatGeneralPage() {
                       </div>
                     </div>
                     <LeadMagnetDownloadButton
-                      buttonClassName="bg-[rgba(233,195,81,1)] hover:bg-[rgba(233,195,81,0.9)] text-black"
+                      buttonClassName="mx-auto w-auto bg-[rgba(233,195,81,1)] px-4 py-2 text-sm text-black hover:bg-[rgba(233,195,81,0.9)]"
                     >
-                      Download Free Guide
+                      Open Cross-Walk
                     </LeadMagnetDownloadButton>
                     <p className="text-xs text-muted-foreground text-center">No spam, just compliance insights</p>
                   </CardContent>

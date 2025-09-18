@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       .from('lead_magnet_signups')
       .upsert(
         { email, source_slug: source },
-        { onConflict: 'email,source_slug' }
+        { onConflict: 'email,source_slug', returning: 'minimal' }
       );
 
     if (error) {

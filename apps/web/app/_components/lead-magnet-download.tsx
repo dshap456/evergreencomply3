@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+
 import { Button } from '@kit/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@kit/ui/dialog';
 import { Input } from '@kit/ui/input';
@@ -29,8 +30,8 @@ export function LeadMagnetDownloadButton({
 
   const resetState = () => {
     setEmail('');
-    setError(null);
     setIsSubmitting(false);
+    setError(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -65,13 +66,13 @@ export function LeadMagnetDownloadButton({
         throw new Error(data?.error ?? 'Unable to process your request right now.');
       }
 
-      const urlToOpen: string = data?.downloadUrl ?? downloadUrl;
+      const targetUrl: string = data?.downloadUrl ?? downloadUrl;
 
       setIsOpen(false);
       resetState();
 
       setTimeout(() => {
-        window.open(urlToOpen, '_blank', 'noopener');
+        window.open(`${targetUrl}?src=${encodeURIComponent(source)}`, '_blank', 'noopener');
       }, 100);
     } catch (err) {
       console.error('lead magnet signup failed', err);
@@ -93,17 +94,18 @@ export function LeadMagnetDownloadButton({
     >
       <DialogTrigger asChild>
         <Button
+          type="button"
           variant={buttonVariant}
-          className={cn('w-full rounded-md font-semibold', buttonClassName)}
+          className={cn('w-auto rounded-md font-semibold', buttonClassName)}
         >
           {children}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Get the DOT HAZMAT Cross-Walk</DialogTitle>
+          <DialogTitle>Unlock the Cross-Walk</DialogTitle>
           <DialogDescription>
-            Enter your email and we&apos;ll open the PDF in a new tab right away.
+            Drop in your email and we&apos;ll open the PDF immediately.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -114,8 +116,8 @@ export function LeadMagnetDownloadButton({
               type="email"
               inputMode="email"
               autoComplete="email"
-              autoFocus
               required
+              autoFocus
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="you@example.com"
@@ -123,10 +125,10 @@ export function LeadMagnetDownloadButton({
           </div>
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Working…' : 'Email me the PDF'}
+            {isSubmitting ? 'Unlocking…' : 'Open the PDF'}
           </Button>
           <p className="text-xs text-muted-foreground text-center">
-            We&apos;ll send a quick confirmation and open the download instantly—no spam.
+            We collect the email for follow-up. The PDF opens in a new tab right away.
           </p>
         </form>
       </DialogContent>
