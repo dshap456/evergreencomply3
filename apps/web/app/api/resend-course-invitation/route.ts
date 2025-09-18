@@ -8,10 +8,10 @@ export async function POST(request: Request) {
     const { invitationId, accountId } = await request.json();
     const client = getSupabaseServerClient();
     const adminClient = getSupabaseServerAdminClient();
-    
+
     // Get current user
     const { data: { user }, error: userError } = await client.auth.getUser();
-    
+
     if (!user || userError) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -97,21 +97,16 @@ export async function POST(request: Request) {
     // Resend the invitation email
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     const inviteUrl = `${baseUrl}/auth/sign-up?invite_token=${newToken}`;
-    
-    console.log('=== Resending Course Invitation ===');
-    console.log('Email:', invitation.email);
-    console.log('New token:', newToken);
-    console.log('Invite URL:', inviteUrl);
-    
+
     try {
       const mailer = await getMailer();
       const primarySender = process.env.EMAIL_SENDER || 'Evergreen Comply <support@evergreencomply.com>';
       const fallbackSender = 'Evergreen Comply <onboarding@resend.dev>';
-      
+
       let emailSender = primarySender;
-      
+
       const subject = `Reminder: You're invited to join "${invitation.courses.title}" by ${account.name}`;
-      
+
       const html = `
         <!DOCTYPE html>
         <html>
@@ -125,24 +120,24 @@ export async function POST(request: Request) {
               <h1 style="color: #111827; font-size: 24px; font-weight: 600; margin: 0 0 8px 0;">Course Invitation Reminder</h1>
               <p style="color: #6b7280; font-size: 16px; margin: 0;">Your invitation has been resent</p>
             </div>
-            
+
             <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
               <p style="font-size: 16px; margin: 0 0 16px 0;">Hi ${invitation.invitee_name || 'there'},</p>
-              
+
               <p style="font-size: 16px; margin: 0 0 16px 0;">
                 This is a reminder that <strong>${account.name}</strong> has invited you to enroll in the course:
               </p>
-              
+
               <div style="background-color: #f3f4f6; border-radius: 6px; padding: 16px; margin: 0 0 24px 0;">
                 <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin: 0;">${invitation.courses.title}</h2>
               </div>
-              
+
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${inviteUrl}" style="display: inline-block; background-color: #3b82f6; color: white; font-size: 16px; font-weight: 500; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
                   Accept Invitation
                 </a>
               </div>
-              
+
               <p style="font-size: 14px; color: #6b7280; margin: 24px 0 0 0;">
                 Or copy and paste this link into your browser:
               </p>
@@ -150,7 +145,7 @@ export async function POST(request: Request) {
                 ${inviteUrl}
               </p>
             </div>
-            
+
             <div style="text-align: center; padding: 24px 0;">
               <p style="font-size: 14px; color: #111827; font-weight: 600; margin: 0 0 8px 0;">
                 New to Evergreen Comply?
@@ -171,11 +166,11 @@ export async function POST(request: Request) {
           </body>
         </html>
       `;
-      
+
       // Try with configured sender first
       let emailSent = false;
       let lastError = null;
-      
+
       try {
         await mailer.sendEmail({
           from: emailSender,
@@ -185,15 +180,12 @@ export async function POST(request: Request) {
         });
         emailSent = true;
       } catch (firstError) {
-        console.log('Primary sender failed:', firstError);
         lastError = firstError;
-        
+
         // If domain not verified, try with fallback
-        if (emailSender !== fallbackSender && 
-            firstError instanceof Error && 
+        if (emailSender !== fallbackSender &&
+            firstError instanceof Error &&
             firstError.message.includes('domain is not verified')) {
-          console.log('Trying fallback sender:', fallbackSender);
-          
           try {
             await mailer.sendEmail({
               from: fallbackSender,
@@ -202,40 +194,38 @@ export async function POST(request: Request) {
               html,
             });
             emailSent = true;
-            console.log('✅ Email sent with fallback sender');
           } catch (fallbackError) {
             lastError = fallbackError;
           }
         }
       }
-      
+
       if (!emailSent) {
         throw lastError;
       }
-      
-      console.log('✅ Invitation email resent successfully to:', invitation.email);
+
     } catch (emailError) {
       console.error('❌ Failed to resend invitation email:', emailError);
       // Still return success since the invitation was updated
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         invitation: updatedInvitation,
         warning: 'Invitation updated but email could not be sent. Please share the invitation link manually.',
         emailError: emailError instanceof Error ? emailError.message : 'Email sending failed'
       });
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       invitation: updatedInvitation,
       message: 'Invitation resent successfully'
     });
 
   } catch (error) {
     console.error('Server error:', error);
-    return NextResponse.json({ 
-      error: 'Server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
+    return NextResponse.json({
+      error: 'Server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

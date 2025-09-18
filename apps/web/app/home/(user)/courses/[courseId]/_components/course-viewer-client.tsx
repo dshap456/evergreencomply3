@@ -58,7 +58,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState<CourseData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Initialize language from localStorage with courseId-specific key
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es'>(() => {
     if (typeof window !== 'undefined') {
@@ -72,10 +72,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(`/api/debug-course?courseId=${courseId}&language=${language}`);
       const result = await response.json();
-      
+
       if (result.success && result.course) {
         // Process lessons to determine locked state
         const processedCourse = processLessonLockStates(result.course);
@@ -83,7 +83,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       } else {
         const errorMsg = result.error || 'Failed to load course data';
         console.error('Failed to load course:', errorMsg);
-        
+
         // Check if it's an enrollment issue
         if (errorMsg.includes('not enrolled')) {
           setError('You are not enrolled in this course. Please enroll first or contact support.');
@@ -102,41 +102,41 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   const processLessonLockStates = (courseData: CourseData): CourseData => {
     let previousLessonCompleted = true;
     let allLessonsFlat: CourseLesson[] = [];
-    
+
     // First, flatten all lessons to process them in order
     courseData.modules.forEach(module => {
       module.lessons.forEach(lesson => {
         allLessonsFlat.push(lesson);
       });
     });
-    
+
     // Process all lessons in sequence to determine lock states
     const processedLessonsMap = new Map<string, CourseLesson>();
     allLessonsFlat.forEach((lesson, index) => {
       // First lesson is always unlocked, others depend on previous completion
       const isLocked = index > 0 ? !previousLessonCompleted : false;
-      
+
       // Check if lesson meets completion criteria
       const isFullyCompleted = lesson.completed || false;
-      
+
       // Update previous lesson completed state for next iteration
       previousLessonCompleted = isFullyCompleted;
-      
+
       processedLessonsMap.set(lesson.id, {
         ...lesson,
         is_locked: isLocked,
         completed: isFullyCompleted
       });
     });
-    
+
     // Now rebuild modules with processed lessons
     const processedModules = courseData.modules.map(module => ({
       ...module,
-      lessons: module.lessons.map(lesson => 
+      lessons: module.lessons.map(lesson =>
         processedLessonsMap.get(lesson.id) || lesson
       )
     }));
-    
+
     return {
       ...courseData,
       modules: processedModules
@@ -145,19 +145,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   useEffect(() => {
     // Don't reset currentLessonId here - let the restoration logic handle it
-    
+
     // Load course data with the selected language (from localStorage or default)
     loadCourseData(selectedLanguage);
   }, [courseId]);
 
   const handleLanguageSwitch = async (newLanguage: 'en' | 'es') => {
     if (newLanguage === selectedLanguage) return;
-    
+
     // Show warning about progress not being lost
-    const message = newLanguage === 'es' 
+    const message = newLanguage === 'es'
       ? "Switching to Spanish content. Your progress in English will be saved.\n\nCambiando al contenido en español. Tu progreso en inglés se guardará."
       : "Switching to English content. Your progress in Spanish will be saved.\n\nCambiando al contenido en inglés. Tu progreso en español se guardará.";
-      
+
     if (confirm(message)) {
       setSelectedLanguage(newLanguage);
       // Save language preference to localStorage
@@ -193,10 +193,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
   };
 
   const [currentLessonId, setCurrentLessonIdRaw] = useState<string | null>(null);
-  
-  // Wrapper to debug lesson changes
+
   const setCurrentLessonId = (id: string | null) => {
-    console.log(`🔄 Setting currentLessonId from "${currentLessonId}" to "${id}" (courseId: ${courseId})`);
     setCurrentLessonIdRaw(id);
   };
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(null);
@@ -209,7 +207,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   // Save current lesson when it changes and on unmount
   useEffect(() => {
-    
+
     // Don't save during initial load/restoration
     if (isInitialLoad) {
       return;
@@ -223,21 +221,21 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
     // Save current lesson whenever it changes (not just on unmount)
     const saveCurrentLesson = async () => {
-      
+
       // Skip if no lesson selected
       if (!currentLessonId) {
         return;
       }
-      
+
       // Skip if already saved
       if (lastSavedLessonRef.current === currentLessonId) {
         return;
       }
-      
+
       lastSavedLessonRef.current = currentLessonId;
-      
+
       try {
-        
+
         const response = await fetch('/api/lessons/update-progress', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -246,7 +244,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             courseId
           })
         });
-        
+
         if (!response.ok) {
           const error = await response.json();
           console.error('Failed to save current lesson:', error);
@@ -295,30 +293,29 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   // Fetch last accessed lesson from database when course loads
   useEffect(() => {
-    
+
     const fetchLastAccessedLesson = async () => {
       if (!course || !course.modules || course.modules.length === 0) {
         return;
       }
-      
+
       // Only skip restoration if we explicitly have a lesson selected
       // (not if it's null from initialization)
       if (currentLessonId && lastSavedLessonRef.current === currentLessonId) {
-        console.log('⏸️ Already have lesson selected and saved:', currentLessonId);
         return;
       }
-      
+
       try {
         const response = await fetch(`/api/lessons/last-accessed?courseId=${courseId}`);
         const result = await response.json();
-        
+
         if (result.success && result.lessonId) {
           setLastAccessedLesson(result.lessonId);
           // Check if this lesson is still available (not locked)
           const allLessons = course.modules.flatMap(m => m.lessons);
-          
+
           const lesson = allLessons.find(l => l.id === result.lessonId);
-          
+
           if (lesson && !lesson.is_locked) {
             setCurrentLessonId(result.lessonId);
             // Mark initial load as complete
@@ -331,7 +328,6 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
               setCurrentLessonId(nextLesson.lesson.id);
               // Mark initial load as complete
               setIsInitialLoad(false);
-            } else {
             }
           }
         } else {
@@ -354,7 +350,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         }
       }
     };
-    
+
     fetchLastAccessedLesson();
   }, [course, lessonRestorationKey, courseId, selectedLanguage]); // Include all dependencies
 
@@ -363,12 +359,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
     const lesson = course?.modules
       .flatMap(m => m.lessons)
       .find(l => l.id === lessonId);
-    
+
     if (lesson?.is_locked) {
       // Don't allow selecting locked lessons
       return;
     }
-    
+
     // Ensure saves are enabled for manual navigation
     setIsInitialLoad(false);
     setCurrentLessonId(lessonId);
@@ -409,14 +405,14 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   const isLastLesson = () => {
     if (!course || !currentLessonId) return false;
-    
+
     const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
     course.modules.forEach(module => {
       module.lessons.forEach(lesson => {
         allLessons.push({ module, lesson });
       });
     });
-    
+
     const currentIndex = allLessons.findIndex(item => item.lesson.id === currentLessonId);
     return currentIndex === allLessons.length - 1;
   };
@@ -436,7 +432,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
       const response = await fetch(`/api/lessons/${lessonId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           time_spent: timeSpent,
           quiz_score: quizScore,
           is_quiz: quizScore !== undefined
@@ -445,12 +441,12 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
       if (response.ok) {
         const responseData = await response.json();
-        
+
         // If this was a final quiz with a passing score, redirect to My Learning
         if (isFinalQuiz && quizScore && quizScore >= 80) {
           // Add a small delay to ensure database operations complete
           await new Promise(resolve => setTimeout(resolve, 1000));
-          
+
           try {
             // Use router.push for cleaner navigation within Next.js
             await router.push('/home/courses');
@@ -461,19 +457,19 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           }
           return; // Exit early, no need to refresh course data since we're leaving
         }
-        
+
         // Get fresh course data from server to ensure consistency
         const courseResponse = await fetch(`/api/debug-course?courseId=${courseId}&language=${selectedLanguage}`);
         const courseResult = await courseResponse.json();
-        
+
         if (courseResult.success) {
           // Process lessons to determine locked state with fresh server data
           const processedCourse = processLessonLockStates(courseResult.course);
           setCourse(processedCourse);
-          
+
           // Preserve current lesson selection (don't reset to first lesson)
           const preserveCurrentLesson = currentLessonId;
-          
+
           // Find next lesson based on server data
           const allLessons: Array<{ module: CourseModule; lesson: CourseLesson }> = [];
           processedCourse.modules.forEach(module => {
@@ -485,7 +481,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           const currentIndex = allLessons.findIndex(item => item.lesson.id === lessonId);
           if (currentIndex >= 0 && currentIndex < allLessons.length - 1) {
             const nextLessonData = allLessons[currentIndex + 1];
-            
+
             // Auto-advance to next lesson after a short delay
             setTimeout(() => {
               setCurrentLessonId(nextLessonData.lesson.id);
@@ -497,15 +493,15 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
           // Still mark the lesson as completed in the UI even if refresh fails
           const updatedModules = course.modules.map(module => ({
             ...module,
-            lessons: module.lessons.map(lesson => 
-              lesson.id === lessonId 
+            lessons: module.lessons.map(lesson =>
+              lesson.id === lessonId
                 ? { ...lesson, completed: true, quiz_score: quizScore }
                 : lesson
             )
           }));
           setCourse({ ...course, modules: updatedModules });
         }
-        
+
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         console.error('Failed to save lesson completion:', errorData);
@@ -571,8 +567,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                   <button
                     onClick={() => handleLanguageSwitch('en')}
                     className={`px-2 py-1 text-xs font-medium rounded ${
-                      selectedLanguage === 'en' 
-                        ? 'bg-blue-600 text-white' 
+                      selectedLanguage === 'en'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                     }`}
                   >
@@ -581,8 +577,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                   <button
                     onClick={() => handleLanguageSwitch('es')}
                     className={`px-2 py-1 text-xs font-medium rounded ${
-                      selectedLanguage === 'es' 
-                        ? 'bg-blue-600 text-white' 
+                      selectedLanguage === 'es'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                     }`}
                   >
@@ -599,8 +595,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
             )}
             <div className="flex items-center gap-1">
               <Button
-                variant="ghost" 
-                size="sm" 
+                variant="ghost"
+                size="sm"
                 onClick={() => setSidebarMinimized(!sidebarMinimized)}
                 className="hidden lg:flex"
                 title={sidebarMinimized ? "Expand sidebar" : "Minimize sidebar"}
@@ -608,8 +604,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                 {sidebarMinimized ? '→' : '←'}
               </Button>
               <Button
-                variant="ghost" 
-                size="sm" 
+                variant="ghost"
+                size="sm"
                 onClick={() => setSidebarOpen(false)}
                 className="lg:hidden"
               >
@@ -632,10 +628,10 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                         lesson.is_locked
                           ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : currentLessonId === lesson.id 
-                            ? 'bg-blue-600 text-white' 
-                            : lesson.completed 
-                              ? 'bg-green-600 text-white' 
+                          : currentLessonId === lesson.id
+                            ? 'bg-blue-600 text-white'
+                            : lesson.completed
+                              ? 'bg-green-600 text-white'
                               : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                       }`}
                       title={`${lesson.title} (${module.title})${lesson.is_locked ? ' - Locked' : ''}`}
@@ -661,18 +657,18 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
                         className={`w-full flex items-center gap-3 p-2 text-left rounded-lg transition-all text-sm ${
                           lesson.is_locked
                             ? 'bg-gray-100 opacity-50 cursor-not-allowed'
-                            : currentLessonId === lesson.id 
-                              ? 'bg-blue-100 border border-blue-200 text-blue-900' 
-                              : lesson.completed 
-                                ? 'bg-green-50 hover:bg-green-100' 
+                            : currentLessonId === lesson.id
+                              ? 'bg-blue-100 border border-blue-200 text-blue-900'
+                              : lesson.completed
+                                ? 'bg-green-50 hover:bg-green-100'
                                 : 'hover:bg-gray-100'
                         }`}
                       >
                         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          lesson.is_locked 
-                            ? 'bg-gray-300 text-gray-500' 
-                            : lesson.completed 
-                              ? 'bg-green-600 text-white' 
+                          lesson.is_locked
+                            ? 'bg-gray-300 text-gray-500'
+                            : lesson.completed
+                              ? 'bg-green-600 text-white'
                               : 'bg-gray-200 text-gray-600'
                         }`}>
                           {lesson.is_locked ? '🔒' : lesson.completed ? '✓' : ''}
@@ -702,8 +698,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between p-2 sm:p-3 bg-white gap-2 flex-shrink-0">
           <Button
-            variant="ghost" 
-            size="sm" 
+            variant="ghost"
+            size="sm"
             onClick={() => setSidebarOpen(true)}
             className="shrink-0 text-xs sm:text-sm"
           >
@@ -714,8 +710,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
         {/* Lesson Player */}
         <div className="flex-1 bg-white overflow-hidden flex flex-col" style={{ minHeight: 0 }}>
           {currentLesson ? (
-            <LessonPlayer 
-              lesson={currentLesson.lesson} 
+            <LessonPlayer
+              lesson={currentLesson.lesson}
               module={currentLesson.module}
               onNext={handleNextLesson}
               hasNextLesson={!!getNextLessonInSequence()}
@@ -741,8 +737,8 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -751,16 +747,16 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 }
 
 // Lesson Player Component
-function LessonPlayer({ 
-  lesson, 
-  module, 
+function LessonPlayer({
+  lesson,
+  module,
   onNext,
   hasNextLesson,
   isLastLesson,
   onLessonComplete,
   selectedLanguage
-}: { 
-  lesson: CourseLesson; 
+}: {
+  lesson: CourseLesson;
   module: CourseModule;
   onNext: () => void;
   hasNextLesson: boolean;
@@ -769,7 +765,7 @@ function LessonPlayer({
   selectedLanguage: 'en' | 'es';
 }) {
   const [currentLessonCompleted, setCurrentLessonCompleted] = useState(lesson.completed);
-  
+
   // Reset completion state when lesson changes
   useEffect(() => {
     setCurrentLessonCompleted(lesson.completed);
@@ -782,13 +778,12 @@ function LessonPlayer({
         return (
           <div className="bg-gray-900 flex items-center justify-center w-full h-[25vh] sm:h-[35vh] md:h-[50vh] lg:h-[60vh] max-h-[200px] sm:max-h-[300px] md:max-h-[400px] lg:max-h-[500px]">
             <div className="w-full h-full relative flex items-center justify-center">
-              <StorageVideoPlayer 
+              <StorageVideoPlayer
                 lessonId={lesson.id}
                 languageCode={selectedLanguage}
-                onProgress={(progress) => {
-                  // TODO: Track video progress for completion requirements
-                  console.log('Video progress:', progress);
-                }}
+                  onProgress={(progress) => {
+                    // TODO: Track video progress for completion requirements
+                  }}
                 onCompletion={(completed) => {
                   if (completed) {
                     setCurrentLessonCompleted(true);
@@ -800,7 +795,7 @@ function LessonPlayer({
             </div>
           </div>
         );
-        
+
       case 'text':
         return (
           <div className="prose max-w-none bg-white rounded-lg p-6">
@@ -815,10 +810,10 @@ function LessonPlayer({
             )}
           </div>
         );
-        
+
       case 'quiz':
         return (
-          <QuizPlayer 
+          <QuizPlayer
             lesson={lesson}
             currentScore={lesson.quiz_score}
             onQuizComplete={(score, passed) => {
@@ -831,16 +826,16 @@ function LessonPlayer({
             }}
           />
         );
-        
+
       case 'asset':
         return (
           <div className="bg-white rounded-lg p-3 sm:p-4 md:p-6 text-center">
             <h2 className="text-lg sm:text-xl font-bold mb-2">{lesson.title}</h2>
             <p className="text-gray-600 mb-4">Asset content</p>
             {lesson.asset_url && (
-              <a 
-                href={lesson.asset_url} 
-                target="_blank" 
+              <a
+                href={lesson.asset_url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800"
               >
@@ -849,7 +844,7 @@ Download Asset
             )}
           </div>
         );
-        
+
       default:
         return (
           <div className="bg-white rounded-lg p-6 text-center">
@@ -872,8 +867,8 @@ Download Asset
                 <span className="sm:hidden">✓</span>
               </Badge>
             )}
-            <Button 
-              onClick={onNext} 
+            <Button
+              onClick={onNext}
               variant="default"
               size="sm"
               disabled={!currentLessonCompleted || (!hasNextLesson && !isLastLesson)}
@@ -895,13 +890,13 @@ Download Asset
 }
 
 // Custom Video Player Component that prevents fast-forwarding
-function VideoPlayer({ 
-  src, 
+function VideoPlayer({
+  src,
   isPlaceholder,
   onProgress,
   onCompletion
-}: { 
-  src: string; 
+}: {
+  src: string;
   isPlaceholder: boolean;
   onProgress: (progress: number) => void;
   onCompletion: (completed: boolean) => void;
@@ -923,24 +918,24 @@ function VideoPlayer({
     // Set up video for mobile compatibility
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
-    
+
     // Try to load video metadata for mobile
     video.load();
 
     const handleTimeUpdate = () => {
       const current = video.currentTime;
       setCurrentTime(current);
-      
+
       // Update max watched time only if moving forward
       if (current > maxWatchedTime) {
         setMaxWatchedTime(current);
       }
-      
+
       // Calculate and report progress
       if (duration > 0) {
         const progress = (maxWatchedTime / duration) * 100;
         onProgress(progress);
-        
+
         // Check if video meets completion requirement (95%)
         if (progress >= 95 && !isCompleted) {
           setIsCompleted(true);
@@ -951,7 +946,7 @@ function VideoPlayer({
 
     const handleSeeking = () => {
       const current = video.currentTime;
-      
+
       // Prevent seeking beyond the maximum watched time (plus a small buffer for rewind)
       if (current > maxWatchedTime + 1) {
         video.currentTime = maxWatchedTime;
@@ -998,7 +993,7 @@ function VideoPlayer({
         video.pause();
       } else {
         video.play().catch(err => {
-          console.log('Playback failed:', err);
+          console.error('Playback failed:', err);
           // Show play button again if autoplay fails
           setShowPlayButton(true);
         });
@@ -1012,7 +1007,7 @@ function VideoPlayer({
 
     if (!document.fullscreenElement) {
       container.requestFullscreen().catch(err => {
-        console.log('Fullscreen failed:', err);
+        console.error('Fullscreen failed:', err);
       });
     } else {
       document.exitFullscreen();
@@ -1045,7 +1040,7 @@ function VideoPlayer({
 
   return (
     <div ref={containerRef} className="w-full h-full relative bg-black">
-      <video 
+      <video
         ref={videoRef}
         className="w-full h-full object-contain"
         src={src}
@@ -1057,10 +1052,10 @@ function VideoPlayer({
       >
         Your browser does not support the video tag.
       </video>
-      
+
       {/* Play Button Overlay for Mobile */}
       {showPlayButton && !isPlaying && (
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
           onClick={togglePlayPause}
         >
@@ -1071,25 +1066,25 @@ function VideoPlayer({
           </div>
         </div>
       )}
-      
+
       {/* Custom Controls Overlay */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 md:p-4">
         {/* Progress Bar */}
         <div className="mb-2 md:mb-3 py-2 -my-2" onClick={handleProgressClick}>
           <div className="w-full bg-gray-600 rounded-full h-3 md:h-1 relative cursor-pointer">
             {/* Max watched progress (gray) */}
-            <div 
+            <div
               className="bg-gray-400 h-full rounded-full absolute top-0 left-0"
               style={{ width: `${maxProgressPercentage}%` }}
             />
             {/* Current progress (blue) */}
-            <div 
+            <div
               className="bg-blue-500 h-full rounded-full absolute top-0 left-0"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
         </div>
-        
+
         {/* Control Buttons */}
         <div className="flex items-center justify-between text-white">
           <div className="flex items-center gap-2 md:gap-3">
@@ -1100,7 +1095,7 @@ function VideoPlayer({
             >
               <span className="text-xl md:text-base">⏪</span>
             </button>
-            
+
             <button
               onClick={togglePlayPause}
               className="text-white hover:bg-white/20 p-3 md:p-2 rounded-full min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors"
@@ -1109,12 +1104,12 @@ function VideoPlayer({
               <span className="text-xl md:text-base">{isPlaying ? '⏸️' : '▶️'}</span>
             </button>
           </div>
-          
+
           <div className="flex items-center gap-2 md:gap-3">
             <div className="text-xs md:text-sm">
               {formatTime(currentTime)} / {formatTime(duration)}
             </div>
-            
+
             <button
               onClick={toggleFullscreen}
               className="text-white hover:bg-white/20 p-3 md:p-2 rounded-full min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors"
@@ -1127,7 +1122,7 @@ function VideoPlayer({
           </div>
         </div>
       </div>
-      
+
       {/* Placeholder indicator */}
       {isPlaceholder && (
         <div className="absolute top-4 left-4 bg-yellow-500 text-black px-2 py-1 rounded text-xs">
@@ -1150,11 +1145,11 @@ interface QuizQuestion {
 }
 
 // Quiz Player Component
-function QuizPlayer({ 
-  lesson, 
+function QuizPlayer({
+  lesson,
   currentScore,
-  onQuizComplete 
-}: { 
+  onQuizComplete
+}: {
   lesson: CourseLesson;
   currentScore?: number;
   onQuizComplete: (score: number, passed: boolean) => void;
@@ -1174,10 +1169,10 @@ function QuizPlayer({
     const fetchQuizQuestions = async () => {
       try {
         setLoading(true);
-        
+
         const response = await fetch(`/api/quiz-questions?lessonId=${lesson.id}`);
         const result = await response.json();
-        
+
         if (result.success && result.questions) {
           setQuestions(result.questions);
         } else {
@@ -1293,14 +1288,14 @@ function QuizPlayer({
             Contact your instructor or check back later for quiz content.
           </p>
         </div>
-        
+
         {/* For now, treat empty quiz as completed so users can proceed */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
           <p className="text-blue-800 font-medium">
             ✅ This lesson is marked as complete since no quiz content is available.
           </p>
         </div>
-        
+
         <div className="text-sm text-gray-500">
           This quiz will be available once questions are added to the course.
         </div>
@@ -1329,7 +1324,7 @@ function QuizPlayer({
             Minimum passing score: 80%
           </p>
         </div>
-        
+
         {lesson.is_final_quiz && (
           <Badge variant="destructive" className="mb-4">Final Quiz</Badge>
         )}
@@ -1345,7 +1340,7 @@ function QuizPlayer({
                   <Spinner className="h-3 w-3" />
                   Saving your progress and redirecting to My Learning...
                 </p>
-                <Link 
+                <Link
                   href="/home/courses"
                   className="text-blue-600 hover:text-blue-800 text-sm mt-2 inline-block underline"
                 >
@@ -1359,7 +1354,7 @@ function QuizPlayer({
             <p className="text-red-800 font-medium">
               ❌ Score too low. You need at least 80% to pass.
             </p>
-            <Button 
+            <Button
               onClick={retakeQuiz}
               variant="outline"
               className="mt-3"
@@ -1392,7 +1387,7 @@ function QuizPlayer({
           Question {currentQuestionIndex + 1} of {totalQuestions}
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-          <div 
+          <div
             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
           />
@@ -1404,14 +1399,14 @@ function QuizPlayer({
         <h3 className="text-lg font-medium mb-4">
           {currentQuestion.question}
         </h3>
-        
+
         <div className="space-y-3">
           {currentQuestion.options.map((option, index) => (
             <label
               key={index}
               className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
-                selectedAnswer === option 
-                  ? 'border-blue-500 bg-blue-50' 
+                selectedAnswer === option
+                  ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200'
               }`}
             >
@@ -1424,8 +1419,8 @@ function QuizPlayer({
                 className="sr-only"
               />
               <div className={`w-4 h-4 rounded-full border-2 mr-3 flex items-center justify-center ${
-                selectedAnswer === option 
-                  ? 'border-blue-500 bg-blue-500' 
+                selectedAnswer === option
+                  ? 'border-blue-500 bg-blue-500'
                   : 'border-gray-300'
               }`}>
                 {selectedAnswer === option && (
@@ -1443,7 +1438,7 @@ function QuizPlayer({
         <div className="text-sm text-gray-500">
           {selectedAnswer ? 'Answer selected' : 'Please select an answer'}
         </div>
-        
+
         <Button
           onClick={handleNextQuestion}
           disabled={!selectedAnswer}

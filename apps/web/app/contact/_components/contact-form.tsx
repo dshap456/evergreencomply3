@@ -54,43 +54,37 @@ export function ContactForm() {
         onSubmit={form.handleSubmit((data) => {
           startTransition(async () => {
             try {
-              console.log('Submitting contact form with data:', data);
-              
               // Use fetch to call the API route as a workaround
               const response = await fetch('/api/contact-form-submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
               });
-              
-              console.log('Response status:', response.status);
-              console.log('Response ok:', response.ok);
-              
+
               let result;
               try {
                 result = await response.json();
-                console.log('Contact form submission result:', result);
               } catch (parseError) {
                 console.error('Failed to parse response:', parseError);
                 throw new Error('Invalid response from server');
               }
-              
+
               if (!response.ok) {
                 console.error('Response not ok:', response.status, result);
                 throw new Error(result?.error || `Server error: ${response.status}`);
               }
-              
+
               // Check multiple possible success indicators
-              const isSuccess = result?.success === true || 
-                               result?.result?.success === true || 
-                               (response.ok && result?.result?.emailId);
-              
+              const isSuccess =
+                result?.success === true ||
+                result?.result?.success === true ||
+                (response.ok && result?.result?.emailId);
+
               if (!isSuccess) {
                 console.error('Result indicates failure:', result);
                 throw new Error(result?.error || 'Failed to send message');
               }
 
-              console.log('Email sent successfully!');
               setState({ success: true, error: false });
               form.reset();
             } catch (error) {

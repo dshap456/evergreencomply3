@@ -27,30 +27,30 @@ const CheckoutSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate input
     const result = CheckoutSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: 'Invalid cart data' }, { status: 400 });
     }
-    
+
     const { cartItems, customerName, accountType, accountId } = result.data;
 
     // Get authenticated user (required now)
     const client = getSupabaseServerClient();
     const { data: { session } } = await client.auth.getSession();
-    
+
     if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
-    
+
     const user = session.user;
 
     // Determine the purchase account based on account type
     // For team purchases with explicit accountId, use that
     // Otherwise use the user's personal account
     let purchaseAccountId = user.id;
-    
+
     if (accountType === 'team' && accountId) {
       // Verify the user has access to this team account
       const { data: membership } = await client
@@ -59,10 +59,9 @@ export async function POST(request: NextRequest) {
         .eq('user_id', user.id)
         .eq('account_id', accountId)
         .single();
-      
+
       if (membership) {
         purchaseAccountId = accountId;
-        console.log('Using team account for purchase:', accountId);
       } else {
         console.warn('User does not have access to team account:', accountId);
         // Fall back to personal account
@@ -75,14 +74,12 @@ export async function POST(request: NextRequest) {
         .select('account_id, accounts!inner(id, is_personal_account)')
         .eq('user_id', user.id)
         .eq('accounts.is_personal_account', false);
-      
+
       if (teamAccounts && teamAccounts.length > 0) {
         // Use the first team account found
         purchaseAccountId = teamAccounts[0].account_id;
-        console.log('Using existing team account:', purchaseAccountId);
       } else {
         // No team account exists - webhook will handle creation
-        console.log('No team account found, will create during webhook processing');
       }
     }
 
@@ -93,10 +90,10 @@ export async function POST(request: NextRequest) {
 
     // Build line items for Stripe
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
-    
+
     for (const item of cartItems) {
       const courseId = item.courseId as keyof typeof COURSE_MAPPING;
-      
+
       // Map to the correct price ID based on course
       let priceId: string;
       switch (courseId) {
@@ -105,7 +102,7 @@ export async function POST(request: NextRequest) {
           priceId = 'price_1S5Cnq97cNCBYOcXYjFFdmEm';  // $119 price
           break;
         case 'advanced-hazmat':
-          priceId = 'price_1S5CnD97cNCBYOcX4ehVBpo6';  // $149 price  
+          priceId = 'price_1S5CnD97cNCBYOcX4ehVBpo6';  // $149 price
           break;
         case 'epa-rcra':
           priceId = 'price_1S5CmP97cNCBYOcXEKzqDOJs';  // $119 price
@@ -120,15 +117,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log('Creating Stripe checkout with line items:', lineItems);
-    console.log('Purchase account ID:', purchaseAccountId);
 
     // Determine success URL
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.evergreencomply.com';
     // 80/20: send users to a dedicated success page that fires GA4 purchase
     // (team vs personal routing can happen from there if needed)
     const successPath = `/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
-    
+
     // Create Stripe checkout session with proper account reference
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       line_items: lineItems,
@@ -151,25 +146,23 @@ export async function POST(request: NextRequest) {
         items: JSON.stringify(cartItems),
       },
     };
-    
+
     // Add user email and ALWAYS use user ID as reference
     // The webhook will determine the correct account based on quantity
     sessionParams.customer_email = user.email;
     sessionParams.client_reference_id = user.id;
-    
-    const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
 
-    console.log('Checkout session created:', checkoutSession.id);
+    const checkoutSession = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error('Checkout error:', error);
-    
+
     // Provide more detailed error message
     const errorMessage = error instanceof Error ? error.message : 'Failed to create checkout session';
-    
+
     return NextResponse.json(
-      { 
+      {
         error: errorMessage,
         details: process.env.NODE_ENV === 'development' ? error : undefined
       },

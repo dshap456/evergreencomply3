@@ -30,9 +30,6 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
 
   const updateCourse = async (courseId: string, updates: any) => {
     setSaving(courseId);
-    
-    console.log('Updating course:', courseId, 'with:', updates);
-    
     const { data, error } = await supabase
       .from('courses')
       .update(updates)
@@ -40,31 +37,27 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
       .select()
       .single();
 
-    console.log('Update result:', { data, error });
-
     if (error) {
       toast.error(`Failed to update course: ${error.message}`);
       console.error('Update error:', error);
     } else if (data) {
       toast.success('Course updated successfully');
-      console.log('Updated course data:', data);
       // Update local state
       setCourses(courses.map(c => c.id === courseId ? data : c));
-      
+
       // Verify the update by fetching again
       const { data: verifyData, error: verifyError } = await supabase
         .from('courses')
         .select('*')
         .eq('id', courseId)
         .single();
-        
-      console.log('Verification fetch:', { verifyData, verifyError });
+
       if (verifyData && verifyData.slug !== updates.slug) {
         console.warn('Slug did not save! Expected:', updates.slug, 'Got:', verifyData.slug);
         toast.error('Slug update may have failed - check console');
       }
     }
-    
+
     setSaving(null);
   };
 
@@ -92,10 +85,8 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
 
   const handleServerActionUpdate = async (courseId: string, updates: any) => {
     setSaving(courseId);
-    console.log('Using server action to update:', courseId, updates);
-    
     const result = await updateCourseAction(courseId, updates);
-    
+
     if (result.success) {
       toast.success('Course updated via server action');
       // Update local state
@@ -103,7 +94,7 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
     } else {
       toast.error(`Server action failed: ${result.error}`);
     }
-    
+
     setSaving(null);
   };
 
@@ -177,7 +168,7 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
                     /courses/{course.slug || 'slug-not-set'}
                   </p>
                 </div>
-                
+
                 <div>
                   <Label>Status</Label>
                   <div className="flex gap-2">
@@ -200,7 +191,7 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
                   </div>
                 </div>
               </div>
-              
+
               <div className="text-xs text-muted-foreground">
                 ID: {course.id} | Price: ${course.price || 0}
               </div>
@@ -208,7 +199,7 @@ export function CourseManagementClient({ initialCourses }: CourseManagementClien
           </Card>
         ))}
       </div>
-      
+
       <div className="mt-8">
         <Button onClick={refreshCourses} variant="outline">
           Refresh Courses

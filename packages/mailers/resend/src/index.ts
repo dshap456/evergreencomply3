@@ -39,12 +39,6 @@ class ResendMailer implements Mailer {
       ...contentObject,
     };
 
-    console.log('Sending email via Resend:', {
-      from: payload.from,
-      to: payload.to,
-      subject: payload.subject,
-    });
-
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -64,7 +58,6 @@ class ResendMailer implements Mailer {
       throw new Error(`Failed to send email: ${res.status} ${res.statusText} - ${errorText}`);
     }
 
-    const result = await res.json();
-    console.log('Email sent successfully:', result);
+    await res.json();
   }
 }

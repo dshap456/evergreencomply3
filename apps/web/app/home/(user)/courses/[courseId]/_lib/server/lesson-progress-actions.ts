@@ -47,12 +47,12 @@ export const updateLessonProgressAction = enhanceAction(
       status: data.progress >= 95 ? 'completed' : 'in_progress', // Auto-complete at 95%
       updated_at: new Date().toISOString(), // Always update this for tracking
     };
-    
+
     // Only add these if the columns exist (after migration)
     if (data.progress !== undefined) {
       progressData.progress_percentage = data.progress;
     }
-    
+
     const { error: progressError } = await client
       .from('lesson_progress')
       .upsert(progressData, {
@@ -97,7 +97,7 @@ export const completeLessonAction = enhanceAction(
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(), // Always update this for tracking
     };
-    
+
     // Only add these if the columns exist (after migration)
     if (data.finalProgress !== undefined) {
       completionData.progress_percentage = data.finalProgress;
@@ -105,7 +105,7 @@ export const completeLessonAction = enhanceAction(
     if (data.quizScore !== undefined) {
       completionData.quiz_score = data.quizScore;
     }
-    
+
     const { error: progressError } = await client
       .from('lesson_progress')
       .upsert(completionData, {
@@ -151,14 +151,8 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
       return;
     }
 
-    console.log('🔧 Debug - updateCourseProgress:', {
-      courseId,
-      userId,
-      totalLessonsFound: courseLessons.length
-    });
-
     const totalLessons = courseLessons.length;
-    
+
     if (totalLessons === 0) {
       return; // No lessons to track
     }
@@ -179,16 +173,6 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
     const completedCount = completedLessons?.length || 0;
     const overallProgress = Math.round((completedCount / totalLessons) * 100);
 
-    console.log('📊 Debug - Progress calculation:', {
-      courseId,
-      userId,
-      completedCount,
-      totalLessons,
-      overallProgress,
-      lessonIds: courseLessons.map(l => l.id),
-      completedLessonIds: completedLessons?.map(l => l.lesson_id) || []
-    });
-
     // Check if course is now complete
     const isCompleted = completedCount === totalLessons;
 
@@ -201,12 +185,6 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
       updateData.completed_at = new Date().toISOString();
     }
 
-    console.log('💾 Debug - Updating course enrollment:', {
-      courseId,
-      userId,
-      updateData
-    });
-
     const { error: updateError } = await client
       .from('course_enrollments')
       .update(updateData)
@@ -216,23 +194,17 @@ async function updateCourseProgress(client: any, userId: string, courseId: strin
     if (updateError) {
       console.error('Error updating course progress:', updateError);
     } else {
-      console.log('✅ Debug - Course progress updated successfully');
-      
       // If course is completed, trigger the completion function
       if (isCompleted) {
-        console.log('🎉 Course completed! Creating completion record...');
-        
         // Call the complete_course function to create proper completion record
         const { data: completionData, error: completionError } = await client
           .rpc('complete_course', {
             p_user_id: userId,
             p_course_id: courseId
           });
-        
+
         if (completionError) {
           console.error('Error creating course completion record:', completionError);
-        } else {
-          console.log('✅ Course completion record created:', completionData);
         }
       }
     }
@@ -275,9 +247,9 @@ export const getLessonProgressAction = enhanceAction(
       progressMap.set(progress.lesson_id, progress);
     });
 
-    return { 
-      success: true, 
-      progressMap: Object.fromEntries(progressMap) 
+    return {
+      success: true,
+      progressMap: Object.fromEntries(progressMap)
     };
   },
   {

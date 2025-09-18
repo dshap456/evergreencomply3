@@ -25,7 +25,6 @@ export const TeamNameSchema = z
   .max(50)
   .refine(
     (name) => {
-      console.log(name);
       return !SPECIAL_CHARACTERS_REGEX.test(name);
     },
     {

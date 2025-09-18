@@ -53,46 +53,42 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const quizEditorRef = useRef<QuizEditorRef>(null);
   const [existingQuizData, setExistingQuizData] = useState<any>(null);
   const [loadingQuizData, setLoadingQuizData] = useState(false);
-  
+
   // Load existing quiz data if this is a quiz lesson
   useEffect(() => {
     if (lessonData.content_type === 'quiz') {
-      console.log('LessonEditor: Loading existing quiz data for lesson:', lessonData.id);
       setLoadingQuizData(true);
-      
+
       loadQuizDataAction({ lessonId: lessonData.id })
         .then((result) => {
-          if (result.success && result.questions && result.questions.length > 0) {
-            // Transform database questions back to quiz editor format
-            const transformedQuestions = result.questions.map((q: any) => ({
-              id: q.id || Math.random().toString(36).substr(2, 9),
-              question_text: q.question,
-              question_type: q.question_type,
-              order_index: q.order_index,
-              options: Array.isArray(q.options) ? q.options.map((optText: string, idx: number) => ({
-                id: Math.random().toString(36).substr(2, 9),
-                option_text: optText,
-                is_correct: optText === q.correct_answer,
-                order_index: idx + 1
-              })) : [],
-              correct_answer: q.correct_answer,
-              explanation: q.explanation || '',
-              points: q.points || 1
-            }));
-            
-            const quizData = {
-              id: 'loaded-quiz-id',
-              title: 'Lesson Quiz',
-              description: 'Test your understanding of this lesson',
-              passing_score: 80,
-              time_limit_minutes: undefined,
-              questions: transformedQuestions
-            };
-            
-            console.log('LessonEditor: Loaded and transformed quiz data:', quizData);
-            setExistingQuizData(quizData);
-          } else {
-            console.log('LessonEditor: No existing quiz data found');
+        if (result.success && result.questions && result.questions.length > 0) {
+          // Transform database questions back to quiz editor format
+          const transformedQuestions = result.questions.map((q: any) => ({
+            id: q.id || Math.random().toString(36).substr(2, 9),
+            question_text: q.question,
+            question_type: q.question_type,
+            order_index: q.order_index,
+            options: Array.isArray(q.options) ? q.options.map((optText: string, idx: number) => ({
+              id: Math.random().toString(36).substr(2, 9),
+              option_text: optText,
+              is_correct: optText === q.correct_answer,
+              order_index: idx + 1
+            })) : [],
+            correct_answer: q.correct_answer,
+            explanation: q.explanation || '',
+            points: q.points || 1
+          }));
+
+          const quizData = {
+            id: 'loaded-quiz-id',
+            title: 'Lesson Quiz',
+            description: 'Test your understanding of this lesson',
+            passing_score: 80,
+            time_limit_minutes: undefined,
+            questions: transformedQuestions
+          };
+
+          setExistingQuizData(quizData);
           }
         })
         .catch((error) => {
@@ -107,13 +103,6 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
   const handleSave = () => {
     startTransition(async () => {
       try {
-        console.log('LessonEditor: Saving lesson with video data...', {
-          id: lessonData.id,
-          title: lessonData.title,
-          content_type: lessonData.content_type,
-          video_url: lessonData.video_url ? 'present' : 'missing'
-        });
-
         // First, update the basic lesson data
         const updateData = {
           id: lessonData.id,
@@ -125,11 +114,9 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
           language: lessonData.language,
           video_url: lessonData.video_url || undefined,
         };
-        
-        console.log('LessonEditor: Update data being sent:', updateData);
-        
+
         const updateResult = await updateLessonAction(updateData);
-        
+
         // Update local state with the returned lesson data from database
         if (updateResult.lesson) {
           setLessonData(updateResult.lesson);
@@ -137,45 +124,23 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
 
         // If this is a quiz lesson, save the quiz data
         if (lessonData.content_type === 'quiz' && quizEditorRef.current) {
-          console.log('LessonEditor: Saving quiz data...');
           const quizData = quizEditorRef.current.getQuizData();
-          
-          console.log('LessonEditor: Raw quiz data from editor:', quizData);
-          
+
           // Only try to save if there are actually questions
           if (quizData.questions.length > 0) {
-            console.log('LessonEditor: Quiz data structure for server:', {
-              lessonId: lessonData.id,
-              quizData: {
-                ...quizData,
-                questions: quizData.questions.map(q => ({
-                  id: q.id,
-                  question_text: q.question_text,
-                  question_type: q.question_type,
-                  options: q.options,
-                  points: q.points,
-                  order_index: q.order_index
-                }))
-              }
-            });
-            
             try {
               await saveQuizDataAction({
                 lessonId: lessonData.id,
                 quizData,
                 language: lessonData.language || 'en',
               });
-              
-              console.log('LessonEditor: Quiz data saved successfully');
             } catch (quizError) {
               console.error('LessonEditor: Quiz save failed:', quizError);
               throw new Error(`Failed to save quiz data: ${quizError instanceof Error ? quizError.message : 'Unknown error'}`);
             }
-          } else {
-            console.log('LessonEditor: No quiz questions to save, skipping quiz data save');
           }
         }
-        
+
         toast.success('Lesson saved successfully');
         // Pass the updated lesson data from the database (or current state if update failed)
         onSave(updateResult.lesson || lessonData);
@@ -276,7 +241,7 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   placeholder="Enter lesson title"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Description</label>
                 <Textarea
@@ -297,9 +262,9 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                     type="number"
                     value={lessonData.order_index}
                     onChange={(e) => {
-                      setLessonData(prev => ({ 
-                        ...prev, 
-                        order_index: parseInt(e.target.value) || 1 
+                      setLessonData(prev => ({
+                        ...prev,
+                        order_index: parseInt(e.target.value) || 1
                       }));
                       setIsDirty(true);
                     }}
@@ -344,11 +309,10 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                   accountId="c01c1f21-619e-4df0-9c0b-c8a3f296a2b7" // TODO: Get actual account ID from context
                   languageCode={lessonData.language}
                   onUploadComplete={(videoMetadata) => {
-                    console.log('Video uploaded, metadata:', videoMetadata);
                     // Update the lesson data with the new video URL
                     // The RPC returns the video_metadata row which contains storage_path
                     let storagePath = null;
-                    
+
                     if (videoMetadata) {
                       // Handle both object and string cases
                       if (typeof videoMetadata === 'object' && videoMetadata.storage_path) {
@@ -357,12 +321,11 @@ export function LessonEditor({ lesson, module, onBack, onSave }: LessonEditorPro
                         storagePath = videoMetadata;
                       }
                     }
-                    
+
                     if (storagePath) {
-                      console.log('Updating lesson video_url to:', storagePath);
-                      setLessonData(prev => ({ 
-                        ...prev, 
-                        video_url: storagePath 
+                      setLessonData(prev => ({
+                        ...prev,
+                        video_url: storagePath
                       }));
                       // Mark the lesson as dirty so the save button is enabled
                       setIsDirty(true);

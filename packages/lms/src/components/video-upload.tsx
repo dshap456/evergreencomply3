@@ -98,15 +98,6 @@ export function VideoUpload({
         message: 'Upload complete, creating metadata...'
       });
 
-      // Create or update video metadata record
-      console.log('Creating video metadata with:', {
-        lessonId,
-        languageCode,
-        storagePath,
-        filename: file.name,
-        fileSize: file.size
-      });
-
       const { data: metadataData, error: metadataError } = await supabase.rpc(
         'create_video_metadata',
         {
@@ -118,13 +109,6 @@ export function VideoUpload({
           p_quality: '720p' // Default quality
         }
       );
-
-      console.log('Video metadata RPC response:', { 
-        metadataData, 
-        metadataError,
-        storagePath,
-        type: typeof metadataData 
-      });
 
       if (metadataError) {
         throw new Error(`Failed to create metadata: ${metadataError.message}`);
@@ -142,11 +126,9 @@ export function VideoUpload({
 
       // Update video metadata to ready status (since we're not actually processing)
       // We need to update it directly since the RPC might not return the ID
-      console.log('Updating video status to ready for lesson:', lessonId, 'language:', languageCode);
-      
-      const { data: updatedMetadata, error: statusUpdateError } = await supabase
+      const { error: statusUpdateError } = await supabase
         .from('video_metadata')
-        .update({ 
+        .update({
           processing_status: 'ready',
           updated_at: new Date().toISOString()
         })
@@ -158,8 +140,6 @@ export function VideoUpload({
 
       if (statusUpdateError) {
         console.error('Failed to update video status to ready:', statusUpdateError);
-      } else {
-        console.log('Video status updated to ready successfully:', updatedMetadata);
       }
 
       setProgress({
@@ -215,16 +195,16 @@ export function VideoUpload({
         {...getRootProps()}
         className={`
           border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
-          ${isDragActive 
-            ? 'border-blue-400 bg-blue-50' 
-            : uploading 
-              ? 'border-gray-300 bg-gray-50 cursor-not-allowed' 
+          ${isDragActive
+            ? 'border-blue-400 bg-blue-50'
+            : uploading
+              ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
               : 'border-gray-300 hover:border-gray-400'
           }
         `}
       >
         <input {...getInputProps()} />
-        
+
         {uploading ? (
           <div className="space-y-3">
             <div className="text-2xl">🎬</div>
@@ -272,10 +252,10 @@ export function VideoUpload({
 }
 
 // Progress indicator component for video processing status
-export function VideoProcessingStatus({ 
-  videoMetadataId, 
-  className = '' 
-}: { 
+export function VideoProcessingStatus({
+  videoMetadataId,
+  className = ''
+}: {
   videoMetadataId: string;
   className?: string;
 }) {
@@ -293,7 +273,7 @@ export function VideoProcessingStatus({
         .select('processing_status, processing_error')
         .eq('id', videoMetadataId)
         .single();
-      
+
       if (data) {
         setStatus(data);
       }

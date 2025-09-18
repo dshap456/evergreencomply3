@@ -56,8 +56,6 @@ export class LemonSqueezyBillingStrategyService
     const { data: response, error } = await createLemonSqueezyCheckout(params);
 
     if (error ?? !response?.data.id) {
-      console.log(error);
-
       logger.error(
         {
           ...ctx,

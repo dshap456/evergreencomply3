@@ -11,16 +11,12 @@ const InviteToCourseSchema = z.object({
 });
 
 export async function inviteToCourseActionSimple(data: z.infer<typeof InviteToCourseSchema>) {
-  console.log('inviteToCourseActionSimple called with:', data);
-  
   try {
     const client = getSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: userError } = await client.auth.getUser();
-    
-    console.log('Auth check:', { user: user?.id, error: userError });
-    
+
     if (userError || !user) {
       return { success: false, error: 'Not authenticated' };
     }
