@@ -156,8 +156,8 @@ function DOTHazmatGeneralPage() {
               </div>
               <div className="relative h-64 md:h-full w-full overflow-hidden rounded-lg shadow-lg">
                 <Image
-                  src="/images/general-hazmat-training.png"
-                  alt="General HAZMAT Training"
+                  src="/images/taller-guy.png"
+                  alt="Professional in warehouse aisle representing DOT HAZMAT training"
                   fill
                   className="object-cover transform hover:scale-105 transition-transform duration-300"
                 />
@@ -253,6 +253,35 @@ function DOTHazmatGeneralPage() {
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
+                </div>
+
+                <div className="hidden md:block rounded-xl border border-primary/30 bg-primary/5 p-8 shadow-sm">
+                  <h3 className="text-2xl font-bold text-primary mb-3">Ready to get certified?</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Complete in 1–2 hours. Certificate included today.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <AddToCartButton
+                      courseId="dot-hazmat-general"
+                      price={119}
+                      size="lg"
+                      className="rounded-md px-6 py-3 font-semibold"
+                    >
+                      Start Training – $119 per seat
+                    </AddToCartButton>
+                    <Link href="/bulk-orders">
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="rounded-md px-6 py-3 font-semibold"
+                      >
+                        <span role="img" aria-label="team" className="mr-2">
+                          👥
+                        </span>
+                        Team & Bulk Pricing
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
 
