@@ -81,6 +81,29 @@ export async function POST(request: Request) {
       (normalizedUserEmail && normalizedEmail === normalizedUserEmail),
     );
     const resolvedSelfUserId = isSelfInvite ? lookupUserId ?? user.id : null;
+    let autoEnrollUserId: string | null = resolvedSelfUserId;
+
+    if (!autoEnrollUserId && lookupUserId) {
+      const { data: membership, error: membershipError } = await adminClient
+        .from('accounts_memberships')
+        .select('id')
+        .eq('account_id', accountId)
+        .eq('user_id', lookupUserId)
+        .maybeSingle();
+
+      if (membershipError) {
+        console.error('Failed to check existing team membership for course invitation', {
+          accountId,
+          courseId,
+          userId: lookupUserId,
+          error: membershipError,
+        });
+      }
+
+      if (membership) {
+        autoEnrollUserId = lookupUserId;
+      }
+    }
 
     // Check available seats (including pending invitations)
     const { data: seatInfo } = await client
@@ -132,46 +155,52 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to process invitation' }, { status: 500 });
     }
 
-    const hasPendingSelfInvite = Boolean(
-      isSelfInvite && existingInvite && !existingInvite.accepted_at,
+    const hasPendingAutoInvite = Boolean(
+      autoEnrollUserId && existingInvite && !existingInvite.accepted_at,
     );
 
-    if (availableSeats <= 0 && !hasPendingSelfInvite) {
+    if (availableSeats <= 0 && !hasPendingAutoInvite) {
       return NextResponse.json({ error: 'No available seats for this course' });
     }
 
-    if (isSelfInvite && resolvedSelfUserId) {
+    if (autoEnrollUserId) {
       const { data: existingEnrollment, error: existingEnrollmentError } = await adminClient
         .from('course_enrollments')
         .select('id, account_id')
         .eq('course_id', courseId)
-        .eq('user_id', resolvedSelfUserId)
+        .eq('user_id', autoEnrollUserId)
         .maybeSingle();
 
       if (existingEnrollmentError) {
-        console.error('Failed to fetch existing enrollment for self-invite', {
+        console.error('Failed to fetch existing enrollment for auto enrollment', {
           accountId,
           courseId,
-          userId: resolvedSelfUserId,
+          userId: autoEnrollUserId,
           error: existingEnrollmentError,
         });
         return NextResponse.json({ error: 'Failed to process enrollment' }, { status: 500 });
       }
 
       if (existingEnrollment) {
+        const enrollmentUpdates: { account_id?: string; invited_by: string } = {
+          invited_by: user.id,
+        };
+
         if (!existingEnrollment.account_id) {
-          await adminClient
-            .from('course_enrollments')
-            .update({ account_id: accountId, invited_by: user.id })
-            .eq('id', existingEnrollment.id);
+          enrollmentUpdates.account_id = accountId;
         }
+
+        await adminClient
+          .from('course_enrollments')
+          .update(enrollmentUpdates)
+          .eq('id', existingEnrollment.id);
 
         if (existingInvite && !existingInvite.accepted_at) {
           await adminClient
             .from('course_invitations')
             .update({
               accepted_at: new Date().toISOString(),
-              accepted_by: resolvedSelfUserId,
+              accepted_by: autoEnrollUserId,
             })
             .eq('id', existingInvite.id);
         }
@@ -185,7 +214,7 @@ export async function POST(request: Request) {
         revalidatePath(`/home/${accountSlug}/courses/seats`);
         revalidatePath(`/home/${accountSlug}/my-learning`);
         revalidatePath(pathsConfig.app.personalAccountCourses);
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, autoEnrolled: true });
       }
 
       const { error: enrollError } = await adminClient
@@ -193,15 +222,15 @@ export async function POST(request: Request) {
         .insert({
           course_id: courseId,
           account_id: accountId,
-          user_id: resolvedSelfUserId,
+          user_id: autoEnrollUserId,
           invited_by: user.id,
         });
 
       if (enrollError) {
-        console.error('Failed to self-enroll owner while inviting:', {
+        console.error('Failed to auto-enroll user while inviting:', {
           accountId,
           courseId,
-          userId: resolvedSelfUserId,
+          userId: autoEnrollUserId,
           error: enrollError,
         });
         return NextResponse.json({
@@ -215,7 +244,7 @@ export async function POST(request: Request) {
           .from('course_invitations')
           .update({
             accepted_at: new Date().toISOString(),
-            accepted_by: resolvedSelfUserId,
+            accepted_by: autoEnrollUserId,
           })
           .eq('id', existingInvite.id);
       }
@@ -230,7 +259,7 @@ export async function POST(request: Request) {
       revalidatePath(`/home/${accountSlug}/my-learning`);
       revalidatePath(pathsConfig.app.personalAccountCourses);
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, autoEnrolled: true });
     }
 
     let invitation;

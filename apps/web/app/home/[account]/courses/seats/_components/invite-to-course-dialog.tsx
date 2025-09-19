@@ -82,7 +82,15 @@ export function InviteToCourseDialog({
           throw new Error(result.error || 'Failed to send invitation');
         }
 
-        toast.success('Invitation sent successfully! An email has been sent to ' + data.email);
+        if (result.autoEnrolled) {
+          toast.success(`${data.email} now has immediate access to the course.`);
+        } else {
+          toast.success(`Invitation sent successfully! An email has been sent to ${data.email}`);
+        }
+
+        if (result.warning) {
+          toast.warning(result.warning);
+        }
         form.reset();
         onOpenChange(false);
         onSuccess();
