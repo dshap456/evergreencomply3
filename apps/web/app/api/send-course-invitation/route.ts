@@ -104,13 +104,32 @@ export async function POST(request: Request) {
     if (isSelfInvite) {
       const { data: existingEnrollment } = await client
         .from('course_enrollments')
-        .select('id')
-        .eq('account_id', accountId)
+        .select('id, account_id')
         .eq('course_id', courseId)
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (existingEnrollment) {
+        if (!existingEnrollment.account_id) {
+          await client
+            .from('course_enrollments')
+            .update({ account_id: accountId, invited_by: user.id })
+            .eq('id', existingEnrollment.id);
+        }
+
+        if (existingInvite && !existingInvite.accepted_at) {
+          await adminClient
+            .from('course_invitations')
+            .update({ accepted_at: new Date().toISOString() })
+            .eq('id', existingInvite.id);
+        }
+
+        await client
+          .from('pending_invitation_tokens')
+          .delete()
+          .eq('email', email)
+          .eq('invitation_type', 'course');
+
         revalidatePath(`/home/${accountId}/courses/seats`);
         revalidatePath(pathsConfig.app.personalAccountCourses);
         return NextResponse.json({ success: true });
@@ -127,7 +146,10 @@ export async function POST(request: Request) {
 
       if (enrollError) {
         console.error('Failed to self-enroll owner while inviting:', enrollError);
-        return NextResponse.json({ error: 'Failed to enroll user into the course' });
+        return NextResponse.json({
+          error: 'Failed to enroll user into the course',
+          details: enrollError instanceof Error ? enrollError.message : String(enrollError),
+        });
       }
 
       if (existingInvite && !existingInvite.accepted_at) {
