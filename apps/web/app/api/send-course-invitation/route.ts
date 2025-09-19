@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { getSupabaseServerAdminClient } from '@kit/supabase/server-admin-client';
 import { getMailer } from '@kit/mailers';
+
+import pathsConfig from '~/config/paths.config';
 
 export async function POST(request: Request) {
   try {
@@ -45,6 +49,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Course not found' });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUserEmail = user.email?.trim().toLowerCase();
+    const isSelfInvite = Boolean(normalizedUserEmail && normalizedEmail === normalizedUserEmail);
+
     // Check available seats (including pending invitations)
     const { data: seatInfo } = await client
       .from('course_seats')
@@ -75,10 +83,6 @@ export async function POST(request: Request) {
 
     const totalUsed = (usedSeats || 0) + (pendingInvites || 0);
     const availableSeats = seatInfo.seats_purchased - totalUsed;
-    
-    if (availableSeats <= 0) {
-      return NextResponse.json({ error: 'No available seats for this course' });
-    }
 
     // Check if invitation already exists (use admin client to bypass RLS)
     const { data: existingInvite } = await adminClient
@@ -88,6 +92,62 @@ export async function POST(request: Request) {
       .eq('course_id', courseId)
       .eq('account_id', accountId)
       .single();
+
+    const hasPendingSelfInvite = Boolean(
+      isSelfInvite && existingInvite && !existingInvite.accepted_at,
+    );
+
+    if (availableSeats <= 0 && !hasPendingSelfInvite) {
+      return NextResponse.json({ error: 'No available seats for this course' });
+    }
+
+    if (isSelfInvite) {
+      const { data: existingEnrollment } = await client
+        .from('course_enrollments')
+        .select('id')
+        .eq('account_id', accountId)
+        .eq('course_id', courseId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingEnrollment) {
+        revalidatePath(`/home/${accountId}/courses/seats`);
+        revalidatePath(pathsConfig.app.personalAccountCourses);
+        return NextResponse.json({ success: true });
+      }
+
+      const { error: enrollError } = await client
+        .from('course_enrollments')
+        .insert({
+          course_id: courseId,
+          account_id: accountId,
+          user_id: user.id,
+          invited_by: user.id,
+        });
+
+      if (enrollError) {
+        console.error('Failed to self-enroll owner while inviting:', enrollError);
+        return NextResponse.json({ error: 'Failed to enroll user into the course' });
+      }
+
+      if (existingInvite && !existingInvite.accepted_at) {
+        await adminClient
+          .from('course_invitations')
+          .update({ accepted_at: new Date().toISOString() })
+          .eq('id', existingInvite.id);
+      }
+
+      await client
+        .from('pending_invitation_tokens')
+        .delete()
+        .eq('email', email)
+        .eq('invitation_type', 'course');
+
+      revalidatePath(`/home/${accountId}/courses/seats`);
+      revalidatePath(pathsConfig.app.personalAccountCourses);
+
+      return NextResponse.json({ success: true });
+    }
 
     let invitation;
     
@@ -308,6 +368,7 @@ This invitation will expire in 30 days.`;
         stack: emailError instanceof Error ? emailError.stack : undefined,
       });
       // Return error to client so they know email failed
+      revalidatePath(`/home/${accountId}/courses/seats`);
       return NextResponse.json({ 
         success: true, // Invitation was created
         invitation,
@@ -316,6 +377,8 @@ This invitation will expire in 30 days.`;
         emailError: emailError instanceof Error ? emailError.message : 'Email sending failed'
       });
     }
+
+    revalidatePath(`/home/${accountId}/courses/seats`);
 
     return NextResponse.json({ 
       success: true, 
