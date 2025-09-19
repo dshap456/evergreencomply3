@@ -126,6 +126,9 @@ const COURSE_PRODUCT_MAPPING = {
   'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat',
   'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',
   'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',
+  'price_1S5Cnq97cNCBYOcXYjFFdmEm': 'dot-hazmat',
+  'price_1S5CnD97cNCBYOcX4ehVBpo6': 'advanced-hazmat',
+  'price_1S5CmP97cNCBYOcXEKzqDOJs': 'epa-rcra',
 };
 ```
 

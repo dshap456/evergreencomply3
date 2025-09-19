@@ -1,6 +1,10 @@
 'use client';
 
+import { useCallback, useMemo } from 'react';
+
 import type { Provider } from '@supabase/supabase-js';
+
+import { useRouter } from 'next/navigation';
 
 import { isBrowser } from '@kit/shared/utils';
 import { Alert, AlertDescription, AlertTitle } from '@kit/ui/alert';
@@ -30,8 +34,26 @@ export function SignUpMethodsContainer(props: {
   displayTermsCheckbox?: boolean;
   inviteToken?: string;
 }) {
+  const router = useRouter();
   const redirectUrl = getCallbackUrl(props);
   const defaultValues = getDefaultValues();
+
+  const postSignUpPath = useMemo(() => {
+    if (!redirectUrl) {
+      return props.paths.appHome;
+    }
+
+    try {
+      const parsed = new URL(redirectUrl);
+      return `${parsed.pathname}${parsed.search}`;
+    } catch {
+      return props.paths.appHome;
+    }
+  }, [redirectUrl, props.paths.appHome]);
+
+  const handleSignUpSuccess = useCallback(() => {
+    router.replace(postSignUpPath);
+  }, [postSignUpPath, router]);
 
   return (
     <>
@@ -47,6 +69,7 @@ export function SignUpMethodsContainer(props: {
           emailRedirectTo={redirectUrl}
           defaultValues={defaultValues}
           displayTermsCheckbox={props.displayTermsCheckbox}
+          onSignUp={handleSignUpSuccess}
         />
       </If>
 

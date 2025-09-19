@@ -28,7 +28,7 @@ export default createBillingSchema({
           paymentType: 'one-time',
           lineItems: [
             {
-              id: 'price_1RsDQh97cNCBYOcXZBML0Cwf', // DOT HAZMAT General
+              id: 'price_1S5Cnq97cNCBYOcXYjFFdmEm', // DOT HAZMAT General (Stripe one-time price)
               name: 'Training License',
               cost: 1.00,
               type: 'flat' as const,
@@ -57,7 +57,7 @@ export default createBillingSchema({
           paymentType: 'one-time',
           lineItems: [
             {
-              id: 'price_1RsDev97cNCBYOcX008NiFR8', // HAZMAT Advanced
+              id: 'price_1S5CnD97cNCBYOcX4ehVBpo6', // HAZMAT Advanced (Stripe one-time price)
               name: 'Training License',
               cost: 1.00,
               type: 'flat' as const,
@@ -86,7 +86,7 @@ export default createBillingSchema({
           paymentType: 'one-time',
           lineItems: [
             {
-              id: 'price_1RsDf697cNCBYOcXkMlo2mPt', // EPA RCRA
+              id: 'price_1S5CmP97cNCBYOcXEKzqDOJs', // EPA RCRA (Stripe one-time price)
               name: 'Training License',
               cost: 1.00,
               type: 'flat' as const,

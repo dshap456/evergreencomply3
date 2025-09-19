@@ -40,13 +40,15 @@ export function EmailPasswordSignUpContainer({
     resetCaptchaToken,
   });
 
+  const shouldShowSuccessAlert = showVerifyEmailAlert && !onSignUp;
+
   return (
     <>
-      <If condition={showVerifyEmailAlert}>
+      <If condition={shouldShowSuccessAlert}>
         <SuccessAlert />
       </If>
 
-      <If condition={!showVerifyEmailAlert}>
+      <If condition={!shouldShowSuccessAlert}>
         <AuthErrorAlert error={error} />
 
         <PasswordSignUpForm

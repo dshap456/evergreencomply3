@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -10,12 +10,40 @@ import { CustomShieldIcon } from '../../_components/custom-icons';
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const sessionId = searchParams.get('session_id');
   const simulate = searchParams.get('simulate');
   const simValue = searchParams.get('value');
   const simCurrency = searchParams.get('currency');
   const simTid = searchParams.get('transaction_id');
   const [isClearing, setIsClearing] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const shouldAutoRedirect = simulate !== '1';
+
+  const dashboardDest = useMemo(() => {
+    if (sessionId) {
+      return `/home/purchase-success?session_id=${encodeURIComponent(sessionId)}`;
+    }
+
+    return '/home/purchase-success';
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!shouldAutoRedirect) return;
+
+    if (typeof router.prefetch === 'function') {
+      Promise.resolve(router.prefetch(dashboardDest)).catch(() => {});
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsRedirecting(true);
+      router.push(dashboardDest);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [dashboardDest, router, shouldAutoRedirect]);
 
   useEffect(() => {
     // Clear the cart after successful purchase
@@ -169,15 +197,25 @@ export default function CheckoutSuccessPage() {
                 </ul>
               </div>
 
+              {shouldAutoRedirect ? (
+                <p className="text-sm text-muted-foreground">
+                  Redirecting you to your dashboard...
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Use the dashboard button below to continue.
+                </p>
+              )}
+
               <div className="flex flex-col gap-2 pt-4 sm:flex-row sm:justify-center">
                 <Link href="/">
                   <Button variant="outline">
                     Return to Home
                   </Button>
                 </Link>
-                <Link href="/auth/sign-in">
-                  <Button>
-                    Sign In to Dashboard
+                <Link href={dashboardDest}>
+                  <Button disabled={isRedirecting}>
+                    Go to Dashboard
                   </Button>
                 </Link>
               </div>

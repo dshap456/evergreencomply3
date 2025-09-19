@@ -5,9 +5,14 @@ import Stripe from 'stripe';
 
 // Map Stripe price IDs to course slugs
 const PRICE_TO_COURSE_SLUG_MAP = {
+  // Legacy price IDs kept for historical purchases
   'price_1RsDQh97cNCBYOcXZBML0Cwf': 'dot-hazmat-general',
   'price_1RsDev97cNCBYOcX008NiFR8': 'advanced-hazmat',
   'price_1RsDf697cNCBYOcXkMlo2mPt': 'epa-rcra',
+  // Current training checkout price IDs
+  'price_1S5Cnq97cNCBYOcXYjFFdmEm': 'dot-hazmat-general',
+  'price_1S5CnD97cNCBYOcX4ehVBpo6': 'advanced-hazmat',
+  'price_1S5CmP97cNCBYOcXEKzqDOJs': 'epa-rcra',
 } as const;
 
 // GET endpoint to verify the webhook is deployed
