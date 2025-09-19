@@ -443,7 +443,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
                       </Button>
 
                       <p className="text-xs text-muted-foreground text-center">
-                        Secure checkout powered by Stripe
+                        <span className="block">Secure checkout powered by Stripe</span>
+                        <span className="block mt-0.5">30-day money back guarantee</span>
                       </p>
                     </>
                   ) : (

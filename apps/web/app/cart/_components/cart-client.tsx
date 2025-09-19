@@ -566,7 +566,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                       
                       <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
                         <Lock className="h-3 w-3" />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-0.5 text-left leading-relaxed">
                           <span>Secure checkout powered by Stripe</span>
                           <span>30-day money back guarantee</span>
                         </div>
