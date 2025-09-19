@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
@@ -45,7 +45,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
   // Purchase type is now determined by quantity, not user selection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [customerName, setCustomerName] = useState('');
-  const [hasPendingCheckout, setHasPendingCheckout] = useState(false);
+  const [hasAttemptedAutoCheckout, setHasAttemptedAutoCheckout] = useState(false);
+  const searchParams = useSearchParams();
 
   // Load initial quantities from localStorage and check auth
   useEffect(() => {
@@ -83,10 +84,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
         setCustomerName(savedName);
       }
     }
-    
-    const pendingCheckout = localStorage.getItem('pending-checkout');
-    setHasPendingCheckout(pendingCheckout === '1');
-
     // Check if user is authenticated
     checkAuth();
     
@@ -157,9 +154,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const getQuantity = (courseId: string) => quantities[courseId] || 0;
 
-  const totalItems = useMemo(() => {
-    return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
-  }, [quantities]);
+  const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
   const getCartCourses = useCallback(() => {
     return Object.entries(quantities)
@@ -171,7 +166,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
       .filter(item => item.course);
   }, [availableCourses, quantities]);
 
-  const handleCheckout = useCallback(async () => {
+  const handleCheckout = useCallback(async (options?: { skipAuthRedirect?: boolean }) => {
+    const skipAuthRedirect = options?.skipAuthRedirect ?? false;
     const cartCourses = getCartCourses();
     
     if (cartCourses.length === 0) {
@@ -181,11 +177,20 @@ export function CartClient({ availableCourses }: CartClientProps) {
     
     // Check if user is authenticated
     if (!isAuthenticated) {
+      if (skipAuthRedirect) {
+        return;
+      }
+
       toast.error('Please sign in to complete your purchase');
+
       try {
-        localStorage.setItem('pending-checkout', '1');
+        if (totalItems === 1 && customerName.trim()) {
+          localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim()));
+        }
       } catch {}
-      router.push(`${pathsConfig.auth.signIn}?redirect=/cart`);
+
+      const redirectTarget = encodeURIComponent('/cart?checkout=1');
+      router.push(`${pathsConfig.auth.signIn}?redirect=${redirectTarget}`);
       return;
     }
     
@@ -233,18 +238,35 @@ export function CartClient({ availableCourses }: CartClientProps) {
     }
   }, [customerName, getCartCourses, isAuthenticated, router, totalItems]);
 
+  const shouldResumeCheckout = searchParams.get('checkout') === '1';
+
   useEffect(() => {
-    if (!hasPendingCheckout || !isAuthenticated || isCheckingOut) {
+    if (!shouldResumeCheckout || isLoading || hasAttemptedAutoCheckout) {
       return;
     }
 
-    try {
-      localStorage.removeItem('pending-checkout');
-    } catch {}
+    if (!isAuthenticated) {
+      return;
+    }
 
-    setHasPendingCheckout(false);
-    void handleCheckout();
-  }, [hasPendingCheckout, isAuthenticated, isCheckingOut, handleCheckout]);
+    if (totalItems === 0) {
+      return;
+    }
+
+    setHasAttemptedAutoCheckout(true);
+
+    Promise.resolve(router.replace('/cart')).catch(() => {});
+
+    void handleCheckout({ skipAuthRedirect: true });
+  }, [
+    shouldResumeCheckout,
+    isLoading,
+    hasAttemptedAutoCheckout,
+    isAuthenticated,
+    totalItems,
+    handleCheckout,
+    router,
+  ]);
 
   if (isLoading) {
     return (
@@ -255,12 +277,10 @@ export function CartClient({ availableCourses }: CartClientProps) {
   }
 
   const publishedCourses = availableCourses.filter(c => c.status === 'published');
-  const subtotal = useMemo(() => {
-    return Object.entries(quantities).reduce((total, [courseId, qty]) => {
-      const course = availableCourses.find(c => c.id === courseId);
-      return total + (parseFloat(course?.price || '0') * qty);
-    }, 0);
-  }, [availableCourses, quantities]);
+  const subtotal = Object.entries(quantities).reduce((total, [courseId, qty]) => {
+    const course = availableCourses.find(c => c.id === courseId);
+    return total + (parseFloat(course?.price || '0') * qty);
+  }, 0);
   const tax = 0; // No tax for digital products
   const total = subtotal + tax;
 
@@ -523,7 +543,8 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                       localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim()));
                                     }
                                   } catch {}
-                                  router.push(`${pathsConfig.auth.signUp}?redirect=/cart`);
+                                  const redirectTarget = encodeURIComponent('/cart?checkout=1');
+                                  router.push(`${pathsConfig.auth.signUp}?redirect=${redirectTarget}`);
                                 }}
                               >
                                 Create Account to Checkout
@@ -607,7 +628,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                 Checkout
               </Button>
             ) : (
-              <Button size="sm" onClick={() => { try { if (totalItems === 1 && customerName.trim()) { localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim())); } } catch {} ; router.push(`${pathsConfig.auth.signUp}?redirect=/cart`); }} className="min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button size="sm" onClick={() => { try { if (totalItems === 1 && customerName.trim()) { localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim())); } } catch {} ; const redirectTarget = encodeURIComponent('/cart?checkout=1'); router.push(`${pathsConfig.auth.signUp}?redirect=${redirectTarget}`); }} className="min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90">
                 Create Account to Checkout
               </Button>
             )}
