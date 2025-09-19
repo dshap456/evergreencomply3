@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     // Super admin or account owner only (narrow scope enforced below by owner check)
-    const { data: isSuperAdmin } = await client.rpc('is_super_admin');
+    const { data: _isSuperAdmin } = await client.rpc('is_super_admin');
 
     // Check if user is account owner
     const { data: account, error: accountError } = await client
@@ -49,9 +49,36 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Course not found' });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const sanitizedEmail = email.trim();
+    const normalizedEmail = sanitizedEmail.toLowerCase();
     const normalizedUserEmail = user.email?.trim().toLowerCase();
-    const isSelfInvite = Boolean(normalizedUserEmail && normalizedEmail === normalizedUserEmail);
+
+    let lookupUserId: string | null = null;
+    try {
+      const { data: lookupResult, error: lookupError } = await adminClient.auth.admin.getUserByEmail(normalizedEmail);
+
+      if (lookupError && lookupError.status !== 404) {
+        console.error('Failed to lookup user by email for course invitation', {
+          email: normalizedEmail,
+          error: lookupError,
+        });
+      }
+
+      if (lookupResult?.user?.id) {
+        lookupUserId = lookupResult.user.id;
+      }
+    } catch (lookupException) {
+      console.error('Unexpected error while looking up user by email for course invitation', {
+        email: normalizedEmail,
+        error: lookupException,
+      });
+    }
+
+    const isSelfInvite = Boolean(
+      (lookupUserId && lookupUserId === user.id) ||
+      (normalizedUserEmail && normalizedEmail === normalizedUserEmail),
+    );
+    const resolvedSelfUserId = isSelfInvite ? lookupUserId ?? user.id : null;
 
     // Check available seats (including pending invitations)
     const { data: seatInfo } = await client
@@ -85,13 +112,23 @@ export async function POST(request: Request) {
     const availableSeats = seatInfo.seats_purchased - totalUsed;
 
     // Check if invitation already exists (use admin client to bypass RLS)
-    const { data: existingInvite } = await adminClient
+    const { data: existingInvite, error: existingInviteError } = await adminClient
       .from('course_invitations')
       .select('*')
-      .eq('email', email)
       .eq('course_id', courseId)
       .eq('account_id', accountId)
-      .single();
+      .ilike('email', normalizedEmail)
+      .maybeSingle();
+
+    if (existingInviteError) {
+      console.error('Failed to fetch existing course invitation', {
+        accountId,
+        courseId,
+        email: normalizedEmail,
+        error: existingInviteError,
+      });
+      return NextResponse.json({ error: 'Failed to process invitation' }, { status: 500 });
+    }
 
     const hasPendingSelfInvite = Boolean(
       isSelfInvite && existingInvite && !existingInvite.accepted_at,
@@ -101,12 +138,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No available seats for this course' });
     }
 
-    if (isSelfInvite) {
+    if (isSelfInvite && resolvedSelfUserId) {
       const { data: existingEnrollment } = await client
         .from('course_enrollments')
         .select('id, account_id')
         .eq('course_id', courseId)
-        .eq('user_id', user.id)
+        .eq('user_id', resolvedSelfUserId)
         .maybeSingle();
 
       if (existingEnrollment) {
@@ -120,17 +157,21 @@ export async function POST(request: Request) {
         if (existingInvite && !existingInvite.accepted_at) {
           await adminClient
             .from('course_invitations')
-            .update({ accepted_at: new Date().toISOString() })
+            .update({
+              accepted_at: new Date().toISOString(),
+              accepted_by: resolvedSelfUserId,
+            })
             .eq('id', existingInvite.id);
         }
 
         await client
           .from('pending_invitation_tokens')
           .delete()
-          .eq('email', email)
+          .ilike('email', normalizedEmail)
           .eq('invitation_type', 'course');
 
         revalidatePath(`/home/${accountId}/courses/seats`);
+        revalidatePath(`/home/${accountId}/my-learning`);
         revalidatePath(pathsConfig.app.personalAccountCourses);
         return NextResponse.json({ success: true });
       }
@@ -140,7 +181,7 @@ export async function POST(request: Request) {
         .insert({
           course_id: courseId,
           account_id: accountId,
-          user_id: user.id,
+          user_id: resolvedSelfUserId,
           invited_by: user.id,
         });
 
@@ -155,17 +196,21 @@ export async function POST(request: Request) {
       if (existingInvite && !existingInvite.accepted_at) {
         await adminClient
           .from('course_invitations')
-          .update({ accepted_at: new Date().toISOString() })
+          .update({
+            accepted_at: new Date().toISOString(),
+            accepted_by: resolvedSelfUserId,
+          })
           .eq('id', existingInvite.id);
       }
 
       await client
         .from('pending_invitation_tokens')
         .delete()
-        .eq('email', email)
+        .ilike('email', normalizedEmail)
         .eq('invitation_type', 'course');
 
       revalidatePath(`/home/${accountId}/courses/seats`);
+      revalidatePath(`/home/${accountId}/my-learning`);
       revalidatePath(pathsConfig.app.personalAccountCourses);
 
       return NextResponse.json({ success: true });
@@ -217,7 +262,7 @@ export async function POST(request: Request) {
       const { data: newInvitation, error: inviteError } = await client
         .from('course_invitations')
         .insert({
-          email,
+          email: normalizedEmail,
           invitee_name: name,
           course_id: courseId,
           account_id: accountId,
@@ -238,14 +283,14 @@ export async function POST(request: Request) {
     await client
       .from('pending_invitation_tokens')
       .delete()
-      .eq('email', email)
+      .ilike('email', normalizedEmail)
       .eq('invitation_type', 'course');
     
     // Insert the new token
     await client
       .from('pending_invitation_tokens')
       .insert({
-        email,
+        email: normalizedEmail,
         invitation_token: invitation.invite_token,
         invitation_type: 'course',
       });
@@ -257,7 +302,7 @@ export async function POST(request: Request) {
     const inviteUrl = `${baseUrl}/auth/sign-up?invite_token=${invitation.invite_token}`;
     
     console.log('=== Course Invitation Email Debug ===');
-    console.log('Attempting to send email to:', email);
+    console.log('Attempting to send email to:', sanitizedEmail);
     console.log('Invite URL:', inviteUrl);
     
     try {
@@ -348,9 +393,10 @@ This invitation will expire in 30 days.`;
       try {
         await mailer.sendEmail({
           from: emailSender,
-          to: email,
+          to: sanitizedEmail,
           subject,
           html,
+          text,
         });
         emailSent = true;
       } catch (firstError) {
@@ -361,14 +407,16 @@ This invitation will expire in 30 days.`;
         if (emailSender !== fallbackSender && 
             firstError instanceof Error && 
             firstError.message.includes('domain is not verified')) {
-          console.log('Trying fallback sender:', fallbackSender);
-          
+          emailSender = fallbackSender;
+          console.log('Trying fallback sender:', emailSender);
+
           try {
             await mailer.sendEmail({
-              from: fallbackSender,
-              to: email,
+              from: emailSender,
+              to: sanitizedEmail,
               subject,
               html,
+              text,
             });
             emailSent = true;
             console.log('✅ Email sent with fallback sender');
@@ -382,7 +430,7 @@ This invitation will expire in 30 days.`;
         throw lastError;
       }
       
-      console.log('✅ Invitation email sent successfully to:', email);
+      console.log('✅ Invitation email sent successfully to:', sanitizedEmail);
     } catch (emailError) {
       console.error('❌ Failed to send invitation email:', emailError);
       console.error('Email error details:', {
