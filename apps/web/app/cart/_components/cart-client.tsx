@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
@@ -45,6 +45,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
   // Purchase type is now determined by quantity, not user selection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [customerName, setCustomerName] = useState('');
+  const [hasPendingCheckout, setHasPendingCheckout] = useState(false);
 
   // Load initial quantities from localStorage and check auth
   useEffect(() => {
@@ -83,6 +84,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
       }
     }
     
+    const pendingCheckout = localStorage.getItem('pending-checkout');
+    setHasPendingCheckout(pendingCheckout === '1');
+
     // Check if user is authenticated
     checkAuth();
     
@@ -91,22 +95,27 @@ export function CartClient({ availableCourses }: CartClientProps) {
   
   // Check authentication and load team accounts
   const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session) {
-      setIsAuthenticated(true);
-      
-      // Try to load user's name from their account
-      const { data: account } = await supabase
-        .from('accounts')
-        .select('name')
-        .eq('id', session.user.id)
-        .eq('is_personal_account', true)
-        .single();
-      
-      if (account?.name) {
-        setCustomerName(account.name);
-      }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      setIsAuthenticated(false);
+      return;
+    }
+
+    setIsAuthenticated(true);
+
+    // Try to load user's name from their account
+    const { data: account } = await supabase
+      .from('accounts')
+      .select('name')
+      .eq('id', session.user.id)
+      .eq('is_personal_account', true)
+      .single();
+
+    if (account?.name) {
+      setCustomerName(account.name);
     }
   };
 
@@ -148,16 +157,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
 
   const getQuantity = (courseId: string) => quantities[courseId] || 0;
 
-  const calculateSubtotal = () => {
-    return Object.entries(quantities).reduce((total, [courseId, qty]) => {
-      const course = availableCourses.find(c => c.id === courseId);
-      return total + (parseFloat(course?.price || '0') * qty);
-    }, 0);
-  };
+  const totalItems = useMemo(() => {
+    return Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
+  }, [quantities]);
 
-  const totalItems = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
-
-  const getCartCourses = () => {
+  const getCartCourses = useCallback(() => {
     return Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
       .map(([courseId, qty]) => {
@@ -165,9 +169,9 @@ export function CartClient({ availableCourses }: CartClientProps) {
         return { course, quantity: qty };
       })
       .filter(item => item.course);
-  };
+  }, [availableCourses, quantities]);
 
-  const handleCheckout = async () => {
+  const handleCheckout = useCallback(async () => {
     const cartCourses = getCartCourses();
     
     if (cartCourses.length === 0) {
@@ -178,7 +182,11 @@ export function CartClient({ availableCourses }: CartClientProps) {
     // Check if user is authenticated
     if (!isAuthenticated) {
       toast.error('Please sign in to complete your purchase');
-      router.push(pathsConfig.auth.signIn);
+      try {
+        localStorage.setItem('pending-checkout', '1');
+      } catch {}
+      const redirectTarget = encodeURIComponent('/cart');
+      router.push(`${pathsConfig.auth.signIn}?redirect=${redirectTarget}`);
       return;
     }
     
@@ -224,7 +232,20 @@ export function CartClient({ availableCourses }: CartClientProps) {
       toast.error('Failed to start checkout. Please try again.');
       setIsCheckingOut(false);
     }
-  };
+  }, [customerName, getCartCourses, isAuthenticated, router, totalItems]);
+
+  useEffect(() => {
+    if (!hasPendingCheckout || !isAuthenticated || isCheckingOut) {
+      return;
+    }
+
+    try {
+      localStorage.removeItem('pending-checkout');
+    } catch {}
+
+    setHasPendingCheckout(false);
+    void handleCheckout();
+  }, [hasPendingCheckout, isAuthenticated, isCheckingOut, handleCheckout]);
 
   if (isLoading) {
     return (
@@ -235,7 +256,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
   }
 
   const publishedCourses = availableCourses.filter(c => c.status === 'published');
-  const subtotal = calculateSubtotal();
+  const subtotal = useMemo(() => {
+    return Object.entries(quantities).reduce((total, [courseId, qty]) => {
+      const course = availableCourses.find(c => c.id === courseId);
+      return total + (parseFloat(course?.price || '0') * qty);
+    }, 0);
+  }, [availableCourses, quantities]);
   const tax = 0; // No tax for digital products
   const total = subtotal + tax;
 
