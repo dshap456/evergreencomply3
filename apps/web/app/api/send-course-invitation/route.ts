@@ -141,16 +141,26 @@ export async function POST(request: Request) {
     }
 
     if (isSelfInvite && resolvedSelfUserId) {
-      const { data: existingEnrollment } = await client
+      const { data: existingEnrollment, error: existingEnrollmentError } = await adminClient
         .from('course_enrollments')
         .select('id, account_id')
         .eq('course_id', courseId)
         .eq('user_id', resolvedSelfUserId)
         .maybeSingle();
 
+      if (existingEnrollmentError) {
+        console.error('Failed to fetch existing enrollment for self-invite', {
+          accountId,
+          courseId,
+          userId: resolvedSelfUserId,
+          error: existingEnrollmentError,
+        });
+        return NextResponse.json({ error: 'Failed to process enrollment' }, { status: 500 });
+      }
+
       if (existingEnrollment) {
         if (!existingEnrollment.account_id) {
-          await client
+          await adminClient
             .from('course_enrollments')
             .update({ account_id: accountId, invited_by: user.id })
             .eq('id', existingEnrollment.id);
@@ -178,7 +188,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true });
       }
 
-      const { error: enrollError } = await client
+      const { error: enrollError } = await adminClient
         .from('course_enrollments')
         .insert({
           course_id: courseId,
@@ -188,7 +198,12 @@ export async function POST(request: Request) {
         });
 
       if (enrollError) {
-        console.error('Failed to self-enroll owner while inviting:', enrollError);
+        console.error('Failed to self-enroll owner while inviting:', {
+          accountId,
+          courseId,
+          userId: resolvedSelfUserId,
+          error: enrollError,
+        });
         return NextResponse.json({
           error: 'Failed to enroll user into the course',
           details: enrollError instanceof Error ? enrollError.message : String(enrollError),
