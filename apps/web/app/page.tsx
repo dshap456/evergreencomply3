@@ -1,11 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRightIcon, CheckCircle, ArrowRight, ArrowLeft, ChevronDown, Menu } from 'lucide-react';
+import { CheckCircle, ArrowRight, ChevronDown, Menu } from 'lucide-react';
 
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@kit/ui/card';
-import { Trans } from '@kit/ui/trans';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@kit/ui/dropdown-menu';
 
-import pathsConfig from '~/config/paths.config';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { CustomShieldIcon, CustomSmartphoneIcon, CustomAwardIcon } from './_components/custom-icons';
 import { SiteFooter } from './_components/site-footer';

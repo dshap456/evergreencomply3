@@ -101,7 +101,7 @@ export function CourseViewerClient({ courseId }: CourseViewerClientProps) {
 
   const processLessonLockStates = (courseData: CourseData): CourseData => {
     let previousLessonCompleted = true;
-    let allLessonsFlat: CourseLesson[] = [];
+    const allLessonsFlat: CourseLesson[] = [];
 
     // First, flatten all lessons to process them in order
     courseData.modules.forEach(module => {

@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       const primarySender = process.env.EMAIL_SENDER || 'Evergreen Comply <support@evergreencomply.com>';
       const fallbackSender = 'Evergreen Comply <onboarding@resend.dev>';
 
-      let emailSender = primarySender;
+      const emailSender = primarySender;
 
       const subject = `Reminder: You're invited to join "${invitation.courses.title}" by ${account.name}`;
 

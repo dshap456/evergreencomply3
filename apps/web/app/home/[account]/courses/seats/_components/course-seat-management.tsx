@@ -35,26 +35,22 @@ interface CourseSeatData {
   is_purchased: boolean;
 }
 
-export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
+export function CourseSeatManagement({ accountSlug: _accountSlug }: { accountSlug: string }) {
   const supabase = useSupabase();
   const { account } = useTeamAccountWorkspace();
+  const accountId = account?.id;
   
   const [selectedCourse, setSelectedCourse] = useState<CourseSeatData | null>(null);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showEnrollmentsDialog, setShowEnrollmentsDialog] = useState(false);
 
-  // Early return if account is not loaded
-  if (!account?.id) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Spinner className="h-6 w-6" />
-      </div>
-    );
-  }
-
   const { data: courseSeatData, isLoading, refetch } = useQuery({
-    queryKey: ['course-seats', account.id],
+    queryKey: ['course-seats', accountId],
     queryFn: async () => {
+      if (!accountId) {
+        return [];
+      }
+
       try {
         // First, get ALL published courses
         const { data: allCourses, error: coursesError } = await supabase
@@ -81,7 +77,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
             seats_purchased,
             seats_used
           `)
-          .eq('account_id', account.id);
+          .eq('account_id', accountId);
 
         if (seatsError) {
           console.error('Error fetching course seats:', seatsError);
@@ -98,7 +94,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         const { data: enrollments, error: enrollError } = await supabase
           .from('course_enrollments')
           .select('course_id')
-          .eq('account_id', account.id);
+          .eq('account_id', accountId);
 
         if (enrollError) throw enrollError;
 
@@ -106,7 +102,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         const { data: invitations, error: inviteError } = await supabase
           .from('course_invitations')
           .select('course_id')
-          .eq('account_id', account.id)
+          .eq('account_id', accountId)
           .is('accepted_at', null);
 
         if (inviteError) throw inviteError;
@@ -147,8 +143,17 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
         throw error;
       }
     },
-    enabled: !!account.id,
+    enabled: !!accountId,
   });
+
+  // Early return if account is not loaded yet
+  if (!accountId) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Spinner className="h-6 w-6" />
+      </div>
+    );
+  }
 
   const handleInvite = (course: CourseSeatData) => {
     setSelectedCourse(course);
@@ -265,7 +270,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
           open={showInviteDialog}
           onOpenChange={setShowInviteDialog}
           course={selectedCourse!}
-          accountId={account.id}
+          accountId={accountId}
           onSuccess={() => refetch()}
         />
 
@@ -273,7 +278,7 @@ export function CourseSeatManagement({ accountSlug }: { accountSlug: string }) {
           open={showEnrollmentsDialog}
           onOpenChange={setShowEnrollmentsDialog}
           course={selectedCourse!}
-          accountId={account.id}
+          accountId={accountId}
           onUpdate={() => refetch()}
         />
       </If>

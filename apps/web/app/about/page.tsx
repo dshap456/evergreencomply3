@@ -1,18 +1,12 @@
-import { Heading } from '@kit/ui/heading';
-import { Trans } from '@kit/ui/trans';
 import { Card, CardContent } from '@kit/ui/card';
 import { CheckCircle, Users, Award, Target, Shield, Lightbulb, Globe } from 'lucide-react';
-import Image from 'next/image';
 
 import { SitePageHeader } from '../marketing-temp/_components/site-page-header';
-import { createI18nServerInstance } from '~/lib/i18n/i18n.server';
 import { withI18n } from '~/lib/i18n/with-i18n';
 import { SiteHeader } from '../_components/site-header';
 import { SiteFooter } from '../_components/site-footer';
 
 export async function generateMetadata() {
-  const { t } = await createI18nServerInstance();
-
   return {
     title: 'About Evergreen Comply - Modern Safety Training for Blue-Collar Professionals',
     description: 'Learn about Evergreen Comply\'s mission to provide accessible, engaging, and compliant safety training for movers and doers in the transportation and waste management industries.',

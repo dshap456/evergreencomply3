@@ -8,10 +8,17 @@ interface DebugPageProps {
   params: Promise<{ courseId: string }>;
 }
 
-export default function DebugCoursePage({ params }: DebugPageProps) {
-  if (process.env.NODE_ENV === 'production') {
+const isProduction = process.env.NODE_ENV === 'production';
+
+export default function DebugCoursePage(props: DebugPageProps) {
+  if (isProduction) {
     return null;
   }
+
+  return <DebugCoursePageContent {...props} />;
+}
+
+function DebugCoursePageContent({ params }: DebugPageProps) {
   const { courseId } = use(params);
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
