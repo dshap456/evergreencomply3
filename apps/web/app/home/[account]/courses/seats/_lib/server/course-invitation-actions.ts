@@ -7,6 +7,8 @@ import { enhanceAction } from '@kit/next/actions';
 import { getSupabaseServerClient } from '@kit/supabase/server-client';
 import { getLogger } from '@kit/shared/logger';
 
+import pathsConfig from '~/config/paths.config';
+
 const InviteToCourseSchema = z.object({
   email: z.string().email(),
   courseId: z.string().uuid(),
@@ -41,6 +43,9 @@ export const inviteToCourseAction = enhanceAction(
       if (account.primary_owner_user_id !== user.id) {
         throw new Error('Only team owners can invite members to courses');
       }
+
+      const normalizedEmail = data.email.trim().toLowerCase();
+      const normalizedUserEmail = user.email?.trim().toLowerCase();
 
       // Check available seats using direct query
       const { data: seatInfo, error: seatError } = await client
@@ -83,6 +88,43 @@ export const inviteToCourseAction = enhanceAction(
 
       if (existingInvite) {
         throw new Error('An invitation for this email already exists');
+      }
+
+      // If the invite email matches the team owner, directly enroll them instead of sending an invite
+      if (normalizedUserEmail && normalizedEmail === normalizedUserEmail) {
+        const { data: existingEnrollment } = await client
+          .from('course_enrollments')
+          .select('id')
+          .eq('account_id', data.accountId)
+          .eq('course_id', data.courseId)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (existingEnrollment) {
+          logger.info(ctx, 'User already enrolled in course, skipping self-invite');
+          revalidatePath(`/home/${data.accountId}/courses/seats`);
+          revalidatePath(pathsConfig.app.personalAccountCourses);
+          return { success: true };
+        }
+
+        const { error: enrollError } = await client
+          .from('course_enrollments')
+          .insert({
+            course_id: data.courseId,
+            account_id: data.accountId,
+            user_id: user.id,
+            invited_by: user.id,
+          });
+
+        if (enrollError) {
+          logger.error({ ...ctx, error: enrollError }, 'Failed to self-enroll owner');
+          throw enrollError;
+        }
+
+        logger.info(ctx, 'Team owner self-enrolled into course successfully');
+        revalidatePath(`/home/${data.accountId}/courses/seats`);
+        revalidatePath(pathsConfig.app.personalAccountCourses);
+        return { success: true };
       }
 
       // Create invitation
