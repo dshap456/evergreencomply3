@@ -185,8 +185,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
       try {
         localStorage.setItem('pending-checkout', '1');
       } catch {}
-      const redirectTarget = encodeURIComponent('/cart');
-      router.push(`${pathsConfig.auth.signIn}?redirect=${redirectTarget}`);
+      router.push(`${pathsConfig.auth.signIn}?redirect=/cart`);
       return;
     }
     

@@ -35,7 +35,16 @@ export const generateMetadata = async () => {
 async function SignInPage({ searchParams }: SignInPageProps) {
   const { invite_token, invitation_token, course_token, next, redirect } = await searchParams;
   const inviteToken = invitation_token || invite_token;
-  const redirectTo = redirect || next;
+
+  const rawRedirect = redirect || next;
+  let redirectTo = rawRedirect;
+  if (rawRedirect) {
+    try {
+      redirectTo = decodeURIComponent(rawRedirect);
+    } catch {
+      redirectTo = rawRedirect;
+    }
+  }
 
   // Check if user is already authenticated
   const supabase = getSupabaseServerClient();
@@ -61,14 +70,14 @@ async function SignInPage({ searchParams }: SignInPageProps) {
   const queryParams = new URLSearchParams();
   if (inviteToken) queryParams.append('invite_token', inviteToken);
   if (course_token) queryParams.append('course_token', course_token);
-  if (redirect) queryParams.append('redirect', redirect);
+  if (redirectTo) queryParams.append('redirect', redirectTo);
   
   const signUpPath = pathsConfig.auth.signUp + 
     (queryParams.toString() ? `?${queryParams.toString()}` : '');
 
   // Build callback path with redirect
-  const callbackPath = redirect 
-    ? `${pathsConfig.auth.callback}?redirect=${encodeURIComponent(redirect)}`
+  const callbackPath = redirectTo 
+    ? `${pathsConfig.auth.callback}?redirect=${encodeURIComponent(redirectTo)}`
     : pathsConfig.auth.callback;
 
   const paths = {

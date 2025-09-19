@@ -33,7 +33,15 @@ async function SignUpPage({ searchParams }: Props) {
   const params = await searchParams;
   const inviteToken = params.invite_token;
   const courseToken = params.course_token;
-  const redirectTo = params.redirect;
+  const rawRedirect = params.redirect;
+  let redirectTo = rawRedirect;
+  if (rawRedirect) {
+    try {
+      redirectTo = decodeURIComponent(rawRedirect);
+    } catch {
+      redirectTo = rawRedirect;
+    }
+  }
 
   // Check if user is already authenticated
   const supabase = getSupabaseServerClient();
