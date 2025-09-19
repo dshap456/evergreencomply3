@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
@@ -45,13 +45,35 @@ export function CartClient({ availableCourses }: CartClientProps) {
   // Purchase type is now determined by quantity, not user selection
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [customerName, setCustomerName] = useState('');
-  const [hasAttemptedAutoCheckout, setHasAttemptedAutoCheckout] = useState(false);
-  const searchParams = useSearchParams();
+  
+  const checkAuth = useCallback(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      setIsAuthenticated(false);
+      return;
+    }
+
+    setIsAuthenticated(true);
+
+    const { data: account } = await supabase
+      .from('accounts')
+      .select('name')
+      .eq('id', session.user.id)
+      .eq('is_personal_account', true)
+      .single();
+
+    if (account?.name) {
+      setCustomerName((prev) => prev || account.name);
+    }
+  }, [supabase]);
 
   // Load initial quantities from localStorage and check auth
   useEffect(() => {
     const savedCart = localStorage.getItem('training-cart');
-    const savedName = localStorage.getItem('checkout-customer-name');
+    const savedName = localStorage.getItem('training-cart-customer-name');
     if (savedCart) {
       try {
         const cartItems = JSON.parse(savedCart);
@@ -78,43 +100,13 @@ export function CartClient({ availableCourses }: CartClientProps) {
       }
     }
     if (savedName) {
-      try {
-        setCustomerName(JSON.parse(savedName));
-      } catch {
-        setCustomerName(savedName);
-      }
+      setCustomerName(savedName);
     }
     // Check if user is authenticated
-    checkAuth();
+    void checkAuth();
     
     setIsLoading(false);
-  }, [availableCourses]);
-  
-  // Check authentication and load team accounts
-  const checkAuth = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      setIsAuthenticated(false);
-      return;
-    }
-
-    setIsAuthenticated(true);
-
-    // Try to load user's name from their account
-    const { data: account } = await supabase
-      .from('accounts')
-      .select('name')
-      .eq('id', session.user.id)
-      .eq('is_personal_account', true)
-      .single();
-
-    if (account?.name) {
-      setCustomerName(account.name);
-    }
-  };
+  }, [availableCourses, checkAuth]);
 
   // Save to localStorage whenever quantities change
   useEffect(() => {
@@ -136,6 +128,20 @@ export function CartClient({ availableCourses }: CartClientProps) {
       window.dispatchEvent(new Event('cart-updated'));
     }
   }, [quantities, isLoading, availableCourses]);
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    const trimmedName = customerName.trim();
+
+    if (trimmedName) {
+      localStorage.setItem('training-cart-customer-name', trimmedName);
+    } else {
+      localStorage.removeItem('training-cart-customer-name');
+    }
+  }, [customerName, isLoading]);
 
   const updateQuantity = (courseId: string, quantity: number) => {
     if (quantity <= 0) {
@@ -166,8 +172,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
       .filter(item => item.course);
   }, [availableCourses, quantities]);
 
-  const handleCheckout = useCallback(async (options?: { skipAuthRedirect?: boolean }) => {
-    const skipAuthRedirect = options?.skipAuthRedirect ?? false;
+  const handleCheckout = useCallback(async () => {
     const cartCourses = getCartCourses();
     
     if (cartCourses.length === 0) {
@@ -177,25 +182,21 @@ export function CartClient({ availableCourses }: CartClientProps) {
     
     // Check if user is authenticated
     if (!isAuthenticated) {
-      if (skipAuthRedirect) {
-        return;
+      toast.error('Please sign in to complete your purchase');
+      const trimmedNameForRedirect = customerName.trim();
+
+      if (totalItems === 1 && trimmedNameForRedirect) {
+        localStorage.setItem('training-cart-customer-name', trimmedNameForRedirect);
       }
 
-      toast.error('Please sign in to complete your purchase');
-
-      try {
-        if (totalItems === 1 && customerName.trim()) {
-          localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim()));
-        }
-      } catch {}
-
-      const redirectTarget = encodeURIComponent('/cart?checkout=1');
-      router.push(`${pathsConfig.auth.signIn}?redirect=${redirectTarget}`);
+      router.push(`${pathsConfig.auth.signIn}?redirect=/checkout/start`);
       return;
     }
     
+    const trimmedName = customerName.trim();
+
     // Validate name is provided (only for single-seat purchases)
-    if (totalItems === 1 && !customerName.trim()) {
+    if (totalItems === 1 && !trimmedName) {
       toast.error('Please enter your name for the certificate');
       return;
     }
@@ -203,6 +204,12 @@ export function CartClient({ availableCourses }: CartClientProps) {
     setIsCheckingOut(true);
     
     try {
+      if (totalItems === 1) {
+        localStorage.setItem('training-cart-customer-name', trimmedName);
+      } else {
+        localStorage.removeItem('training-cart-customer-name');
+      }
+
       // Create checkout session - use the training endpoint with fixed price IDs
       const response = await fetch('/api/checkout/training', {
         method: 'POST',
@@ -211,10 +218,10 @@ export function CartClient({ availableCourses }: CartClientProps) {
         },
         body: JSON.stringify({
           cartItems: cartCourses.map(({ course, quantity }) => ({
-            courseId: course?.slug || course?.id,  // Use slug as the courseId
+            courseId: course?.slug || course?.expectedSlug || course?.sku || course?.id,
             quantity,
           })),
-          customerName: totalItems === 1 ? customerName.trim() : '',  // Only send name for single seat
+          customerName: totalItems === 1 ? trimmedName : '',  // Only send name for single seat
           accountType: totalItems > 1 ? 'team' : 'personal',  // Determine by quantity
         }),
       });
@@ -237,36 +244,6 @@ export function CartClient({ availableCourses }: CartClientProps) {
       setIsCheckingOut(false);
     }
   }, [customerName, getCartCourses, isAuthenticated, router, totalItems]);
-
-  const shouldResumeCheckout = searchParams.get('checkout') === '1';
-
-  useEffect(() => {
-    if (!shouldResumeCheckout || isLoading || hasAttemptedAutoCheckout) {
-      return;
-    }
-
-    if (!isAuthenticated) {
-      return;
-    }
-
-    if (totalItems === 0) {
-      return;
-    }
-
-    setHasAttemptedAutoCheckout(true);
-
-    Promise.resolve(router.replace('/cart')).catch(() => {});
-
-    void handleCheckout({ skipAuthRedirect: true });
-  }, [
-    shouldResumeCheckout,
-    isLoading,
-    hasAttemptedAutoCheckout,
-    isAuthenticated,
-    totalItems,
-    handleCheckout,
-    router,
-  ]);
 
   if (isLoading) {
     return (
@@ -511,12 +488,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                             type="text"
                             placeholder="Enter full legal name"
                             value={customerName}
-                            onChange={(e) => {
-                              setCustomerName(e.target.value);
-                              try {
-                                localStorage.setItem('checkout-customer-name', JSON.stringify(e.target.value));
-                              } catch {}
-                            }}
+                            onChange={(e) => setCustomerName(e.target.value)}
                             className="h-8 text-xs"
                             required
                           />
@@ -538,13 +510,13 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                 className="hidden md:inline-flex w-full bg-[#F4C542] text-[#17472D] font-semibold hover:bg-[#E0B63B] focus-visible:ring-[#17472D]/40" 
                                 size="sm"
                                 onClick={() => {
-                                  try {
-                                    if (totalItems === 1 && customerName.trim()) {
-                                      localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim()));
-                                    }
-                                  } catch {}
-                                  const redirectTarget = encodeURIComponent('/cart?checkout=1');
-                                  router.push(`${pathsConfig.auth.signUp}?redirect=${redirectTarget}`);
+                                  const trimmedNameForRedirect = customerName.trim();
+
+                                  if (totalItems === 1 && trimmedNameForRedirect) {
+                                    localStorage.setItem('training-cart-customer-name', trimmedNameForRedirect);
+                                  }
+
+                                  router.push(`${pathsConfig.auth.signUp}?redirect=/checkout/start`);
                                 }}
                               >
                                 Create Account to Checkout
@@ -562,7 +534,7 @@ export function CartClient({ availableCourses }: CartClientProps) {
                                 <span className="text-xs font-medium">Team Purchase</span>
                               </div>
                               <p className="text-xs text-muted-foreground">
-                                You're purchasing {totalItems} seats. After checkout, you'll be able to:
+                                You&apos;re purchasing {totalItems} seats. After checkout, you&apos;ll be able to:
                               </p>
                               <ul className="text-xs text-muted-foreground ml-4 space-y-1">
                                 <li>• Assign seats to team members</li>
@@ -628,7 +600,19 @@ export function CartClient({ availableCourses }: CartClientProps) {
                 Checkout
               </Button>
             ) : (
-              <Button size="sm" onClick={() => { try { if (totalItems === 1 && customerName.trim()) { localStorage.setItem('checkout-customer-name', JSON.stringify(customerName.trim())); } } catch {} ; const redirectTarget = encodeURIComponent('/cart?checkout=1'); router.push(`${pathsConfig.auth.signUp}?redirect=${redirectTarget}`); }} className="min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button
+                size="sm"
+                onClick={() => {
+                  const trimmedNameForRedirect = customerName.trim();
+
+                  if (totalItems === 1 && trimmedNameForRedirect) {
+                    localStorage.setItem('training-cart-customer-name', trimmedNameForRedirect);
+                  }
+
+                  router.push(`${pathsConfig.auth.signUp}?redirect=/checkout/start`);
+                }}
+                className="min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90"
+              >
                 Create Account to Checkout
               </Button>
             )}
