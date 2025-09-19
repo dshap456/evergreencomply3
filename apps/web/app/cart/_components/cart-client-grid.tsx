@@ -6,7 +6,17 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@kit/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@kit/ui/card';
 import { Input } from '@kit/ui/input';
-import { ArrowLeft, ShoppingCart, Plus, Minus, Loader2, Grid, List } from 'lucide-react';
+import {
+  ArrowLeft,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Loader2,
+  Grid,
+  List,
+  Lock,
+  BadgeCheck,
+} from 'lucide-react';
 import { Badge } from '@kit/ui/badge';
 import { toast } from '@kit/ui/sonner';
 import pathsConfig from '~/config/paths.config';
@@ -442,10 +452,16 @@ export function CartClient({ availableCourses }: CartClientProps) {
                         )}
                       </Button>
 
-                      <p className="text-xs text-muted-foreground text-center">
-                        <span className="block">Secure checkout powered by Stripe</span>
-                        <span className="block mt-0.5">30-day money back guarantee</span>
-                      </p>
+                      <div className="text-xs text-muted-foreground text-center space-y-1">
+                        <div className="flex items-center justify-center gap-2">
+                          <Lock className="h-3 w-3" />
+                          <span>Secure checkout powered by Stripe</span>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <BadgeCheck className="h-3 w-3" />
+                          <span>30-day money back guarantee</span>
+                        </div>
+                      </div>
                     </>
                   ) : (
                     <div className="text-center py-4">
