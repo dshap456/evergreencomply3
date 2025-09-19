@@ -38,6 +38,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Only team owners can invite members' });
     }
 
+    const accountSlug = account.slug ?? accountId;
+
     // Get course details
     const { data: course, error: courseError } = await client
       .from('courses')
@@ -170,8 +172,8 @@ export async function POST(request: Request) {
           .ilike('email', normalizedEmail)
           .eq('invitation_type', 'course');
 
-        revalidatePath(`/home/${accountId}/courses/seats`);
-        revalidatePath(`/home/${accountId}/my-learning`);
+        revalidatePath(`/home/${accountSlug}/courses/seats`);
+        revalidatePath(`/home/${accountSlug}/my-learning`);
         revalidatePath(pathsConfig.app.personalAccountCourses);
         return NextResponse.json({ success: true });
       }
@@ -209,8 +211,8 @@ export async function POST(request: Request) {
         .ilike('email', normalizedEmail)
         .eq('invitation_type', 'course');
 
-      revalidatePath(`/home/${accountId}/courses/seats`);
-      revalidatePath(`/home/${accountId}/my-learning`);
+      revalidatePath(`/home/${accountSlug}/courses/seats`);
+      revalidatePath(`/home/${accountSlug}/my-learning`);
       revalidatePath(pathsConfig.app.personalAccountCourses);
 
       return NextResponse.json({ success: true });
@@ -438,7 +440,7 @@ This invitation will expire in 30 days.`;
         stack: emailError instanceof Error ? emailError.stack : undefined,
       });
       // Return error to client so they know email failed
-      revalidatePath(`/home/${accountId}/courses/seats`);
+      revalidatePath(`/home/${accountSlug}/courses/seats`);
       return NextResponse.json({ 
         success: true, // Invitation was created
         invitation,
@@ -448,7 +450,7 @@ This invitation will expire in 30 days.`;
       });
     }
 
-    revalidatePath(`/home/${accountId}/courses/seats`);
+    revalidatePath(`/home/${accountSlug}/courses/seats`);
 
     return NextResponse.json({ 
       success: true, 
